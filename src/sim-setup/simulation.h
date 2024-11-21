@@ -12,27 +12,30 @@ namespace Simulation{
     std::vector<std::thread> threads;
     std::vector<Body> bodies;
 
-    constexpr int 
+    int 
         WIDTH = 1366, 
         HEIGHT = 768,
         NUM_THREADS = 16,
-        obj = 10000
+        obj = 10000,
+        max_frames = 5000;
     ;
     
     constexpr double  
         G = 1,
         c = 299'792'458,
-        dt = 0.5,
-        c_squared = c*c,
-
-        divergence = 14.f,
-        takeover = .1f,
-        e_squared = 1e-10f
+        
+        c_squared = c*c
     ;
 
-    double max_temp = 1;
+    double
+        divergence = 14.f,
+        takeover = .1f,
+        e_squared = 1e-10f,
+        dt = 0.5,
+        max_temp = 1
+    ;
 
-    constexpr float 
+    float 
         initial_a = 1,
 
         H_0 = 10e-11,

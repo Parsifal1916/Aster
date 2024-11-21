@@ -1,1 +1,3 @@
 cli-api/*
+gui
+cli-api/main.cpp
