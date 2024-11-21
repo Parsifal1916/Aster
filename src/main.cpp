@@ -1,3 +1,10 @@
+// *  █████╗ ███████╗████████╗███████╗██████╗ 
+// * ██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗
+// * ███████║███████╗   ██║   █████╗  ██████╔╝
+// * ██╔══██║╚════██║   ██║   ██╔══╝  ██╔══██╗
+// * ██║  ██║███████║   ██║   ███████╗██║  ██║
+// * ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
+
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <cstdlib>
@@ -16,6 +23,7 @@ double time_passed = 0;
 #include "physics/vectors.h"
 #include "physics/body.h"
 #include "physics/physics.h"
+
 
 
 #include "sim-setup/sim_helper.h"
