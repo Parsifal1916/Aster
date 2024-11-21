@@ -15,11 +15,6 @@
 #include <thread>
 #include <ctime>
 
-double time_passed = 0;
-
-#define spin .9// v -> 1/spin
-#define stV 0
-
 #include "physics/vectors.h"
 #include "physics/body.h"
 #include "physics/physics.h"
@@ -31,11 +26,8 @@ double time_passed = 0;
 #include "graphics-api/canvas.h"
 #include "setting/setting.h"
 
-
-int main() {
+int main(){
     Simulation::init();
     Simulation::populate();
     Simulation::fire_up();
-
-    return 0;
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <SFML/Graphics.hpp>
 #include "../physics/body.h"
 
 namespace Simulation{

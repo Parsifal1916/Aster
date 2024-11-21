@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include "../physics/body.h"
+
 struct Body;
 
 namespace Simulation{
@@ -23,11 +24,13 @@ namespace Simulation{
     constexpr double  
         G = 1,
         c = 299'792'458,
-        
+        spin = .9,
+        stV = 0,
         c_squared = c*c
     ;
 
     double
+        time_passed = 0,
         divergence = 14.f,
         takeover = .1f,
         e_squared = 1e-10f,

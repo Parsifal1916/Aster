@@ -2,6 +2,7 @@
 
 #include "../sim-setup/simulation.h"
 #include "vectors.h"
+#include <SFML/Graphics.hpp>
 
 using namespace Simulation;
 
@@ -94,7 +95,7 @@ public:
        Body(){}
 
        static sf::Color get_color(double t) {
-              int r, g, b;
+              uint8_t r, g, b;
 
               if (t <= 0.3) {
                      double normalizedT = t / 0.33;

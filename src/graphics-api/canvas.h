@@ -1,3 +1,4 @@
+#include <SFML/Graphics.hpp>
 /*
 * this file contains all the functions
 * relative to image inits, drawing and
