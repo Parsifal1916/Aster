@@ -7,47 +7,63 @@
 namespace Simulation{
 namespace presets{
 
-Body make_spawn_box(unsigned int index){
+Body make_ellipse(unsigned int index, vec2 center){
     int radius = HEIGHT/10;
     
-    // genera l'angolo
     int theta = static_cast<double>(std::rand() % 360);
-    // genera il raggio
     double r = (static_cast<double>(std::rand() % radius))/(1+.7*sin(theta)*sin(theta));
 
     vec2 pos = {std::cos(theta)*r, std::sin(theta)*r};
     double magn_vel = 0*(1/(r*r + .1) + r)/100;
-    //if (r <= radius/2)  magn_vel *= 1;
-    //if (r <= radius/4)  magn_vel = 1.2 *(1/(r*r*r + .1) + r);
-    //if (r <= radius/8)  magn_vel *= 1.5;
-    //if (r <= radius/16)  magn_vel *= 1.6;
 
     vec2 vel = vec2(-std::sin(theta) *magn_vel, std::cos(theta)* magn_vel);
     int mass = normalized_rnd(rng)*10e7;
     Body p(
         mass, // mass
-        vec2({radius+cos(theta)*r, radius+sin(theta)*r}),
-        vel,
-        index,
-        sf::Color::White//r < radius / 4 ? sf::Color::White : sf::Color::Black
+        center + vec2({cos(theta)*r, sin(theta)*r}),
+        vel
     );
     p.temp = 10;
-    if (std::rand() % 2){ p = Body(
-        mass, // mass
-        pos + vec2({WIDTH-radius, HEIGHT-radius}),
-        vel,
-        index,
-        sf::Color::White
-    );}
-    
     
     return p; 
 }
 
-} //fine presets
+Body make_ring_helper(int inner, int outer, vec2 center){
+    double x = (std::rand() % (2*outer)) - outer, y = (std::rand() % (2*outer)) - outer;
 
-    void populate(){
-        for (int i = 0; i < obj; ++i) 
-            bodies.push_back(presets::make_spawn_box(i));
+    while( x*x + y*y > outer*outer || x*x + y*y < outer*outer/4) { // makes sure it's in the circle
+        x = (std::rand() % (2*outer)) - outer;
+        y = (std::rand() % (2*outer)) - outer;
     }
+
+    // make it into radial coordinates (outer = r^2)
+    outer = x*x + y*y;
+    double theta = std::atan(x/(y+0.00001));
+
+    double magn_vel = obj*G/(outer);
+    vec2 vel = vec2(-std::sin(theta) *magn_vel, std::cos(theta)* magn_vel);
+
+    Body p(
+        1, 
+        vec2({x, y}) + center,
+        vel
+    );
+    p.temp = 10;
+    
+    return p; 
+}
+
+void make_ring(int outer, int inner, vec2 center, int nums){
+    bodies.reserve(bodies.size() + nums);
+
+    while (nums--){
+        bodies.push_back(make_ring_helper(outer, inner, center));
+    }
+}
+
+void add_body(double mass, vec2 pos, vec2 vel, sf::Color col, bool still = false){
+    bodies.push_back(Body(mass, pos, vel, col, still));
+}
+
+} //fine presets
 }//fine sim

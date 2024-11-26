@@ -8,21 +8,38 @@
 struct Body;
 
 namespace Simulation{
-    
+    double lagrangian = 0;
+    double highest_lagrangian = 0;
+    std::vector<double> lagrangians = {0};
+
+    bool leave_traces = false;
+    bool save = false;
+
     auto bg = sf::Color(0,0,0);
     std::vector<std::thread> threads;
     std::vector<Body> bodies;
+
+    enum simulation_types: int {LIGHT = 0, MEDIUM = 1, HEAVY = 2}; 
+    simulation_types sim_type = simulation_types::LIGHT;
+
+    using step_func = void(*)();
+    using func_ptr = void(*)(Body*);
+    using force_func = vec2(*)(double, double, vec2, vec2, vec2, vec2);
+
+    force_func get_force;
+    func_ptr update_body;
 
     int 
         WIDTH = 1366, 
         HEIGHT = 768,
         NUM_THREADS = 16,
         obj = 10000,
-        max_frames = 5000;
+        max_frames = 5000,
+        graph_height = HEIGHT*3/4
     ;
     
     constexpr double  
-        G = 1,
+        G = 6e-7,
         c = 299'792'458,
         spin = .9,
         stV = 0,
@@ -32,9 +49,9 @@ namespace Simulation{
     double
         time_passed = 0,
         divergence = 14.f,
-        takeover = .1f,
-        e_squared = 1e-10f,
-        dt = 0.5,
+        takeover = 100,
+        e_squared = .086f,
+        dt = .001,
         max_temp = 1
     ;
 

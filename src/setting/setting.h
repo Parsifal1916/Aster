@@ -1,7 +1,13 @@
+#pragma once
+
 #include "../sim-setup/simulation.h"
+#include "../sim-setup/sim_helper.h"
 #include <cassert>
 
 namespace Simulation{
+    using Clock = std::chrono::high_resolution_clock;
+    using Duration = std::chrono::duration<double>;
+
     void set_numof_objs(unsigned int n_){
         obj = n_;
         if (obj < NUM_THREADS)
@@ -63,42 +69,103 @@ namespace Simulation{
         max_frames = f_;
     }
 
-    void fire_up(){
-        
-        rng.seed(static_cast<unsigned int>(std::time(0)));
+    void set_sim_type(short type){
+        assert(type < 4);
+        sim_type = static_cast<simulation_types>(type);
+    }
 
-        using Clock = std::chrono::high_resolution_clock;
-        using Duration = std::chrono::duration<double>;
-    
+    // !! deprecated
+    void save_stebystep(){
         auto p_start = Clock::now();
 
         sf::Texture texture;
         sf::Sprite sprite;
         auto prev_time = p_start;
         double elapsed = 0;
-        setup_canvas();
-    
+        Renderer::setup_canvas();
+
         while (time_passed <= 50000) {
             auto start = Clock::now();
 
             Simulation::step();
-            draw_bodies();
-            //draw_circle();
+            Renderer::render();
 
             auto end = Clock::now();
-            image.saveToFile("file" + std::to_string((int)(time_passed)) + ".png");
+           
             double elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(Clock::now() - p_start).count();
             double estimated_total_seconds = elapsed_seconds * (50000.0 / (time_passed + 1));
             double remaining_seconds = estimated_total_seconds - elapsed_seconds;
 
-            texture.loadFromImage(image);
+            texture.loadFromImage(Renderer::image);
             sprite.setTexture(texture);
             Duration cl = Clock::now() - p_start;
             std::cout << "[" << cl.count() << "\t] finished and saved frame number " << time_passed <<" of simulation with scale " << Simulation::current_a << " (took " << (end-  p_start).count() << "ms) \n";
             
             time_passed++;
-            image = blank;
+            Renderer::reset();
         }
+    }
+
+    /*
+    * spawn a window and starts the simulation
+    */
+    void do_window(){
+        sf::Texture texture;
+        sf::Sprite sprite;
+
+        // sets up a window and a texture renderer
+        Renderer::setup_canvas();
+        Renderer::window.create(sf::VideoMode(WIDTH, HEIGHT), "Simulation");
+        
+        sf::RenderTexture render_txture;
+        render_txture.create(WIDTH, HEIGHT);
+        
+        while (Renderer::window.isOpen()){
+            sf::Event event;
+            // handles the window closing
+            while (Renderer::window.pollEvent(event)){
+                if (event.type == sf::Event::Closed) Renderer::window.close();
+            }    
+
+            // take a timestep and renders it
+            step();
+            Renderer::render();
+            Renderer::window.clear();
+
+            // overlays the lagrangian text object
+            render_txture.clear();
+            render_txture.draw(sprite);
+            render_txture.draw(Renderer::lagr_text);
+            render_txture.display();
+
+            texture.loadFromImage(Renderer::image);
+            sprite.setTexture(texture);
+            Renderer::window.draw(sprite);
+
+            if (save)
+                render_txture.getTexture().copyToImage().saveToFile("file" + std::to_string((int)(time_passed)) + ".png");
+
+            Renderer::window.draw(Renderer::lagr_text);
+            Renderer::window.display();
+
+            if (!leave_traces)
+                Renderer::reset();
+
+            time_passed++;
+        }
+    }
+
+    /*
+    * stats the simulation
+    */
+    void fire_up(){
+        step = general_step;
+
+        obj = bodies.size();
+        rng.seed(static_cast<unsigned int>(std::time(0)));
+        set_max_threads(NUM_THREADS);
+    
+        do_window();
     }
 
     namespace Sauce{
