@@ -62,3 +62,7 @@ vec2 vec2::normalize(){
        float magn = this -> magnitude();
        return vec2(this -> x/magn, this -> y/magn);
 }
+
+double sqr_magn(vec2 vec){
+    return vec.x*vec.x + vec.y*vec.y;
+}

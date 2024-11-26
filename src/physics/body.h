@@ -34,6 +34,7 @@ void update_scale(){
        current_a += (k1 + 2 * k2 + 2 * k3 + k4) / 6;
 }
 
+
 /*
 * evaluates the post-newtonian approx.
 * @param m1: mass of the first object
@@ -52,12 +53,12 @@ vec2 pn2(double m1, double m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2){
        double m_ratio = m1/m2;
        vec2 v = v1 - v2;
 
-       double a_newton = G/(r*r + (double)e_squared);
-       double correction = std::exp(-r*r/takeover)*divergence;
+       double a_newton = G*m1*m2/(r*r + (double)e_squared);
+       double correction = std::exp(-r*r/takeover)*e_squared;
        vec2 pn1 = ( n*(4 + 2*m_ratio)*term1*c_squared*(double)r - v*v*n*(1+ 3*m_ratio) + v*n*v*4 - v*n*n*3/2) * term1 ;
        vec2 pn25 = (v*n)*v*-8/5 * G*G*m1*m2*(m1+m2)/(c_squared*c_squared*c*r*r*r);
 
-       return n*( (double)a_newton) + pn1 + pn25;
+       return n*( (double)a_newton) + pn1 + pn25 + n*correction;
 }
 std::vector<vec2> get_new_pos(vec2* position, vec2* velocity, vec2* acceleration, double step){
        std::vector<vec2> retval;
@@ -65,20 +66,24 @@ std::vector<vec2> get_new_pos(vec2* position, vec2* velocity, vec2* acceleration
        retval.push_back(vec2({position -> x + retval[0].x * step     , position -> y + retval[0].y * step     }));
        return retval;
 }
+
+/*
+* returns the runge-kutta 4 approx. for 
+* the desired force calculation method
+*/
 vec2 rk4(double m1, double m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2){
        vec2 k1, k2, k3, k4;
        std::vector<vec2> dummy;
-       k1 = pn2(m1, m2, v1, v2, p1, p2) * dt;
+       k1 = get_force(m1, m2, v1, v2, p1, p2) * dt;
        dummy = get_new_pos(&p1, &v1, &k1, dt/2);
-       k2 = pn2(m1, m2, v1 + dummy[0]/2.f, v2, p1 + dummy[1]/2.f, p2) * dt;
+       k2 = get_force(m1, m2, v1 + dummy[0]/2.f, v2, p1 + dummy[1]/2.f, p2) * dt;
        dummy = get_new_pos(&p1, &v1, &k2, dt/2);
-       k3 = pn2(m1, m2, v1 + dummy[0]/2.f, v2, p1 + dummy[1]/2.f, p2) * dt;
+       k3 = get_force(m1, m2, v1 + dummy[0]/2.f, v2, p1 + dummy[1]/2.f, p2) * dt;
        dummy = get_new_pos(&p1, &v1, &k3, dt);
-       k4 = pn2(m1, m2, v1 + dummy[0]/2.f, v2, p1 + dummy[1]/2.f, p2) * dt;
+       k4 = get_force(m1, m2, v1 + dummy[0]/2.f, v2, p1 + dummy[1]/2.f, p2) * dt;
 
        return (k1 + k2*2.f + k3*2.f + k4)/6.f;
 }
-
 
 
 struct Body{
@@ -88,10 +93,11 @@ public:
        vec2 position = {};
        vec2 velocity = {};
        vec2 acceleration = {};
-       sf::Color color = sf::Color::White; 
-       unsigned int index = 0;
+       vec2 prev_acc = {};
+       sf::Color color;
+       bool still = false;
 
-       Body(double mass, vec2 position, vec2 velocity, unsigned int index, sf::Color c ) : color(c),mass(mass), index(index), position(position), velocity(velocity){};
+       Body(double mass, vec2 position, vec2 velocity, sf::Color c = {255, 255, 255}, bool still = false) : still(still), mass(mass),position(position), velocity(velocity), color(c){};
        Body(){}
 
        static sf::Color get_color(double t) {

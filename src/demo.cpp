@@ -28,6 +28,8 @@
 
 int main(){
     Simulation::init();
-    Simulation::populate();
+    Simulation::presets::add_body(5e11, {WIDTH/8 + WIDTH/9, HEIGHT/2}, {0,  200}, sf::Color::Red);
+    Simulation::presets::add_body(5e11, {WIDTH/7 + WIDTH/9, HEIGHT/2}, {0, -200}, sf::Color::Blue);
     Simulation::fire_up();
+    
 }
