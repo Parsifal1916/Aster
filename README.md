@@ -1,1 +1,2 @@
-![title_t](https://github.com/user-attachments/assets/9373b159-9a1c-4557-9111-63868b866073)
+![s_t_e_r__1_-removebg-preview](https://github.com/user-attachments/assets/360d940e-b336-4795-8df6-6d7322aaa60f)
+
