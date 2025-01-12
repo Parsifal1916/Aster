@@ -5,29 +5,16 @@
 // * ██║  ██║███████║   ██║   ███████╗██║  ██║
 // * ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
 
-#include <SFML/Graphics.hpp>
-#include <vector>
-#include <cstdlib>
-#include <cmath>
-#include <iostream>
-#include <chrono>
-#include <iomanip>
-#include <thread>
-#include <ctime>
+#include "Aster/renderer_endpoint.hpp"
+#include "Aster/physics_endpoint.hpp"
+#include "Aster/builder_endpoint.hpp"
 
-#include "physics/vectors.h"
-#include "physics/body.h"
-#include "physics/physics.h"
+#include "Aster/building-api/builder.h"
+#include "Aster/building-api/presets.h"
 
-#include "sim-setup/sim_helper.h"
-#include "sim-setup/presets.h"
-#include "sim-setup/simulation.h"
-
-#include "graphics-api/canvas.h"
-#include "setting/setting.h"
-
-int main(){
-    Simulation::init();
-    Simulation::populate();
-    Simulation::fire_up();
-}
+#include "Aster/simulations/sim_helper.h"
+#include "Aster/simulations/sim_obj.h"
+#include "Aster/simulations/barnes-hut.h"
+#include "Aster/simulations/3d_sim_obj.h"
+#include "Aster/simulations/barnes-hut3d.h"
+#include "Aster/simulations/simulation.h"
