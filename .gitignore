@@ -30,4 +30,6 @@ Thumbs.db
 *.obj
 *.dll
 
+run.sh
+
 lib/
