@@ -25,22 +25,20 @@ jobs:
       run: |
         sudo apt-get update || brew update
         sudo apt-get install -y libsfml-dev || brew install sfml
-
+        sudo apt-get install catch2 || brew install catch2
     - name: Setup dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
         # Install SFML on Windows using vcpkg
         choco install vcpkg
         vcpkg install sfml:x64-windows
-
+        vcpkg install catch2:x64-windows
     - name: Configure CMake
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -S .
-
     - name: Build the project
       run: |
         cmake --build build --config ${{ matrix.build_type }}
-
     - name: Run tests
       run: |
         if [ -f "./build/AsterTests" ]; then
@@ -49,7 +47,6 @@ jobs:
           echo "Test executable not found!"
           exit 1
         fi
-
     - name: Archive build artifacts
       uses: actions/upload-artifact@v3
       with:
