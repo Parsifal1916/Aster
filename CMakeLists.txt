@@ -20,7 +20,8 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_package(SFML REQUIRED COMPONENTS system window graphics)
+    find_package(SFML REQUIRED COMPONENTS System Window Graphics)
+    
     find_package(Catch2 REQUIRED)
 
     file(GLOB_RECURSE ASTER_TEST_SOURCES tests/*.cpp)
