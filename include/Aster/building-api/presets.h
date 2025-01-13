@@ -11,11 +11,18 @@ namespace presets{
 
 
 vec2 rng_vec2(Simulation* _s){
-    return {std::rand() % (int)_s -> data.WIDTH, std::rand() % (int)_s -> data.HEIGHT};
+    return {
+        double(std::rand() % (int)(_s -> data.WIDTH)), 
+        double(std::rand() % (int)_s -> data.HEIGHT)
+    };
 }
 
 vec3 rng_vec3(Simulation3d* _s){
-    return {std::rand() % (int)_s -> data.WIDTH, std::rand() % (int)_s -> data.HEIGHT, std::rand() % (int)_s -> data.depth};
+    return {
+        double(std::rand() % (int)_s -> data.WIDTH), 
+        double(std::rand() % (int)_s -> data.HEIGHT), 
+        double(std::rand() % (int)_s -> data.depth)
+    };
 }
 
 Body make_spawn_box1(unsigned int index){
@@ -43,7 +50,7 @@ Body make_spawn_box1(unsigned int index){
     p.temp = 10;
     if (std::rand() % 2){ p = Body(
         mass, // mass
-        pos + vec2({WIDTH-radius, HEIGHT-radius}),
+        pos + vec2({double(WIDTH)-radius, double(HEIGHT)-radius}),
         vel
     );}
     
@@ -165,7 +172,13 @@ Body3d make_ring_helper3d(Simulation3d* _s, int outer, int inner, vec3 center, d
     double magn_vel =std::sqrt(g_pull*r/10e4);//g_pull*r/10e6- std::exp(-(r*r)/80);
     vec3 vel = vec3(std::sin(t) *magn_vel, -std::cos(t)* magn_vel, thickness ? (std::rand() % (2*thickness)) - thickness : 0);
 
-    vec3 pos = vec3({std::cos(t) * r, std::sin(t) * r/3, thickness ? (std::rand() % (2*thickness)) - thickness : 0});
+    vec3 pos = vec3({
+        std::cos(t) * r, std::sin(t) * r/3, 
+        double(thickness ? 
+              (std::rand() % (2*thickness)) - thickness 
+            : 0
+        )});
+        
     pos = rotate_point(pos, phi, theta);
     vel = rotate_point(vel, phi, theta);
 
@@ -196,9 +209,9 @@ void add_disk3d(Simulation3d* _s, int outer, int inner, vec3 center, int nums, d
 
 vec3 rng_3d(int max_r){
     return {
-        (rand() % (max_r*2)) - max_r,
-        (rand() % (max_r*2)) - max_r,
-        (rand() % (max_r*2)) - max_r
+        (double)(rand() % (max_r*2)) - max_r,
+        (double)(rand() % (max_r*2)) - max_r,
+        (double)(rand() % (max_r*2)) - max_r
     };
 }
 

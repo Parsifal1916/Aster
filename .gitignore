@@ -16,7 +16,7 @@ Makefile
 install_manifest.txt
 
 core.*
-
+demo
 tests/*.mp4
 tests/demo
 
@@ -33,3 +33,4 @@ Thumbs.db
 run.sh
 
 lib/
+Testing/
