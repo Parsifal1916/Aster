@@ -25,23 +25,25 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libsfml-dev catch2
 
-    - name: Setup dependencies (macOS)
+   - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
         brew install sfml catch2
-        echo "SFML_DIR=$(brew --prefix sfml)/lib/cmake/SFML" >> $GITHUB_ENV
+        echo "SFML_DIR=/opt/homebrew/opt/sfml/lib/cmake/SFML" >> $GITHUB_ENV
+        echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/sfml:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
 
-    - name: Setup dependencies (Windows)
-      if: matrix.os == 'windows-latest'
+    - name: Configure CMake (macOS)
+      if: matrix.os == 'macos-latest'
       run: |
-        vcpkg install sfml:x64-windows catch2:x64-windows
-        echo "CMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DSFML_DIR=${{ env.SFML_DIR }} \
+              -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
 
-    - name: Configure CMake
-      shell: bash
+    - name: Configure CMake (non-macOS)
+      if: matrix.os != 'macos-latest'
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -S . ${{ matrix.os == 'windows-latest' && '-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake' || '' }}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.os == 'windows-latest' && '-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake' || '' }}
 
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }}
