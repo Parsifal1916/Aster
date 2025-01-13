@@ -25,13 +25,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libsfml-dev catch2
 
-   - name: Setup dependencies (macOS)
+    - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
         brew install sfml catch2
         echo "SFML_DIR=/opt/homebrew/opt/sfml/lib/cmake/SFML" >> $GITHUB_ENV
         echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/sfml:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
+
+    - name: Setup dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        vcpkg install sfml:x64-windows catch2:x64-windows
+        echo "CMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
 
     - name: Configure CMake (macOS)
       if: matrix.os == 'macos-latest'
