@@ -1,0 +1,57 @@
+name: Build and Test Aster Library
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Release]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup dependencies (Linux and macOS)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: |
+        sudo apt-get update || brew update
+        sudo apt-get install -y libsfml-dev || brew install sfml
+
+    - name: Setup dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Install SFML on Windows using vcpkg
+        choco install vcpkg
+        vcpkg install sfml:x64-windows
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -S .
+
+    - name: Build the project
+      run: |
+        cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Run tests
+      run: |
+        if [ -f "./build/AsterTests" ]; then
+          ./build/AsterTests
+        else
+          echo "Test executable not found!"
+          exit 1
+        fi
+
+    - name: Archive build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-${{ matrix.os }}-${{ matrix.build_type }}
+        path: build
