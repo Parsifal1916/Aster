@@ -20,8 +20,8 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_package(SFML 2.5 COMPONENTS system window graphics REQUIRED)
-    find_package(Catch2 3 REQUIRED)
+    find_package(SFML REQUIRED COMPONENTS system window graphics)
+    find_package(Catch2 REQUIRED)
 
     file(GLOB_RECURSE ASTER_TEST_SOURCES tests/*.cpp)
     add_executable(AsterTests ${ASTER_TEST_SOURCES})
@@ -37,7 +37,23 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     target_include_directories(AsterTests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
-    target_compile_options(AsterTests PRIVATE -O3 -mtune=native -march=native -funroll-loops -ffast-math -fcx-limited-range -Wno-narrowing -Wno-aggressive-loop-optimizations)
+    if(MSVC)
+        target_compile_options(AsterTests PRIVATE 
+            /O2 
+            /arch:AVX2
+        )
+    else()
+        target_compile_options(AsterTests PRIVATE 
+            -O3 
+            -mtune=native 
+            -march=native 
+            -funroll-loops 
+            -ffast-math 
+            -fcx-limited-range 
+            -Wno-narrowing 
+            -Wno-aggressive-loop-optimizations
+        )
+    endif()
 
     include(CTest)
     include(Catch)
