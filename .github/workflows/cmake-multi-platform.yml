@@ -17,36 +17,42 @@ jobs:
         build_type: [Debug]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Setup dependencies (Linux and macOS)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+    - name: Setup dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
       run: |
-        sudo apt-get update || brew update
-        sudo apt-get install -y libsfml-dev || brew install sfml
-        sudo apt-get install catch2 || brew install catch2
+        sudo apt-get update
+        sudo apt-get install -y libsfml-dev catch2
+
+    - name: Setup dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew update
+        brew install sfml catch2
+        echo "SFML_DIR=$(brew --prefix sfml)/lib/cmake/SFML" >> $GITHUB_ENV
+
     - name: Setup dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        choco install vcpkg
-        vcpkg install sfml:x64-windows
-        vcpkg install catch2:x64-windows
+        vcpkg install sfml:x64-windows catch2:x64-windows
+        echo "CMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
+
     - name: Configure CMake
+      shell: bash
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -S .
-    - name: Build the project
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -S . ${{ matrix.os == 'windows-latest' && '-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake' || '' }}
+
+    - name: Build
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: build
+      shell: bash
       run: |
-        cmake --build build --config ${{ matrix.build_type }}
-    - name: Run tests
-      run: |
-        if [ -f "./build/AsterTests" ]; then
-          ./build/AsterTests
-        else
-          echo "Test executable not found!"
-          exit 1
-        fi
-    - name: Archive build artifacts
+        ctest -C ${{ matrix.build_type }} --output-on-failure
+
+    - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: build-${{ matrix.os }}-${{ matrix.build_type }}

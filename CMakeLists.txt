@@ -20,8 +20,8 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_package(SFML  REQUIRED COMPONENTS system window graphics audio network)
-    find_package(Catch2 REQUIRED)
+    find_package(SFML 2.5 COMPONENTS system window graphics audio network REQUIRED)
+    find_package(Catch2 3 REQUIRED)
 
     file(GLOB_RECURSE ASTER_TEST_SOURCES tests/*.cpp)
     add_executable(AsterTests ${ASTER_TEST_SOURCES})
