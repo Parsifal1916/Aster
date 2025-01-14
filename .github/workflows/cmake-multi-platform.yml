@@ -23,23 +23,20 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        # Install OpenGL development files, GLEW, GLFW, and Catch2 for testing
-        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev catch2
+        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2
         
     - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
-        # Install GLEW and GLFW (OpenGL is included in macOS)
-        brew install glew glfw catch2
-        # Set up environment variables for CMake to find the libraries
-        echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
+        brew install glew glfw freeglut catch2
+        echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/freeglut:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
 
     - name: Setup dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
         # Install required libraries using vcpkg
-        vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows catch2:x64-windows
+        vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows freeglut:x64-windows catch2:x64-windows
         echo "CMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
 
     - name: Configure CMake (macOS)
