@@ -1,6 +1,5 @@
 #pragma once
 #include <cassert>
-#include <GL/glut.h>
 #include <vector>
 #include <unordered_map>
 #include <iomanip>
