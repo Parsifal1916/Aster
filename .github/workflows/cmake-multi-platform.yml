@@ -23,27 +23,29 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsfml-dev catch2
-
+        # Install OpenGL development files, GLEW, GLFW, and Catch2 for testing
+        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev catch2
+        
     - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
-        brew install sfml catch2
-        echo "SFML_DIR=/opt/homebrew/opt/sfml/lib/cmake/SFML" >> $GITHUB_ENV
-        echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/sfml:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
+        # Install GLEW and GLFW (OpenGL is included in macOS)
+        brew install glew glfw catch2
+        # Set up environment variables for CMake to find the libraries
+        echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
 
     - name: Setup dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        vcpkg install sfml:x64-windows catch2:x64-windows
+        # Install required libraries using vcpkg
+        vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows catch2:x64-windows
         echo "CMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
 
     - name: Configure CMake (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-              -DSFML_DIR=${{ env.SFML_DIR }} \
               -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
 
     - name: Configure CMake (non-macOS)
