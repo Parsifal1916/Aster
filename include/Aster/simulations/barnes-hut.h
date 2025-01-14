@@ -13,11 +13,10 @@
 namespace Aster{   
 namespace Barnes{
 
-std::vector<struct Node> nodes;
+
 
 struct Node{
     double size = 0;
-
     vec2 center_of_mass = {0,0};
     vec2 velocity = {0,0};
     vec2 center = {0,0};
@@ -93,6 +92,7 @@ void Node::add_twob(Body* _b, Node* _n){
 class Barnes_Hut : public Simulation{public:
     double theta = 0.8;
     std::vector<std::thread> threads;
+    std::vector<struct Node> nodes;
 
     Barnes_Hut(sim_meta m){
         this -> data = m;
@@ -143,16 +143,16 @@ void Barnes_Hut::step(){
 
 void Barnes_Hut::insert(Body* body){
     int node_index = get_to_best_leaf(body);
-    Node& cnode = nodes[node_index];
+    size_t cnode = node_index;
 
-    if (cnode.is_empty()){
-        cnode.init(body); //* it gets initialized
+    if (nodes[cnode].is_empty()){
+        nodes[cnode].init(body); //* it gets initialized
         return;
     }
     //* from now on we know it is not empty therefore it has a body ptr != nullptr
 
-    if ((body -> position - cnode.center_of_mass).sqr_magn() < 100){ // are they in the same place?
-        cnode.merge(body);
+    if ((body -> position - nodes[cnode].center_of_mass).sqr_magn() < 100){ // are they in the same place?
+        nodes[cnode].merge(body);
         return;
     }
 
@@ -162,7 +162,7 @@ void Barnes_Hut::insert(Body* body){
 
     while (tries--){// trova un modo migliore
         // subdivides the current node
-        child = subdivide(node_index);
+        child = subdivide(new_node);
 
         // gets where each body (the already existing one and the one we want to insert) wants to be
         opt_1 = opt_position(nodes[node_index].center_of_mass, nodes[node_index].center);
@@ -178,12 +178,12 @@ void Barnes_Hut::insert(Body* body){
             p2 = child + opt_2
         ;
 
-        nodes[p1].init(&cnode);
+        nodes[p1].init(&nodes[cnode]);
         nodes[p2].init(body);
         return;
     }
 
-    nodes[child].add_twob(body, &cnode);
+    nodes[new_node].add_twob(body, &nodes[cnode]);
 
 }
 

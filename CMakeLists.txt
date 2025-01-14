@@ -6,22 +6,30 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(GNUInstallDirs)
 
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glfw3 REQUIRED)
+
 file(GLOB_RECURSE ASTER_HEADERS include/Aster/*.h include/Aster/*.hpp)
 
 add_library(Aster INTERFACE)
 
 target_include_directories(Aster INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+target_link_libraries(Aster INTERFACE
+    OpenGL::GL
+    GLEW::GLEW
+    glfw
 )
 
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/Aster/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Aster
+)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_package(SFML REQUIRED COMPONENTS System Window Graphics)
-    
+    # Find Catch2 for testing
     find_package(Catch2 REQUIRED)
 
     file(GLOB_RECURSE ASTER_TEST_SOURCES tests/*.cpp)
@@ -30,9 +38,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_libraries(AsterTests PRIVATE
         Catch2::Catch2
         Catch2::Catch2WithMain
-        sfml-system
-        sfml-window
-        sfml-graphics
+        OpenGL::GL
+        GLEW::GLEW
+        glfw
         Aster
     )
 

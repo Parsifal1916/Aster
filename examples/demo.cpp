@@ -10,7 +10,7 @@ using namespace Aster;
 
 int main(){
     auto meta = sim3d_meta();
-    meta.dt = 0.1;
+    meta.dt = 0;
     meta.type = BARNES_HUT;
     //meta.save = true;
 
@@ -21,7 +21,8 @@ int main(){
     presets::add_disk3d(sim, 60e1, 10, {0,0,0}, 1e4, .3, 0, 0, 10e10); 
     //presets::rng_sphere(sim, 10e3, {meta.WIDTH, meta.HEIGHT, meta.depth}, 10e2);
 
-    Renderer::do_window3d(sim);
+    auto n = Renderer::Renderer3d(sim);
+    n.run();
 }
 
 

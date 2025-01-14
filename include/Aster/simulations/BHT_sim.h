@@ -15,6 +15,7 @@ namespace Barnes{
 class BHT : public Simulation {public:
     double theta = 0.8;
     std::vector<std::thread> threads;
+    std::vector<struct Node> nodes;
     static constexpr double kelvin_to_joule = 1e-22/7.2419716667;
 
     BHT(sim_meta m){

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <random>
+#include <map>
 
 #include "Aster/simulations/basic.h"
 #include "Aster/physics/tool-chain.h"
