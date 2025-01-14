@@ -24,25 +24,22 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        # Install all required development libraries
         sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2
 
     - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
-        # Install required libraries (OpenGL is included in macOS)
         brew install glew glfw freeglut catch2
-        # Configure CMake search paths for installed libraries
         echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/freeglut:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
 
     - name: Setup dependencies (Windows)
       if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
-        # Install required libraries using vcpkg package manager
+        vcpkg update
+        vcpkg upgrade
         vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows freeglut:x64-windows catch2:x64-windows
-        # Set up CMake toolchain file path for vcpkg integration
         "CMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
     - name: Configure CMake (macOS)
