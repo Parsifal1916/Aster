@@ -2,19 +2,20 @@ name: Build and Test Aster Library
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" ] 
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main" ] 
 
 jobs:
+
   build-and-test:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: false
+      fail-fast: false 
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        build_type: [Debug]
+        os: [ubuntu-latest, windows-latest, macos-latest] 
+        build_type: [Debug] 
 
     steps:
     - uses: actions/checkout@v4
@@ -23,33 +24,43 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsfml-dev catch2
+        # Install all required development libraries
+        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2
 
     - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
-        brew install sfml catch2
-        echo "SFML_DIR=/opt/homebrew/opt/sfml/lib/cmake/SFML" >> $GITHUB_ENV
-        echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/sfml:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
+        # Install required libraries (OpenGL is included in macOS)
+        brew install glew glfw freeglut catch2
+        # Configure CMake search paths for installed libraries
+        echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/freeglut:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
 
     - name: Setup dependencies (Windows)
       if: matrix.os == 'windows-latest'
+      shell: pwsh
       run: |
-        vcpkg install sfml:x64-windows catch2:x64-windows
-        echo "CMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
+        # Install required libraries using vcpkg package manager
+        vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows freeglut:x64-windows catch2:x64-windows
+        # Set up CMake toolchain file path for vcpkg integration
+        "CMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
     - name: Configure CMake (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-              -DSFML_DIR=${{ env.SFML_DIR }} \
               -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
 
-    - name: Configure CMake (non-macOS)
-      if: matrix.os != 'macos-latest'
+    - name: Configure CMake (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.os == 'windows-latest' && '-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake' || '' }}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }}
+
+    - name: Configure CMake (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }}
