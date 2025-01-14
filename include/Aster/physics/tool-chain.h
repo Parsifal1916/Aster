@@ -5,10 +5,10 @@
 
 namespace Aster{
 
-constexpr double c1 = 1 / (2 * (2 - std::pow(2, 1.0/3)));
-constexpr double c2 = (1 - pow(2, 1.0/3)) * c1;
-constexpr double d1 = 1 / (2 - std::pow(2, 1.0/3));
-constexpr double d2 = -std::pow(2, 1.0/3) *d1;  
+constexpr double c1 = 1 / (2 * (2 - std::pow(2.0, 1.0/3.0)));
+constexpr double c2 = (1 - pow(2.0, 1.0/3.0)) * c1;
+constexpr double d1 = 1 / (2 - std::pow(2.0, 1.0/3.0));
+constexpr double d2 = -std::pow(2.0, 1.0/3.0) *d1;  
 
 //===---------------------------------------------------------===//
 // 2d methods                                                    //

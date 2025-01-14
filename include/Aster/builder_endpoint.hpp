@@ -371,7 +371,7 @@ Simulation3d* bake3d(sim3d_meta _s){
     case BARNES_HUT:
         return new Barnes::Barnes_Hut3d(_s);   
 
-    case default:
+    default:
         break;  
     }
 
