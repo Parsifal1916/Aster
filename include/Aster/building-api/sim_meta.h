@@ -14,6 +14,7 @@ struct sim3d_meta{
     ;
     
     double  
+        H_0 = 10,
         G = 6e-11,
         c = 299'792'458,
         c_squared = c*c,
@@ -39,7 +40,7 @@ struct sim3d_meta{
     float 
         initial_a = 1,
         current_a = 10,
-        H_0 = 10,
+        
         omega_m = 0.3111,
         omega_l = 0.6889,
         vacuum_density = 3.35, // gev/m^3 ? 
@@ -65,6 +66,7 @@ struct sim_meta{
     ;
     
     double  
+        H_0 = 10,
         G = 6e-11,
         c = 299'792'458,
         c_squared = c*c,
@@ -90,7 +92,7 @@ struct sim_meta{
     float 
         initial_a = 1,
         current_a = 10,
-        H_0 = 10,
+
         omega_m = 0.3111,
         omega_l = 0.6889,
         vacuum_density = 3.35, // gev/m^3 ? 
