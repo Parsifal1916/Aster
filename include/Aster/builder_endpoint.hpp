@@ -369,7 +369,10 @@ Simulation3d* bake3d(sim3d_meta _s){
         return new Parallelized3d(_s); 
 
     case BARNES_HUT:
-        return new Barnes::Barnes_Hut3d(_s);    
+        return new Barnes::Barnes_Hut3d(_s);   
+
+    case default:
+        break;  
     }
 
     throw std::runtime_error("Invalid Simulation Type");

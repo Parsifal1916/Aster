@@ -1,3 +1,5 @@
+#define GL_SILENCE_DEPRECATION
+
 #include <iomanip>
 #include <iostream>
 #include <GLFW/glfw3.h>
