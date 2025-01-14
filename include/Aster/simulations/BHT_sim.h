@@ -224,11 +224,13 @@ void BHT::update_bodies(){
 
     this -> threads.clear();
 
-    max_temp = std::reduce(
-        temps.begin(),
-        temps.end(),
-        0, [](double a, double b) {return std::max(a, b);}
-    )+.2;
+    // i know i can use std::reduce
+    // window's compiler is complaining because versions
+
+    max_temp = 0;
+    
+    for (const auto& t : temps)
+        max_temp = (t > max_temp) ?  t : max_temp;
 
     //std::cout << max_temp;
 }

@@ -9,6 +9,7 @@
 namespace Aster{
 namespace presets{
 
+const double PI = 3.141592653589793238462643383279;
 
 vec2 rng_vec2(Simulation* _s){
     return {
@@ -152,8 +153,8 @@ void add_body3d(Simulation3d* _s, Body3d b){
 
 vec3 rotate_point(vec3 v, double phi, double theta){
     float x1, z1, y1, z2;
-    theta *= M_PI/180 ;
-    phi   *= M_PI/180 ; 
+    theta *= PI/180 ;
+    phi   *= PI/180 ; 
 
     x1 = v.x * std::cos(phi) + v.z * std::sin(phi);
     z1 = - v.x * std::sin(phi) + v.z *std::cos(phi);
