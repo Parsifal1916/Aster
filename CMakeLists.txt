@@ -47,10 +47,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_include_directories(AsterTests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
     if(MSVC)
-        target_compile_options(AsterTests PRIVATE 
-            /O2 
-            /arch:AVX2
-        )
+
     else()
         target_compile_options(AsterTests PRIVATE 
             -O3 
@@ -58,7 +55,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             -march=native 
             -funroll-loops 
             -ffast-math 
-            -fcx-limited-range 
             -Wno-narrowing 
             -Wno-aggressive-loop-optimizations
         )
