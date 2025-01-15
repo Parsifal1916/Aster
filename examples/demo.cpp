@@ -16,8 +16,7 @@ int main(){
     presets::add_disk3d(sim, 60e1, 10, sim -> get_corner(0), 1e4, .3, 0, 0, 10e10); 
     //presets::rng_sphere(sim, 10e3, {meta.WIDTH, meta.HEIGHT, meta.depth}, 10e2);
 
-    auto n = Renderer::Renderer3d(sim);
-    n.run();
+    render(sim);
 }
 
 

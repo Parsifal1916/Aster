@@ -15,6 +15,17 @@
 #include "Aster/simulations/barnes-hut.h"
 
 namespace Aster{
+    
+void render(Simulation* s){
+    auto r = Renderer::Renderer2d(s);
+    r.run();
+}
+
+void render(Simulation3d* s){
+    auto r = Renderer::Renderer3d(s);
+    r.run();
+}
+
 namespace Renderer{
 
     #define depth_factor 1.2
@@ -22,6 +33,8 @@ namespace Renderer{
 //===---------------------------------------------------------===//
 // 3d rendering impl                                             //
 //===---------------------------------------------------------===//
+
+
 
 vec3 Renderer3d::rotate_point(vec3 v){
     v =  v - _s -> get_center(); 
@@ -85,7 +98,7 @@ void Renderer3d::run(){
 
     while (!glfwWindowShouldClose(window)) {
         glfwGetFramebufferSize(window, &window_width, &window_height);
-        body_update_func();
+        if (!paused) body_update_func();
 
         (this ->*render3d)();
 
@@ -106,7 +119,7 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
     if (!renderer) throw std::runtime_error("undefined reference to window"); 
 
     renderer -> distance += static_cast<float>(yoffset) * 100.0f * renderer -> distance / (renderer -> distance +1000);
-    renderer -> distance = (renderer -> distance < 0) ? 1 : renderer -> distance;
+    renderer -> distance = (renderer -> distance < .5) ? .5 : renderer -> distance;
     renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> data.WIDTH) ?  10 * renderer -> _s -> data.WIDTH : renderer -> distance;
 }
 
@@ -298,9 +311,13 @@ Renderer2d::Renderer2d(Simulation* _s)  : _s(_s) {
 
 void Renderer2d::run(){
     glfwMakeContextCurrent(window);
+    bool paused = false;
 
     while (!glfwWindowShouldClose(window)) {
-        body_update_func();
+        if (!paused) body_update_func();
+
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+            paused = !paused;
 
         (this ->* render)();
 
