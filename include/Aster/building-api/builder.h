@@ -19,6 +19,7 @@ extern std::map<std::string, force_func> force_funcs;
 class SingleThread : public Simulation {
     public:
     SingleThread(sim_meta m);
+    SingleThread();
 
     void step() override ;
 };
@@ -28,6 +29,7 @@ class Parallelized : public Simulation {
     std::vector<std::thread> threads;
 
     Parallelized(sim_meta m);
+    Parallelized();
     void step() override;
     
     /*

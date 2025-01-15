@@ -16,6 +16,7 @@ extern std::map<std::string, force_func3d> force_funcs_3d;
 class SingleThread3d : public Simulation3d {
     public:
     SingleThread3d(sim3d_meta m);
+    SingleThread3d();
 
     void step() override;
 };
@@ -24,6 +25,7 @@ class Parallelized3d : public Simulation3d {
     public:
     std::vector<std::thread> threads;
     Parallelized3d(sim3d_meta m);
+    Parallelized3d();
     void step() override;
     
     /*

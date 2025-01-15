@@ -98,9 +98,10 @@ class Barnes_Hut3d : public Simulation3d{public:
 
     Barnes_Hut3d(sim3d_meta m){
         this -> data = m;
-        get_force = force_funcs_3d[m.selected_force];
-        update_body = update_funcs_3d[m.selected_update];
-        m.graph_height *= m.HEIGHT;
+        data.type = BARNES_HUT;
+        get_force = force_funcs_3d[data.selected_force];
+        update_body = update_funcs_3d[data.selected_update];
+        data.graph_height *= data.HEIGHT;
 
         get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
         get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
@@ -109,7 +110,21 @@ class Barnes_Hut3d : public Simulation3d{public:
         obj = bodies.size(); 
     }
 
-    Barnes_Hut3d(){data = sim3d_meta();}
+    Barnes_Hut3d(){
+        this -> data = sim3d_meta();
+
+        data.type = BARNES_HUT;
+
+        get_force = force_funcs_3d[data.selected_force];
+        update_body = update_funcs_3d[data.selected_update];
+        data.graph_height *= data.HEIGHT;
+
+        get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
+        get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
+
+        threads.reserve(data.NUM_THREADS);
+        obj = bodies.size(); 
+    }
 
     void step() override;
 

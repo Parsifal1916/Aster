@@ -31,6 +31,20 @@ class BHT : public Simulation {public:
         obj = bodies.size(); 
     }
 
+    BHT(){
+        this -> data = sim_meta();
+        get_force = force_funcs[data.selected_force];
+        update_body = update_funcs[data.selected_update];
+        data.graph_height *= data.HEIGHT;
+
+        get_rndX = std::uniform_real_distribution<double>(0, data.WIDTH);
+        get_rndY = std::uniform_real_distribution<double>(0, data.HEIGHT);
+
+        threads.reserve(data.NUM_THREADS);
+        obj = bodies.size(); 
+    }
+
+
 
     void step() override;
 

@@ -19,7 +19,7 @@ namespace Renderer{
 
 class Renderer3d{
     public: 
-    bool paused = false;
+
     using render_func3d = void(Renderer3d::*)();
     Simulation3d* _s = nullptr;
     render_func3d render3d = nullptr;
@@ -29,15 +29,13 @@ class Renderer3d{
     vec3 rot_center = vec3(0,0,0); 
 
     double 
-        mouse_x = 0, 
-        mouse_y = 0, 
         x_theta = 0, 
         y_theta = 0,
         sin_x_theta = 0,
         cos_x_theta = 0,
         sin_y_theta = 0,
         cos_y_theta = 0,
-        distance
+        distance = 100
     ;   
 
     Renderer3d(Simulation3d* _s);
@@ -66,9 +64,15 @@ class Renderer3d{
     };
 
     private:
+    int window_width, window_height;
 
+    vec2 mouse_init_pos = {0,0};
+
+    bool paused = false , clicked = false;
+    void reset_mouse();
+    void mouse_clicked();
     vec3 rotate_point(vec3 v);
-    bool is_in3d_bounds(vec3 v);
+    bool is_unitary_bound(vec3 v);
     void handle_displacement();
     static void handle_keyboard_input(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void handle_mouse_scroll(GLFWwindow* window, double xoffset, double yoffset);

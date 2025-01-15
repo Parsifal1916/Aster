@@ -9,16 +9,11 @@
 using namespace Aster;
 
 int main(){
-    auto meta = sim3d_meta();
-    meta.dt = 0;
-    meta.type = BARNES_HUT;
-    //meta.save = true;
-
-    Simulation3d* sim = bake3d(meta);
+    Simulation3d* sim = bake3d(BARNES_HUT);
     //presets::cosmic_web(sim, 1e4, 10e9);
     ////presets::cosmic_web3d(sim, 10e3, 10e5);
-    presets::add_disk3d(sim, 60e1, 10, {meta.WIDTH/2, meta.HEIGHT/2, meta.depth/2}, 1e4, .3, 0, 90, 10e10);
-    presets::add_disk3d(sim, 60e1, 10, {0,0,0}, 1e4, .3, 0, 0, 10e10); 
+    presets::add_disk3d(sim, 60e1, 10, sim -> get_center(), 1e4, .3, 0, 90, 10e10);
+    presets::add_disk3d(sim, 60e1, 10, sim -> get_corner(0), 1e4, .3, 0, 0, 10e10); 
     //presets::rng_sphere(sim, 10e3, {meta.WIDTH, meta.HEIGHT, meta.depth}, 10e2);
 
     auto n = Renderer::Renderer3d(sim);

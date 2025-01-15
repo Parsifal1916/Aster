@@ -87,9 +87,19 @@ Simulation3d* Simulation3d::set_sim_type(short type){
 
 SingleThread3d::SingleThread3d(sim3d_meta m){
     this -> data = m;
-    get_force = force_funcs_3d[m.selected_force];
-    update_body = update_funcs_3d[m.selected_update];
-    m.graph_height *= m.HEIGHT;
+    get_force = force_funcs_3d[data.selected_force];
+    update_body = update_funcs_3d[data.selected_update];
+    data.graph_height *= data.HEIGHT;
+
+    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
+    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
+}
+
+SingleThread3d::SingleThread3d(){
+    this -> data = sim3d_meta();
+    get_force = force_funcs_3d[data.selected_force];
+    update_body = update_funcs_3d[data.selected_update];
+    data.graph_height *= data.HEIGHT;
 
     get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
     get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
@@ -119,9 +129,22 @@ void SingleThread3d::step(){
 
 Parallelized3d::Parallelized3d(sim3d_meta m){
     this -> data = m;
-    get_force = force_funcs_3d[m.selected_force];
-    update_body = update_funcs_3d[m.selected_update];
-    m.graph_height *= m.HEIGHT;
+    get_force = force_funcs_3d[data.selected_force];
+    update_body = update_funcs_3d[data.selected_update];
+    data.graph_height *= data.HEIGHT;
+
+    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
+    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
+
+    threads.reserve(this -> data.NUM_THREADS); 
+    obj = bodies.size();
+}
+
+Parallelized3d::Parallelized3d(){
+    this -> data = sim3d_meta();
+    get_force = force_funcs_3d[data.selected_force];
+    update_body = update_funcs_3d[data.selected_update];
+    data.graph_height *= data.HEIGHT;
 
     get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
     get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
@@ -171,6 +194,23 @@ void Parallelized3d::update_bundle(Simulation3d* _s, unsigned short index){
        body -> temp /= _s -> max_temp;
     }
 }
+
+vec3 Simulation3d::get_center() const {
+    return {
+        data.WIDTH/2,
+        data.HEIGHT/2,
+        data.depth/2
+    };
+}
+
+vec3 Simulation3d::get_corner(int n) const {
+    return {
+        data.WIDTH * (n % 2),
+        data.HEIGHT *(n < 2 || (n > 3 && n < 5)),
+        data.depth * (n < 3)
+    };
+}
+
 
 //===---------------------------------------------------------===//
 // 2d building                                                   //
@@ -246,11 +286,37 @@ Simulation* Simulation::set_sim_type(short type){
     return this;
 }
 
+vec2 Simulation::get_center() const{
+    return {
+        data.WIDTH/2,
+        data.HEIGHT/2
+    };
+}
+
+vec2 Simulation::get_corner(int n) const{
+    assert(n >= 0 && n < 5);
+
+    return {
+        data.WIDTH * (n % 2),
+        data.HEIGHT * (n > 2)
+    };
+}
+
 SingleThread::SingleThread(sim_meta m){
     this -> data = m;
-    get_force = force_funcs[m.selected_force];
-    update_body = update_funcs[m.selected_update];
-    m.graph_height *= m.HEIGHT;
+    get_force = force_funcs[data.selected_force];
+    update_body = update_funcs[data.selected_update];
+    data.graph_height *= data.HEIGHT;
+
+    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
+    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
+}
+
+SingleThread::SingleThread(){
+    this -> data = sim_meta();
+    get_force = force_funcs[data.selected_force];
+    update_body = update_funcs[data.selected_update];
+    data.graph_height *= data.HEIGHT;
 
     get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
     get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
@@ -281,9 +347,22 @@ void SingleThread::step(){
 
 Parallelized::Parallelized(sim_meta m){
     this -> data = m;
-    get_force = force_funcs[m.selected_force];
-    update_body = update_funcs[m.selected_update];
-    m.graph_height *= m.HEIGHT;
+    get_force = force_funcs[data.selected_force];
+    update_body = update_funcs[data.selected_update];
+    data.graph_height *= data.HEIGHT;
+
+    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
+    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
+
+    threads.reserve(this -> data.NUM_THREADS); 
+    obj = bodies.size();
+}
+
+Parallelized::Parallelized(){
+    this -> data = sim_meta();
+    get_force = force_funcs[data.selected_force];
+    update_body = update_funcs[data.selected_update];
+    data.graph_height *= data.HEIGHT;
 
     get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
     get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
@@ -338,20 +417,20 @@ void Parallelized::update_bundle(Simulation* _s, unsigned short index){
 //===---------------------------------------------------------===//
 
 
-Simulation* bake(sim_meta _s){
-    switch (_s.type){
+Simulation* bake(simulation_types s){
+    switch (s){
      
     case LIGHT:
-        return new SingleThread(_s);
+        return new SingleThread();
      
     case HEAVY:
-        return new Parallelized(_s); 
+        return new Parallelized(); 
 
     case BARNES_HUT:
-        return new Barnes::Barnes_Hut(_s);
+        return new Barnes::Barnes_Hut();
 
     case BH_termal:
-        return new Barnes::BHT(_s);
+        return new Barnes::BHT();
 
     default:
         throw std::runtime_error("Invalid Simulation Type");
@@ -359,17 +438,17 @@ Simulation* bake(sim_meta _s){
     }
 }
 
-Simulation3d* bake3d(sim3d_meta _s){
-    switch (_s.type){
+Simulation3d* bake3d(simulation_types s){
+    switch (s){
     
     case LIGHT:
-        return new SingleThread3d(_s);
+        return new SingleThread3d();
     
     case HEAVY:
-        return new Parallelized3d(_s); 
+        return new Parallelized3d(); 
 
     case BARNES_HUT:
-        return new Barnes::Barnes_Hut3d(_s);   
+        return new Barnes::Barnes_Hut3d();   
 
     default:
         break;  

@@ -42,7 +42,10 @@ class Simulation{
     Simulation* set_vacuum_density(float d_);
     Simulation* set_max_frames(unsigned int f_);
     Simulation* set_sim_type(short type);
-
+    
+    vec2 get_center() const;
+    vec2 get_corner(int n) const;
+    
     virtual void step(){assert(1);}
 
     virtual void update_pair(Body* b1){

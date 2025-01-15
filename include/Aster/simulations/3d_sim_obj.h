@@ -38,6 +38,9 @@ class Simulation3d{
     Simulation3d* set_max_frames(unsigned int f_);
     Simulation3d* set_sim_type(short type);
 
+    vec3 get_center() const;
+    vec3 get_corner(int n) const;
+
     virtual void step(){assert(1);}
 
     virtual void update_pair(Body3d* b1){

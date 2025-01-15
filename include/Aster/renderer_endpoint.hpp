@@ -2,6 +2,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <cmath>
 #include <GLFW/glfw3.h>
 
 #include "Aster/graphics/3d_graphics.h"
@@ -16,12 +17,19 @@
 namespace Aster{
 namespace Renderer{
 
+    #define depth_factor 1.2
+
 //===---------------------------------------------------------===//
 // 3d rendering impl                                             //
 //===---------------------------------------------------------===//
 
 vec3 Renderer3d::rotate_point(vec3 v){
-    v = v - rot_center;
+    v =  v - _s -> get_center(); 
+
+    v.x /= _s -> data.WIDTH  / 2 - 1;
+    v.y /= _s -> data.HEIGHT / 2 - 1;
+    v.z /= _s -> data.depth  / 2 - 1;
+
     float x1, z1, y1, z2;
 
     x1 = v.x * cos_x_theta + v.z * sin_x_theta;
@@ -30,18 +38,19 @@ vec3 Renderer3d::rotate_point(vec3 v){
     y1 = v.y * cos_y_theta + z1 *sin_y_theta;
     z2 = -v.y *sin_y_theta + z1 * cos_y_theta;
 
-    float scale = _s -> data.depth/ distance;
 
-    v.x = x1*scale; 
-    v.y = y1*scale; 
+    float scale = distance/ std::pow(distance + z2, depth_factor);
+
+    v.x = (x1*scale) * (double)window_width  / _s -> data.WIDTH ; 
+    v.y = (y1*scale) * (double)window_height / _s -> data.HEIGHT; 
     v.z = z2;
 
-    return v + rot_center;
+    return v;
 }
 
-bool Renderer3d::is_in3d_bounds(vec3 v){
-    return v.x >= 0 && v.x < _s -> data.WIDTH && 
-           v.y >= 0 && v.y < _s -> data.HEIGHT;
+bool Renderer3d::is_unitary_bound(vec3 v){
+    return v.x >= -1 && v.x <= 1 && 
+           v.y >= -1 && v.y <= 1;
 }
 
 Renderer3d::Renderer3d(Simulation3d* _s) : _s(_s){
@@ -66,6 +75,8 @@ Renderer3d::Renderer3d(Simulation3d* _s) : _s(_s){
 
 
 void Renderer3d::run(){
+    //glViewport(-_s -> data.WIDTH/2, -_s -> data.HEIGHT/2, -_s -> data.WIDTH, -_s -> data.HEIGHT);
+    
     glfwMakeContextCurrent(window);
     glfwSetWindowUserPointer(window, this);
 
@@ -73,6 +84,7 @@ void Renderer3d::run(){
     glfwSetScrollCallback(window, handle_mouse_scroll);
 
     while (!glfwWindowShouldClose(window)) {
+        glfwGetFramebufferSize(window, &window_width, &window_height);
         body_update_func();
 
         (this ->*render3d)();
@@ -93,7 +105,9 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
     
     if (!renderer) throw std::runtime_error("undefined reference to window"); 
 
-    renderer -> distance += static_cast<float>(yoffset) * 100.0f;
+    renderer -> distance += static_cast<float>(yoffset) * 100.0f * renderer -> distance / (renderer -> distance +1000);
+    renderer -> distance = (renderer -> distance < 0) ? 1 : renderer -> distance;
+    renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> data.WIDTH) ?  10 * renderer -> _s -> data.WIDTH : renderer -> distance;
 }
 
 void Renderer3d::draw_termal3d(){
@@ -107,14 +121,25 @@ void Renderer3d::draw_termal3d(){
     for (const auto& p : _s -> bodies){
         glColor3f(1.0, 1.0, 1.0);
         temp = rotate_point(p.position);
-        if (is_in3d_bounds(temp))        // if it's in the canva range it draws it 
+        if (is_unitary_bound(temp))        // if it's in the canva range it draws it 
             glVertex2f(
-                2.f * temp.x / _s -> data.WIDTH - 1, 
-                2.f * temp.y / _s -> data.HEIGHT - 1
+                temp.x, 
+                temp.y
             );
     }
 
     glEnd();
+}
+
+void Renderer3d::reset_mouse(){
+    clicked = false;
+    mouse_init_pos = {0,0};
+}
+
+void Renderer3d::mouse_clicked(){
+    if (clicked) return;
+    clicked = true;
+    glfwGetCursorPos(window, &mouse_init_pos.x, &mouse_init_pos.y);
 }
 
 void Renderer3d::handle_displacement(){
@@ -126,6 +151,18 @@ void Renderer3d::handle_displacement(){
         x_theta -= DIS_SCALE;
     if (inputs["right"])
         x_theta += DIS_SCALE;
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS){
+        mouse_clicked();
+        double mouse_x, mouse_y;
+
+        glfwGetCursorPos(window, &mouse_x, &mouse_y);         
+        x_theta = atan2((mouse_init_pos.x - mouse_x)*6, distance);
+        y_theta = atan2(-(mouse_init_pos.y - mouse_y)*6, distance);
+    }else 
+        reset_mouse();
+
+
 
     cos_x_theta = cos(x_theta);
     cos_y_theta = cos(y_theta);
@@ -151,10 +188,10 @@ void Renderer3d::draw_minimal3d(){
         glColor3f(1.0, 1.0, 1.0);
         // if it's in the canva range it draws it 
         temp = rotate_point(p.position);
-        if (is_in3d_bounds(temp))
+        if (is_unitary_bound(temp))
             glVertex2f(
-                2.f * temp.x / _s -> data.WIDTH - 1, 
-                2.f * temp.y / _s -> data.HEIGHT - 1
+                temp.x, 
+                temp.y
             );
     }
 
@@ -172,10 +209,10 @@ void Renderer3d::draw_detailed3d(){
         glPointSize(std::log(p.mass)/10);
         // if it's in the canva range it draws it 
         temp = rotate_point(p.position);
-        if (is_in3d_bounds(temp))
+        if (is_unitary_bound(temp))
             glVertex2f(
-                2.f * temp.x / _s -> data.WIDTH - 1, 
-                2.f * temp.y / _s -> data.HEIGHT - 1
+                temp.x, 
+                temp.y
             );
     }
 
