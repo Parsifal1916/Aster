@@ -109,7 +109,6 @@ void SingleThread3d::step(){
     for (auto& body : this -> bodies){  
         update_pair(&body);
         update_body(&body, this );
-        std::cout << body.position.x << " " << body.position.y << "\n";
 
         if (body.temp >  this -> max_temp) this -> max_temp = body.temp;
         body.temp /= this -> max_temp;
