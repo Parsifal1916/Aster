@@ -67,9 +67,3 @@ jobs:
       shell: bash
       run: |
         ctest -C ${{ matrix.build_type }} --output-on-failure
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-${{ matrix.os }}-${{ matrix.build_type }}
-        path: build
