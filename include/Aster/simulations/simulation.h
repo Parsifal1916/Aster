@@ -3,6 +3,7 @@
 #include <vector>
 #include <random>
 #include <iomanip>
+#include <sstream>
 
 #include "Aster/physics/body.h"
 
