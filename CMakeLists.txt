@@ -10,7 +10,7 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 
-file(GLOB_RECURSE ASTER_HEADERS include/Aster/*.h include/Aster/*.hpp)
+file(GLOB_RECURSE ASTER_HEADERS include/Aster/.h include/Aster/.hpp)
 
 add_library(Aster INTERFACE)
 
@@ -29,11 +29,10 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/Aster/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Aster
 )
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # Find Catch2 for testing
     find_package(Catch2 REQUIRED)
 
-    file(GLOB_RECURSE ASTER_TEST_SOURCES tests/*.cpp)
-    add_executable(AsterTests ${ASTER_TEST_SOURCES})
+    file(GLOB_RECURSE TEST_HEADERS tests/*.h)
+    add_executable(AsterTests tests/main_tests.cpp)
 
     target_link_libraries(AsterTests PRIVATE
         Catch2::Catch2
@@ -41,10 +40,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         OpenGL::GL
         GLEW::GLEW
         glfw
-        Aster
     )
 
-    target_include_directories(AsterTests PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    #target_include_directories(AsterTests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
     if(MSVC)
 
