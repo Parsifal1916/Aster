@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        build_type: [Debug]
+        build_type: [Release]
 
     steps:
     - uses: actions/checkout@v4
@@ -29,7 +29,6 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: |
         brew update
-        # On macOS, we use the built-in GLUT framework instead of freeglut
         brew install glew glfw catch2
         echo "CPATH=/System/Library/Frameworks/GLUT.framework/Headers:/opt/homebrew/include" >> $GITHUB_ENV
         echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
