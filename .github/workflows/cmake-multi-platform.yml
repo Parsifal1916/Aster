@@ -1,58 +1,77 @@
-name: CI
+name: Build and Test Aster Library
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        build_type: [Debug]
-        
+  build-and-test:
     runs-on: ${{ matrix.os }}
-    
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Debug]
+
     steps:
-    - uses: actions/checkout@v2
-    
-    - name: Install dependencies (Ubuntu)
-      if: runner.os == 'Linux'
+    - uses: actions/checkout@v4
+
+    - name: Setup dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglfw3-dev libglew-dev xorg-dev libgl1-mesa-dev catch2
-        
-    - name: Install dependencies (macOS)
-      if: runner.os == 'macOS'
+        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2
+
+    - name: Setup dependencies (macOS)
+      if: matrix.os == 'macos-latest'
       run: |
         brew update
-        brew install glfw
-        brew install glew
-        brew install catch2
-        
-    - name: Install dependencies (Windows)
-      if: runner.os == 'Windows'
+        # On macOS, we use the built-in GLUT framework instead of freeglut
+        brew install glew glfw catch2
+        echo "CPATH=/System/Library/Frameworks/GLUT.framework/Headers:/opt/homebrew/include" >> $GITHUB_ENV
+        echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=/System/Library/Frameworks" >> $GITHUB_ENV
+
+    - name: Setup dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
       run: |
-        vcpkg install glfw3:x64-windows
-        vcpkg install glew:x64-windows
-        vcpkg install catch2
-        vcpkg integrate install
-        
+        vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows freeglut:x64-windows catch2:x64-windows
+        "CMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+    - name: Configure CMake (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }} \
+              -DCPATH=${{ env.CPATH }} \
+              -DLIBRARY_PATH=${{ env.LIBRARY_PATH }}
+
     - name: Configure CMake (Windows)
-      if: runner.os == 'Windows'
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_TOOLCHAIN_FILE=${{env.VCPKG_ROOT}}/scripts/buildsystems/vcpkg.cmake
-        
-    - name: Configure CMake (Unix)
-      if: runner.os != 'Windows'
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }}
+
+    - name: Configure CMake (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
-        
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{matrix.build_type}}
-      
+      run: cmake --build build --config ${{ matrix.build_type }}
+
     - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{matrix.build_type}} --output-on-failure
+      working-directory: build
+      shell: bash
+      run: |
+        ctest -C ${{ matrix.build_type }} --output-on-failure
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-${{ matrix.os }}-${{ matrix.build_type }}
+        path: build
