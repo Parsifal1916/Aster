@@ -1,6 +1,5 @@
-#pragma once
-
 #include <map>
+#include <stdexcept>
 
 #include "Aster/building-api/3d_builder.h"
 #include "Aster/building-api/builder.h"
@@ -10,6 +9,7 @@
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/simulations/barnes-hut.h"
 #include "Aster/simulations/barnes-hut3d.h"
+#include "Aster/simulations/BHT_sim.h"
 #include "Aster/simulations/sim_helper.h"
 
 #include "Aster/physics/tool-chain.h"

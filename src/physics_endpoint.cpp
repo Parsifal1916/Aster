@@ -5,8 +5,14 @@
 
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/simulations/3d_sim_obj.h"
+ 
 
 namespace Aster{
+    
+double c1 = 1 / (2 * (2 - std::pow(2.0, 1.0/3.0)));
+double c2 = (1 - pow(2.0, 1.0/3.0)) * c1;
+double d1 = 1 / (2 - std::pow(2.0, 1.0/3.0));
+double d2 = -std::pow(2.0, 1.0/3.0) *d1; 
 //===---------------------------------------------------------===//
 // Update methods                                                //
 //===---------------------------------------------------------===//

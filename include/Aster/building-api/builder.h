@@ -2,6 +2,7 @@
 #include <vector>
 #include <random>
 #include <map>
+#include <thread>
 
 #include "Aster/simulations/basic.h"
 #include "Aster/physics/tool-chain.h"

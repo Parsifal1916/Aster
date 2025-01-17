@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <thread>
 
 #include "Aster/simulations/basic.h"
 #include "Aster/simulations/3d_sim_obj.h"

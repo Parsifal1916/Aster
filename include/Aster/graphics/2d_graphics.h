@@ -8,6 +8,9 @@
 #include "Aster/simulations/sim_obj.h"
 
 namespace Aster{
+
+void render(Simulation*);
+
 namespace Renderer{
     
 class Renderer2d{

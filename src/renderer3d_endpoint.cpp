@@ -6,21 +6,12 @@
 #include <GLFW/glfw3.h>
 
 #include "Aster/graphics/3d_graphics.h"
-#include "Aster/graphics/2d_graphics.h"
 #include "Aster/graphics/inferno_scale.h"
-//#include "graphics/2d_graphics.h"
 
-#include "Aster/simulations/BHT_sim.h"
 #include "Aster/simulations/barnes-hut3d.h"
-#include "Aster/simulations/barnes-hut.h"
 
 namespace Aster{
     
-void render(Simulation* s){
-    auto r = Renderer::Renderer2d(s);
-    r.run();
-}
-
 void render(Simulation3d* s){
     auto r = Renderer::Renderer3d(s);
     r.run();
@@ -33,8 +24,6 @@ namespace Renderer{
 //===---------------------------------------------------------===//
 // 3d rendering impl                                             //
 //===---------------------------------------------------------===//
-
-
 
 vec3 Renderer3d::rotate_point(vec3 v){
     v =  v - _s -> get_center(); 
@@ -287,163 +276,5 @@ void Renderer3d::body_update_func(){
     _s -> time_passed++;
 }
 
-//===---------------------------------------------------------===//
-// 2d rendering impl                                             //
-//===---------------------------------------------------------===//
-
-using render_func = void(*)(Simulation*);
-
-Renderer2d::Renderer2d(Simulation* _s)  : _s(_s) {
-    render = render_modes[_s -> data.type];
-
-    if (!glfwInit()) 
-        throw std::runtime_error("glfw failed to initialize");
-
-
-    window = glfwCreateWindow(_s -> data.WIDTH, _s -> data.HEIGHT, "Aster's simulation", nullptr, nullptr);
-
-    
-    if (!window) {
-        glfwTerminate();
-        throw std::runtime_error("glfw failed to create window");
-    }
-}
-
-void Renderer2d::run(){
-    glfwMakeContextCurrent(window);
-    bool paused = false;
-
-    while (!glfwWindowShouldClose(window)) {
-        if (!paused) body_update_func();
-
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-            paused = !paused;
-
-        (this ->* render)();
-
-        glfwSwapBuffers(window); 
-        glfwPollEvents();
-    }
-
-    glfwDestroyWindow(window);
-    glfwTerminate();     
-}
-
-void Renderer2d::body_update_func(){
-    _s -> step();
-    _s -> time_passed++;
-}
-    
-void Renderer2d::draw_termal(){
-    glClearColor(0.f, 0.f, 0.f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBegin(GL_POINTS);
-
-    glPointSize(10);
-    
-    for (const auto& p : _s -> bodies){
-        glColor3f(1.0, 1.0, 1.0);
-        // if it's in the canva range it draws it  
-        if (p.position.x >= 0 && p.position.x < _s -> data.WIDTH && p.position.y >= 0 && p.position.y < _s -> data.HEIGHT)
-            glVertex2f(
-                2.f * p.position.x / _s -> data.WIDTH - 1, 
-                2.f * p.position.y / _s -> data.HEIGHT - 1
-            );
-    }
-
-    glEnd();
-}
-
-void Renderer2d::draw_minimal(){
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBegin(GL_POINTS);
-
-    glPointSize(10);
-    
-    for (const auto& p : _s -> bodies){
-        glColor3f(1.0, 1.0, 1.0);
-        // if it's in the canva range it draws it 
-        if (p.position.x >= 0 && p.position.x < _s -> data.WIDTH && p.position.y >= 0 && p.position.y < _s -> data.HEIGHT)
-            glVertex2f(
-                2.f * p.position.x / _s -> data.WIDTH - 1, 
-                2.f * p.position.y / _s -> data.HEIGHT - 1
-            );
-    }
-
-    glEnd();
-}
-
-void Renderer2d::draw_detailed(){
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0.f, 0.f, 0.f, 1.0f);
-    glBegin(GL_POINTS);
-
-    for (const auto& p : _s -> bodies){
-        glColor3f(1.0, 0.0, 0.0);    
-        glPointSize(std::log(p.mass)/10);  
-        // if it's in the canva range it draws it 
-        if (p.position.x >= 0 && p.position.x < _s -> data.WIDTH && p.position.y >= 0 && p.position.y < _s -> data.graph_height)
-            glVertex2f(
-                2.f * p.position.x / _s -> data.WIDTH - 1, 
-                2.f * p.position.y / _s -> data.HEIGHT - 1
-            );
-    }
-
-    if (_s -> data.show_graph) {
-        //clear_graph(_s);
-        //draw_graph(_s);
-    }
-
-    glEnd();
-}
-/*
-void clear_graph(Simulation* _s){
-    for (int i = 0; i < _s -> data.WIDTH; i++){
-    for (int j = _s -> data.graph_height; j < _s -> data.HEIGHT; j++){
-        clients[_s].screen.setPixel(i, j, bg_color);
-    }
-    }
-}
-
-void draw_graph(Simulation* _s){
-    std::ostringstream scien;
-    scien << std::scientific << std::setprecision(3) << _s -> lagrangians.back();
-    clients[_s].lagr_text.setString("Lagrangian: "+ scien.str() + "J");
-    clients[_s].lagr_text.setPosition(10, _s -> data.graph_height + 10);
-    clients[_s].window -> draw(clients[_s].lagr_text);
-
-    for (int i = 0; i < _s -> data.WIDTH; ++i)
-        clients[_s].screen.setPixel(i, _s -> data.graph_height, sf::Color::White);
-
-    double p1, p2 = 0;
-    int max_height = _s -> data.HEIGHT - _s -> data.graph_height;
-
-    for (int index = 1; index < _s -> lagrangians.size(); index++){
-        p2 = std::clamp(_s -> data.HEIGHT - _s -> lagrangians[index] * max_height / _s -> highest_lagrangian, 0.0, _s -> data.HEIGHT-1);
-        p1 = std::clamp(_s -> data.HEIGHT - _s -> lagrangians[index-1] *  max_height / _s -> highest_lagrangian, 0.0, _s -> data.HEIGHT-1);
-
-        //assert(p2 < HEIGHT);
-        clients[_s].screen.setPixel(index, p2, sf::Color::White);
-
-        int 
-            start = (int)std::min(p1, p2),
-            stop = (int)std::max(p1, p2)           
-        ;
-
-        for (int i = start; i < stop; i++){
-            clients[_s].screen.setPixel(index, i, sf::Color::White);
-        }
-
-    }
-}
-
-void reset(Simulation* _s){
-    clients[_s].screen = clients[_s].blank;
-}
-
-int clamp_rgb(double x){
-    return (int)std::max(std::min(int(x), 255), 0);
-}
-*/
 }
 }

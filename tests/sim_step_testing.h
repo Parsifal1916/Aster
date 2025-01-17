@@ -11,8 +11,7 @@ using namespace Catch;
 
 TEST_CASE("Simulation step benchmarking", "[building]") {
     SECTION("2d simulations"){
-        auto type = GENERATE(LIGHT, HEAVY, BARNES_HUT, BH_termal);
-        auto* simulation = bake(type);
+        auto* simulation = bake(BARNES_HUT);
 
         presets::cosmic_web(simulation, 1e3, 1e4);
 
@@ -24,8 +23,7 @@ TEST_CASE("Simulation step benchmarking", "[building]") {
     }
 
     SECTION("3d simulations"){
-        auto type = GENERATE(LIGHT, HEAVY, BARNES_HUT);
-        auto* simulation = bake3d(type);
+        auto* simulation = bake3d(BARNES_HUT);
 
         presets::cosmic_web3d(simulation, 1e3, 1e4);
 

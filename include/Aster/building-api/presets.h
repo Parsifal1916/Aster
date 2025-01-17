@@ -5,6 +5,7 @@
 #include "Aster/physics/body.h"
 #include "Aster/simulations/simulation.h"
 #include "Aster/building-api/FastNoiseLite.h"
+#include <iostream>
 
 namespace Aster{
 namespace presets{

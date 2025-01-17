@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include "Aster/physics/vectors.h"
 
 namespace Aster{
