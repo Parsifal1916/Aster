@@ -13,7 +13,7 @@ find_dependency(OpenGL REQUIRED)
 find_dependency(GLEW REQUIRED)
 find_dependency(glfw3 REQUIRED)
 
-file(GLOB_RECURSE ASTER_SOURCES src/.cpp)
+file(GLOB_RECURSE ASTER_SOURCES src/*.cpp)
 file(GLOB_RECURSE ASTER_HEADERS include/Aster/.h include/Aster/*.hpp)
 
 add_library(Aster ${ASTER_SOURCES} ${ASTER_HEADERS})
