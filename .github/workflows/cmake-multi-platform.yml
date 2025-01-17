@@ -22,7 +22,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglfw3-dev libglew-dev xorg-dev libgl1-mesa-dev
+        sudo apt-get install -y libglfw3-dev libglew-dev xorg-dev libgl1-mesa-dev catch2
         
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
@@ -30,12 +30,14 @@ jobs:
         brew update
         brew install glfw
         brew install glew
+        brew install catch2
         
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
       run: |
         vcpkg install glfw3:x64-windows
         vcpkg install glew:x64-windows
+        vcpkg install catch2
         vcpkg integrate install
         
     - name: Configure CMake (Windows)
