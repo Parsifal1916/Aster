@@ -4,7 +4,6 @@ project(Aster VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Opzione per scegliere tra libreria statica o condivisa
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 include(GNUInstallDirs)
@@ -14,20 +13,16 @@ find_dependency(OpenGL REQUIRED)
 find_dependency(GLEW REQUIRED)
 find_dependency(glfw3 REQUIRED)
 
-# Raccolta dei file sorgente e header
 file(GLOB_RECURSE ASTER_SOURCES src/*.cpp)
 file(GLOB_RECURSE ASTER_HEADERS include/Aster/*.h include/Aster/*.hpp)
 
-# Creazione della libreria (statica o dinamica in base all'opzione)
 add_library(Aster ${ASTER_SOURCES} ${ASTER_HEADERS})
 
-# Configurazione della libreria
 target_include_directories(Aster PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# Link delle dipendenze
 target_link_libraries(Aster PRIVATE
     OpenGL::GL
     GLEW::GLEW
@@ -35,7 +30,6 @@ target_link_libraries(Aster PRIVATE
     ${CMAKE_DL_LIBS}
 )
 
-# Imposta le proprietà per la libreria
 set_target_properties(Aster PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -57,13 +51,15 @@ configure_package_config_file(
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Aster
 )
 
-# Installazione
 install(FILES include/Aster.hpp 
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Aster
+    COMPONENT headers
 )
 
 install(DIRECTORY include/Aster
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    COMPONENT headers
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )
 
 install(TARGETS Aster
@@ -115,3 +111,4 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     include(Catch)
     catch_discover_tests(AsterTests)
 endif()
+
