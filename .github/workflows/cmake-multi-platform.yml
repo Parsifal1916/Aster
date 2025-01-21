@@ -23,13 +23,15 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2 libnoise
+        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2 vcpkg
+        vcpkg install libnoise
 
     - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
-        brew install glew glfw catch2 libnoise
+        brew install glew glfw catch2 vcpkg
+        vcpkg install libnoise
         echo "CPATH=/System/Library/Frameworks/GLUT.framework/Headers:/opt/homebrew/include" >> $GITHUB_ENV
         echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
         echo "LIBRARY_PATH=/System/Library/Frameworks" >> $GITHUB_ENV
