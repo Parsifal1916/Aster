@@ -14,7 +14,7 @@ public:
        vec2 acceleration = {};
        vec2 prev_acc = {};
 
-       Body(double mass, vec2 position, vec2 velocity) : mass(mass),position(position), velocity(velocity){};
+       Body(double mass, vec2 position, vec2 velocity, double temp = 0) : mass(mass),position(position), velocity(velocity){};
        Body(){}
 };
 
@@ -27,7 +27,7 @@ struct Body3d{
        vec3 acceleration = {};
        vec3 prev_acc = {};
 
-       Body3d(double mass, vec3 position, vec3 velocity) : mass(mass),position(position), velocity(velocity){};
+       Body3d(double mass, vec3 position, vec3 velocity, double temp = 0) : mass(mass),position(position), velocity(velocity){};
        Body3d(){}
 
        static float* get_color(double t) {

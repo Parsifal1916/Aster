@@ -73,9 +73,6 @@ Barnes_Hut::Barnes_Hut(sim_meta m){
     update_body = update_funcs[m.selected_update];
     m.graph_height *= m.HEIGHT;
 
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
-
     threads.reserve(data.NUM_THREADS);
     obj = bodies.size(); 
 }
@@ -85,9 +82,6 @@ Barnes_Hut::Barnes_Hut(){
     get_force = force_funcs[data.selected_force];
     update_body = update_funcs[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
 
     threads.reserve(data.NUM_THREADS);
     obj = bodies.size(); 
@@ -99,6 +93,8 @@ void Barnes_Hut::step(){
         
     update_bodies();
     nodes.clear();
+
+    time_passed++;
     //std::cout << "stepped!";
 }
 
@@ -263,18 +259,7 @@ void Barnes_Hut::get_node_body(size_t node, Body* body){
     
 }
 
-void Barnes_Hut::update_bodies(){
-    this -> obj = bodies.size(); 
-    for (int i = 0; i < this -> data.NUM_THREADS; ++i)
-        this -> threads.push_back(std::thread(update_bundle, this, i));
-
-    for (auto& t : threads)
-        t.join();
-
-    this -> threads.clear();
-}
-
-void Barnes_Hut::update_bundle(Barnes_Hut* _s, unsigned short index){
+void update_bundle(Barnes_Hut* _s, unsigned short index){
     unsigned int mult, start, stop;
     mult = _s -> obj/_s -> data.NUM_THREADS;
     start = index * mult;
@@ -288,6 +273,19 @@ void Barnes_Hut::update_bundle(Barnes_Hut* _s, unsigned short index){
         body -> temp -= body -> temp * body -> temp * body -> temp * body -> temp * _s -> data.boltzmann * _s -> data.dt;
     }
 }
+
+
+void Barnes_Hut::update_bodies(){
+    this -> obj = bodies.size(); 
+    for (int i = 0; i < this -> data.NUM_THREADS; ++i)
+        this -> threads.push_back(std::thread(update_bundle, this, i));
+
+    for (auto& t : threads)
+        t.join();
+
+    this -> threads.clear();
+}
+
 
 void Barnes_Hut::make_tree(){
     //nodes.reserve(obj * 3);
@@ -329,6 +327,8 @@ void BHT::step(){
         
     update_bodies();
     nodes.clear();
+
+    time_passed++;
 }
 
 BHT::BHT(sim_meta m){
@@ -336,9 +336,6 @@ BHT::BHT(sim_meta m){
     get_force = force_funcs[m.selected_force];
     update_body = update_funcs[m.selected_update];
     m.graph_height *= m.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.WIDTH);
-    get_rndY = std::uniform_real_distribution<double>(0, data.HEIGHT);
 
     threads.reserve(data.NUM_THREADS);
     obj = bodies.size(); 
@@ -349,9 +346,6 @@ BHT::BHT(){
     get_force = force_funcs[data.selected_force];
     update_body = update_funcs[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.WIDTH);
-    get_rndY = std::uniform_real_distribution<double>(0, data.HEIGHT);
 
     threads.reserve(data.NUM_THREADS);
     obj = bodies.size(); 

@@ -39,7 +39,7 @@ class Parallelized : public Simulation {
     * it will be topped at the number of objs
     */
     Parallelized* set_max_threads(unsigned int t_);
-    static void update_bundle(Simulation* _s, unsigned short index);
+    friend void update_bundle(Simulation* _s, unsigned short index);
 };
 
 }

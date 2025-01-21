@@ -28,9 +28,9 @@ namespace Renderer{
 vec3 Renderer3d::rotate_point(vec3 v){
     v =  v - _s -> get_center(); 
 
-    v.x /= _s -> data.WIDTH  / 2 - 1;
-    v.y /= _s -> data.HEIGHT / 2 - 1;
-    v.z /= _s -> data.depth  / 2 - 1;
+    //v.x /= _s -> data.WIDTH  / 2 - 1;
+    //v.y /= _s -> data.HEIGHT / 2 - 1;
+    //v.z /= _s -> data.depth  / 2 - 1;
 
     float x1, z1, y1, z2;
 
@@ -43,8 +43,8 @@ vec3 Renderer3d::rotate_point(vec3 v){
 
     float scale = distance/ std::pow(distance + z2, depth_factor);
 
-    v.x = (x1*scale) * (double)window_width  / _s -> data.WIDTH ; 
-    v.y = (y1*scale) * (double)window_height / _s -> data.HEIGHT; 
+    v.x = (x1*scale) *2  / (double)current_width ; 
+    v.y = (y1*scale) *2  / (double)current_height; 
     v.z = z2;
 
     return v;
@@ -82,11 +82,11 @@ void Renderer3d::run(){
     glfwMakeContextCurrent(window);
     glfwSetWindowUserPointer(window, this);
 
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, handle_keyboard_input);
     glfwSetScrollCallback(window, handle_mouse_scroll);
 
     while (!glfwWindowShouldClose(window)) {
-        glfwGetFramebufferSize(window, &window_width, &window_height);
         if (!paused) body_update_func();
 
         (this ->*render3d)();
@@ -99,6 +99,15 @@ void Renderer3d::run(){
 
     glfwDestroyWindow(window);
     glfwTerminate(); 
+}
+
+void Renderer3d::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+	void* ptr = glfwGetWindowUserPointer(window);
+    auto* renderer = static_cast<Renderer3d*>(ptr);
+
+    renderer -> current_width = width;
+    renderer -> current_height = height;
+    glViewport(0, 0, width, height);
 }
 
 void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double yoffset) {
@@ -121,8 +130,13 @@ void Renderer3d::draw_termal3d(){
 
     vec3 temp = {0,0,0};
     for (const auto& p : _s -> bodies){
-        glColor3f(1.0, 1.0, 1.0);
-        temp = rotate_point(p.position);
+
+        double mult = _s -> data.depth/std::max(temp.z, .001) + .2;
+        glColor3f(
+            mult, mult, mult
+        );
+    
+    
         if (is_unitary_bound(temp))        // if it's in the canva range it draws it 
             glVertex2f(
                 temp.x, 
@@ -187,11 +201,17 @@ void Renderer3d::draw_minimal3d(){
 
     vec3 temp = {0,0,0};
     for (const auto& p : _s -> bodies){
-        glColor3f(1.0, 1.0, 1.0);
         // if it's in the canva range it draws it 
         temp = rotate_point(p.position);
+        double mult = _s -> data.depth/std::max(temp.z, .001) + .2;
+        glColor3f(
+            mult, mult, mult
+        );
+    
+    
+        //std::cout << std::abs(distance/(temp.z*temp.z)) << "\n";
         if (is_unitary_bound(temp))
-            glVertex2f(
+            glVertex2f( 
                 temp.x, 
                 temp.y
             );

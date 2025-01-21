@@ -20,6 +20,7 @@ class Renderer2d{
     render_func render = nullptr;
     
     GLFWwindow* window;
+    int current_height, current_width;
 
     Renderer2d(Simulation* _s);
 
@@ -28,6 +29,7 @@ class Renderer2d{
     void draw_minimal();
     void draw_detailed();
     void run();
+    static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     
     std::vector<render_func> render_modes = {
         &Renderer2d::draw_minimal, 

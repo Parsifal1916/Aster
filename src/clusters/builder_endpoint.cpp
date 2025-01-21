@@ -43,6 +43,10 @@ Simulation3d* Simulation3d::set_screen_size(unsigned int w_, unsigned int h_){
     return this;
 }
 
+bool Simulation3d::has_loaded_yet() const {
+    return has_loaded;
+}
+
 Simulation3d* Simulation3d::set_dt(float dt_){
     assert(dt_ > 0);
     data.dt = dt_;
@@ -85,14 +89,19 @@ Simulation3d* Simulation3d::set_sim_type(short type){
     return this;
 }
 
+Simulation3d* Simulation3d::load(){
+    assert(!has_loaded && "the simulation has already been loaded");
+    loading_queue.load(this);
+    has_loaded = true;
+    return this;
+}
+
+
 SingleThread3d::SingleThread3d(sim3d_meta m){
     this -> data = m;
     get_force = force_funcs_3d[data.selected_force];
     update_body = update_funcs_3d[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
 }
 
 SingleThread3d::SingleThread3d(){
@@ -100,9 +109,6 @@ SingleThread3d::SingleThread3d(){
     get_force = force_funcs_3d[data.selected_force];
     update_body = update_funcs_3d[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
 }
 
 void SingleThread3d::step(){
@@ -124,6 +130,9 @@ void SingleThread3d::step(){
     data.max_temp = 1;
     //update_scale(this);
     this -> lagrangian = 0;
+
+
+    time_passed++;
 }
 
 Parallelized3d::Parallelized3d(sim3d_meta m){
@@ -131,9 +140,6 @@ Parallelized3d::Parallelized3d(sim3d_meta m){
     get_force = force_funcs_3d[data.selected_force];
     update_body = update_funcs_3d[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
 
     threads.reserve(this -> data.NUM_THREADS); 
     obj = bodies.size();
@@ -144,9 +150,6 @@ Parallelized3d::Parallelized3d(){
     get_force = force_funcs_3d[data.selected_force];
     update_body = update_funcs_3d[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
 
     threads.reserve(this -> data.NUM_THREADS); 
     obj = bodies.size();
@@ -161,6 +164,9 @@ void Parallelized3d::step(){
         t.join();
 
     this -> threads.clear();
+
+
+    time_passed++;
 }
     
 /*
@@ -244,7 +250,7 @@ Simulation* Simulation::set_screen_size(unsigned int w_, unsigned int h_){
 }
 
 Simulation* Simulation::set_dt(float dt_){
-    assert(dt_ > 0);
+    assert(dt_ >= 0);
     data.dt = dt_;
     return this;
 }
@@ -285,6 +291,19 @@ Simulation* Simulation::set_sim_type(short type){
     return this;
 }
 
+Simulation* Simulation::load(){
+    assert(!has_loaded && "the simulation has already been loaded");
+    loading_queue.load(this);
+    has_loaded = true;
+    return this;
+}
+
+
+bool Simulation::has_loaded_yet() const {
+    return has_loaded;
+}
+
+
 vec2 Simulation::get_center() const{
     return {
         data.WIDTH/2,
@@ -306,9 +325,6 @@ SingleThread::SingleThread(sim_meta m){
     get_force = force_funcs[data.selected_force];
     update_body = update_funcs[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
 }
 
 SingleThread::SingleThread(){
@@ -316,9 +332,6 @@ SingleThread::SingleThread(){
     get_force = force_funcs[data.selected_force];
     update_body = update_funcs[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
 }
 
 void SingleThread::step(){
@@ -342,6 +355,8 @@ void SingleThread::step(){
     data.max_temp = 1;
     //update_scale(this);
     this -> lagrangian = 0;
+
+    time_passed++;
 }
 
 Parallelized::Parallelized(sim_meta m){
@@ -349,9 +364,6 @@ Parallelized::Parallelized(sim_meta m){
     get_force = force_funcs[data.selected_force];
     update_body = update_funcs[data.selected_update];
     data.graph_height *= data.HEIGHT;
-
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
 
     threads.reserve(this -> data.NUM_THREADS); 
     obj = bodies.size();
@@ -363,11 +375,23 @@ Parallelized::Parallelized(){
     update_body = update_funcs[data.selected_update];
     data.graph_height *= data.HEIGHT;
 
-    get_rndX = std::uniform_real_distribution<double>(0, data.HEIGHT);
-    get_rndY = std::uniform_real_distribution<double>(0, data.WIDTH);
-
     threads.reserve(this -> data.NUM_THREADS); 
     obj = bodies.size();
+}
+
+void update_bundle(Simulation* _s, unsigned short index){
+    unsigned int mult, start, stop;
+    mult = _s -> obj/_s -> data.NUM_THREADS;
+    start = index * mult;
+    stop = (index + 1) * mult;
+          
+    for (int i = start; i < stop; ++i){  
+       Body* body = &_s -> bodies[i];
+       _s -> update_pair(body);
+       _s -> update_body(body, _s);
+       if (body -> temp > _s -> max_temp) _s -> max_temp = body -> temp;
+       body -> temp /= _s -> max_temp;
+    }
 }
 
 void Parallelized::step(){
@@ -379,6 +403,8 @@ void Parallelized::step(){
         t.join();
 
     this -> threads.clear();
+
+    time_passed++;
 }
     
 /*
@@ -396,20 +422,7 @@ Parallelized* Parallelized::set_max_threads(unsigned int t_){
         return this;
 }
 
-void Parallelized::update_bundle(Simulation* _s, unsigned short index){
-    unsigned int mult, start, stop;
-    mult = _s -> obj/_s -> data.NUM_THREADS;
-    start = index * mult;
-    stop = (index + 1) * mult;
-          
-    for (int i = start; i < stop; ++i){  
-       Body* body = &_s -> bodies[i];
-       _s -> update_pair(body);
-       _s -> update_body(body, _s);
-       if (body -> temp > _s -> max_temp) _s -> max_temp = body -> temp;
-       body -> temp /= _s -> max_temp;
-    }
-}
+
 
 //===---------------------------------------------------------===//
 // baking                                                        //

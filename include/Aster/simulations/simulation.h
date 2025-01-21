@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "Aster/simulations/sim_obj.h"
 #include "Aster/physics/body.h"
 
 struct Body;

@@ -9,29 +9,17 @@
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/simulations/3d_sim_obj.h"
 
+#include "Aster/building-api/clusters.h"
 #include "Aster/building-api/sim_meta.h"
 
 namespace Aster{
 
 class Simulation{
     public:
-    int obj;
-    sim_meta data;
-
-    double
-        c_squared,
-        time_passed = 0,
-        max_temp = 10e5,
-        lagrangian, highest_lagrangian
-    ;
-
     float current_a = 0;
 
     std::vector<double> lagrangians;
     std::vector<Body> bodies;
-
-    std::uniform_real_distribution<double> get_rndX;
-    std::uniform_real_distribution<double> get_rndY;
 
     Simulation* set_numof_objs(unsigned int n_);
     Simulation* set_screen_size(unsigned int w_, unsigned int h_);
@@ -42,6 +30,10 @@ class Simulation{
     Simulation* set_vacuum_density(float d_);
     Simulation* set_max_frames(unsigned int f_);
     Simulation* set_sim_type(short type);
+    Simulation* load();
+    bool has_loaded_yet() const;
+
+    friend void update_bundle(Simulation*, short unsigned int);
     
     vec2 get_center() const;
     vec2 get_corner(int n) const;
@@ -65,6 +57,24 @@ class Simulation{
 
     func_ptr update_body;
     force_func get_force;
+    
+    sim_meta data;
+    int obj;
+    
+    double lagrangian, highest_lagrangian;
+    struct Queue2d loading_queue;
+    std::pair<std::string, double> loading_meta = {"", 0};
+
+    protected:
+    double
+        c_squared,
+        time_passed = 0,
+        max_temp = 10e5
+
+    ;
+
+    bool has_loaded = false;
+
 };
 
 }

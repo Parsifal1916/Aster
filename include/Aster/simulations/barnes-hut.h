@@ -43,7 +43,8 @@ struct Node{
 .                    // Barnes-Hut definition                                         //
 .                    //===---------------------------------------------------------===*/
 
-class Barnes_Hut : public Simulation{public:
+class Barnes_Hut : public Simulation{
+    public:
     double theta = 0.8;
     std::vector<std::thread> threads;
     std::vector<struct Node> nodes;
@@ -63,7 +64,7 @@ class Barnes_Hut : public Simulation{public:
     void make_tree();
     void init_node(Node& _n, Body* b) const;
     size_t subdivide(int n);
-    static void update_bundle(Barnes_Hut* _s, unsigned short index);
+    friend void update_bundle(Barnes_Hut* _s, unsigned short index);
 };
 
 }

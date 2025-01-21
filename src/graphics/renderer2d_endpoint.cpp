@@ -7,6 +7,7 @@
 
 #include "Aster/graphics/2d_graphics.h"
 #include "Aster/graphics/inferno_scale.h"
+#include "Aster/graphics/animations.h"
 
 #include "Aster/simulations/BHT_sim.h"
 #include "Aster/simulations/barnes-hut.h"
@@ -301,15 +302,47 @@ Renderer2d::Renderer2d(Simulation* _s)  : _s(_s) {
     }
 }
 
+void Renderer2d::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+	void* ptr = glfwGetWindowUserPointer(window);
+    auto* renderer = static_cast<Renderer2d*>(ptr);
+
+    renderer -> current_width = width;
+    renderer -> current_height = height;
+    glViewport(0, 0, width, height);
+}
+
 void Renderer2d::run(){
     glfwMakeContextCurrent(window);
     bool paused = false;
 
+	glfwSetWindowUserPointer(window, this);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	if (!_s -> has_loaded_yet()){
+		std::thread t([this](){
+			this -> _s -> load();
+		});
+		
+		show_loadingbar(window, _s);
+		t.join();
+	}
+	glfwDestroyWindow(window);
+
+ 	window = glfwCreateWindow(_s -> data.WIDTH, _s -> data.HEIGHT, "Aster's simulation", nullptr, nullptr);
+
+    glfwMakeContextCurrent(window);
+	glfwSetWindowUserPointer(window, this);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
     while (!glfwWindowShouldClose(window)) {
-        if (!paused) body_update_func();
+        if (!paused) body_update_func(); 
 
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
             paused = !paused;
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            break;
+
 
         (this ->* render)();
 
@@ -323,7 +356,6 @@ void Renderer2d::run(){
 
 void Renderer2d::body_update_func(){
     _s -> step();
-    _s -> time_passed++;
 }
     
 void Renderer2d::draw_termal(){
@@ -338,8 +370,8 @@ void Renderer2d::draw_termal(){
         // if it's in the canva range it draws it  
         if (p.position.x >= 0 && p.position.x < _s -> data.WIDTH && p.position.y >= 0 && p.position.y < _s -> data.HEIGHT)
             glVertex2f(
-                2.f * p.position.x / _s -> data.WIDTH - 1, 
-                2.f * p.position.y / _s -> data.HEIGHT - 1
+                2.f * p.position.x / current_width - 1, 
+                2.f * p.position.y / current_height - 1
             );
     }
 
@@ -357,8 +389,8 @@ void Renderer2d::draw_minimal(){
         // if it's in the canva range it draws it 
         if (p.position.x >= 0 && p.position.x < _s -> data.WIDTH && p.position.y >= 0 && p.position.y < _s -> data.HEIGHT)
             glVertex2f(
-                2.f * p.position.x / _s -> data.WIDTH - 1, 
-                2.f * p.position.y / _s -> data.HEIGHT - 1
+                2.f * p.position.x / current_width - 1, 
+                2.f * p.position.y / current_height - 1
             );
     }
 
@@ -376,8 +408,8 @@ void Renderer2d::draw_detailed(){
         // if it's in the canva range it draws it 
         if (p.position.x >= 0 && p.position.x < _s -> data.WIDTH && p.position.y >= 0 && p.position.y < _s -> data.graph_height)
             glVertex2f(
-                2.f * p.position.x / _s -> data.WIDTH - 1, 
-                2.f * p.position.y / _s -> data.HEIGHT - 1
+                2.f * p.position.x / current_width - 1, 
+                2.f * p.position.y / current_height - 1
             );
     }
 

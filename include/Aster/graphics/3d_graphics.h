@@ -37,7 +37,7 @@ class Renderer3d{
         cos_x_theta = 0,
         sin_y_theta = 0,
         cos_y_theta = 0,
-        distance = 100
+        distance = 1000
     ;   
 
     Renderer3d(Simulation3d* _s);
@@ -47,6 +47,8 @@ class Renderer3d{
     void draw_minimal3d();
     void draw_detailed3d();
     void draw_termal3d();
+    static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+ 
     void run();
     
     std::vector<render_func3d> render_modes3d = {
@@ -66,7 +68,7 @@ class Renderer3d{
     };
 
     private:
-    int window_width, window_height;
+    int current_width, current_height;
 
     vec2 mouse_init_pos = {0,0};
 

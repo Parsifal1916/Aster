@@ -2,9 +2,11 @@
 #include <random>
 #include <string>
 #include <cassert>
+#include <string>
 
 #include "Aster/simulations/basic.h"
 #include "Aster/building-api/sim_meta.h"
+#include "Aster/building-api/clusters.h"
 
 namespace Aster{
 
@@ -38,6 +40,10 @@ class Simulation3d{
     Simulation3d* set_max_frames(unsigned int f_);
     Simulation3d* set_sim_type(short type);
 
+    bool has_loaded_yet() const;
+
+    Simulation3d* load();
+
     vec3 get_center() const;
     vec3 get_corner(int n) const;
 
@@ -60,6 +66,13 @@ class Simulation3d{
 
     func_ptr3d update_body;
     force_func3d get_force;
+
+    std::pair<std::string, double> loading_meta = {"", 0};
+    
+    Queue3d loading_queue;
+
+    protected:
+    bool has_loaded = false;
 };
 
 }
