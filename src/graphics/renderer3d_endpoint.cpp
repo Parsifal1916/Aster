@@ -12,9 +12,8 @@
 
 namespace Aster{
     
-void render(Simulation3d* s){
-    auto r = Renderer::Renderer3d(s);
-    r.run();
+Renderer::Renderer3d* render(Simulation3d* s){
+    return new Renderer::Renderer3d(s);
 }
 
 namespace Renderer{
@@ -25,12 +24,47 @@ namespace Renderer{
 // 3d rendering impl                                             //
 //===---------------------------------------------------------===//
 
-vec3 Renderer3d::rotate_point(vec3 v){
-    v =  v - _s -> get_center(); 
+Renderer3d* Renderer3d::show_axis(){
+    show_axis_b = true;
+    return this;
+}
 
-    //v.x /= _s -> data.WIDTH  / 2 - 1;
-    //v.y /= _s -> data.HEIGHT / 2 - 1;
-    //v.z /= _s -> data.depth  / 2 - 1;
+bool Renderer3d::does_show_axis(){
+    return show_axis_b;
+}
+
+void Renderer3d::draw_axis(){
+    vec3 origin = {0, 0, 0};
+
+    vec3 point1 = {_s -> data.WIDTH,      0.0,               0.0        };
+    vec3 point2 = {       0.0,      _s -> data.HEIGHT,       0.0        };
+    vec3 point3 = {       0.0,            0.0,          _s -> data.depth};
+
+    point1 = map_point(point1);
+    point2 = map_point(point2);
+    point3 = map_point(point3);
+
+    origin = map_point(origin);
+    
+    glLineWidth(0);
+
+    glBegin(GL_LINES);
+        glColor3f(1.0, 0.0, 0.0);
+        glVertex2f(origin.x, origin.y);
+        glVertex2f(point1.x, point1.y);
+
+        glColor3f(0.0,1.0,0.0);
+        glVertex2f(origin.x, origin.y);
+        glVertex2f(point2.x, point2.y);
+
+        glColor3f(0.0, 0.0, 1.0);
+        glVertex2f(origin.x, origin.y);
+        glVertex2f(point3.x, point3.y);
+    glEnd();
+}
+
+vec3 Renderer3d::map_point(vec3 v){
+    v =  v - _s -> get_center(); 
 
     float x1, z1, y1, z2;
 
@@ -39,7 +73,6 @@ vec3 Renderer3d::rotate_point(vec3 v){
 
     y1 = v.y * cos_y_theta + z1 *sin_y_theta;
     z2 = -v.y *sin_y_theta + z1 * cos_y_theta;
-
 
     float scale = distance/ std::pow(distance + z2, depth_factor);
 
@@ -76,9 +109,7 @@ Renderer3d::Renderer3d(Simulation3d* _s) : _s(_s){
 }
 
 
-void Renderer3d::run(){
-    //glViewport(-_s -> data.WIDTH/2, -_s -> data.HEIGHT/2, -_s -> data.WIDTH, -_s -> data.HEIGHT);
-    
+void Renderer3d::show(){
     glfwMakeContextCurrent(window);
     glfwSetWindowUserPointer(window, this);
 
@@ -87,8 +118,12 @@ void Renderer3d::run(){
     glfwSetScrollCallback(window, handle_mouse_scroll);
 
     while (!glfwWindowShouldClose(window)) {
+        glClear(GL_COLOR_BUFFER_BIT);
         if (!paused) body_update_func();
 
+        if (show_axis_b)
+            draw_axis();
+        
         (this ->*render3d)();
 
         handle_displacement();
@@ -122,8 +157,6 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
 }
 
 void Renderer3d::draw_termal3d(){
-    glClearColor(0.f, 0.f, 0.f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
     glBegin(GL_POINTS);
 
     glPointSize(10);    
@@ -193,8 +226,6 @@ void Renderer3d::handle_displacement(){
 * objectc
 */
 void Renderer3d::draw_minimal3d(){
-    glClearColor(0.f, 0.f, 0.f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
     glBegin(GL_POINTS);
 
     glPointSize(10);    
@@ -202,7 +233,7 @@ void Renderer3d::draw_minimal3d(){
     vec3 temp = {0,0,0};
     for (const auto& p : _s -> bodies){
         // if it's in the canva range it draws it 
-        temp = rotate_point(p.position);
+        temp = map_point(p.position);
         double mult = _s -> data.depth/std::max(temp.z, .001) + .2;
         glColor3f(
             mult, mult, mult
@@ -221,7 +252,6 @@ void Renderer3d::draw_minimal3d(){
 }
 
 void Renderer3d::draw_detailed3d(){
-    glClearColor(0.f, 0.f, 0.f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glBegin(GL_POINTS);
 
@@ -230,7 +260,7 @@ void Renderer3d::draw_detailed3d(){
         glColor3f(1.0, 1.0, 1.0);
         glPointSize(std::log(p.mass)/10);
         // if it's in the canva range it draws it 
-        temp = rotate_point(p.position);
+        temp = map_point(p.position);
         if (is_unitary_bound(temp))
             glVertex2f(
                 temp.x, 

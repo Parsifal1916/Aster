@@ -9,26 +9,25 @@
 
 namespace Aster{
 
-void render(Simulation*);
-
 namespace Renderer{
     
 class Renderer2d{
     public: 
     using render_func = void(Renderer2d::*)();
-    Simulation* _s = nullptr;
-    render_func render = nullptr;
-    
+
     GLFWwindow* window;
     int current_height, current_width;
 
     Renderer2d(Simulation* _s);
 
+    Renderer2d* show_axis();
+    bool does_show_axis();
+
     void body_update_func();
     void draw_termal();
     void draw_minimal();
     void draw_detailed();
-    void run();
+    void show();
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     
     std::vector<render_func> render_modes = {
@@ -39,7 +38,19 @@ class Renderer2d{
         &Renderer2d::draw_termal
 
     };
+
+    private:
+
+    void draw_axis();
+
+    bool show_axis_b = false;    
+    Simulation* _s = nullptr;
+    render_func render = nullptr;
+    
 };
 
 }
+
+Renderer::Renderer2d* render(Simulation*);
+
 }
