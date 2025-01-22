@@ -27,7 +27,6 @@ target_link_libraries(Aster PRIVATE
     OpenGL::GL
     GLEW::GLEW
     glfw
-    noise 
     ${CMAKE_DL_LIBS}
 )
 
