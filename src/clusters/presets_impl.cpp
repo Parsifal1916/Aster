@@ -1,14 +1,12 @@
 #include <cmath>
 #include <iostream>
-#include <noise/noise.h>
-
+#define FNL_IMPL
+#include "Aster/thirdparty/FastNoiseLite.h"
 #include "Aster/physics/body.h"
 #include "Aster/simulations/simulation.h"
 #include "Aster/building-api/clusters.h"
 
 namespace Aster{
-
-noise::module::Perlin perlin;
 
 const double PI = 3.141592653589793238462643383279;
 const int digit_precision = 4;
@@ -28,7 +26,6 @@ vec3 rotate_point(vec3 v, double phi, double theta){
 
     y1 = v.y * std::cos(theta) + z1 *std::sin(theta);
     z2 = -v.y *std::sin(theta) + z1 *std::cos(theta);
-
     return {x1, y1, z2};
 }
 
@@ -153,7 +150,9 @@ void add_disk(Simulation* _s, size_t nums, vec2 center, double outer, double inn
 }
 
 void cosmic_web(Simulation* _s, int nums, double avr_mass){
-    noise::module::Perlin perlin; 
+    fnl_state noise = fnlCreateState();
+    noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+
     int tot_nums = nums;
 
     _s -> bodies.reserve(_s -> bodies.size() + nums);
@@ -166,17 +165,17 @@ void cosmic_web(Simulation* _s, int nums, double avr_mass){
 
     double g_pull = nums *  _s -> data.G  * avr_mass;
 
-    cluster.builder = [perlin, _s, avr_mass](Cluster2d cl2d, size_t _) {
+    cluster.builder = [&noise, _s, avr_mass](Cluster2d cl2d, size_t _) {
         vec2 pos = rng_vec2(_s);
 
-        while ((perlin.GetValue(pos.x, pos.y, 0) + 1)/2 < rng_percent()) 
+        while ((fnlGetNoise2D(&noise, pos.x, pos.y) + 1)/2 < rng_percent()) 
             pos = rng_vec2(_s);
 
         return Body({
             avr_mass,
             pos,
             vec2({0,0}),
-            (perlin.GetValue(pos.x, pos.y, 0) + 1) * 5
+            (fnlGetNoise2D(&noise, pos.x, pos.y) + 1) * 5
         });
     };
 
@@ -243,7 +242,9 @@ void add_body(Simulation3d* _s, Body3d b){
 
 
 void cosmic_web3d(Simulation3d* _s, int nums, double avr_mass){
-    noise::module::Perlin perlin; 
+    fnl_state noise = fnlCreateState();
+    noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+
     int tot_nums = nums;
 
     _s -> bodies.reserve(_s -> bodies.size() + nums);
@@ -256,17 +257,17 @@ void cosmic_web3d(Simulation3d* _s, int nums, double avr_mass){
 
     double g_pull = nums *  _s -> data.G  * avr_mass;
 
-    cluster.builder = [perlin, _s, avr_mass](Cluster3d cl3d, size_t _) {
+    cluster.builder = [&noise, _s, avr_mass](Cluster3d cl3d, size_t _) {
         vec3 pos = rng_vec3(_s);
 
-        while ((perlin.GetValue(pos.x, pos.y, pos.z) + 1)/2 < rng_percent()) 
+        while ((fnlGetNoise3D(&noise, pos.x, pos.y, pos.z) + 1)/2 < rng_percent()) 
             pos = rng_vec3(_s);
 
         return Body3d({
             avr_mass,
             pos,
             vec3({0,0,0}),
-            (perlin.GetValue(pos.x, pos.y, pos.z) + 1) * 5
+            (fnlGetNoise3D(&noise, pos.x, pos.y, pos.z) + 1) * 5
         });
     };
 

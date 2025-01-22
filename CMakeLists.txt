@@ -38,6 +38,11 @@ set_target_properties(Aster PROPERTIES
     POSITION_INDEPENDENT_CODE ON
 )
 
+target_compile_options(Aster PRIVATE 
+    -Wno-aggressive-loop-optimizations
+    -O3
+)
+
 include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(

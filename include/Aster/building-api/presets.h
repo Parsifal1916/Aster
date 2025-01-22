@@ -1,7 +1,6 @@
 #pragma once 
 
 #include <cmath>
-#include <noise/noise.h>
 #include "Aster/physics/body.h"
 #include "Aster/simulations/simulation.h"
 #include <iostream>
