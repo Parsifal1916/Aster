@@ -37,10 +37,12 @@ set_target_properties(Aster PROPERTIES
     POSITION_INDEPENDENT_CODE ON
 )
 
+if(NOT MSVC)
 target_compile_options(Aster PRIVATE 
     -Wno-aggressive-loop-optimizations
     -O3
 )
+endif()
 
 include(CMakePackageConfigHelpers)
 
