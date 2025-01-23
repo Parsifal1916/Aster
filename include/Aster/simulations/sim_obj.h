@@ -12,6 +12,8 @@
 #include "Aster/building-api/clusters.h"
 #include "Aster/building-api/sim_meta.h"
 
+#include "Aster/graphs/graph_collection.h"
+
 namespace Aster{
 
 class Simulation{
@@ -31,6 +33,7 @@ class Simulation{
     Simulation* set_max_frames(unsigned int f_);
     Simulation* set_sim_type(short type);
     Simulation* load();
+    double get_time_passed();
     bool has_loaded_yet() const;
 
     friend void update_bundle(Simulation*, short unsigned int);
@@ -70,8 +73,9 @@ class Simulation{
         c_squared,
         time_passed = 0,
         max_temp = 10e5
-
     ;
+
+    std::vector<struct Graph2d*> graphs;
 
     bool has_loaded = false;
 

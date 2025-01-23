@@ -43,6 +43,10 @@ Simulation3d* Simulation3d::set_screen_size(unsigned int w_, unsigned int h_){
     return this;
 }
 
+double Simulation3d::get_time_passed(){
+    return time_passed;
+}
+
 bool Simulation3d::has_loaded_yet() const {
     return has_loaded;
 }
@@ -236,6 +240,10 @@ std::map<std::string, force_func> force_funcs = {
     {"Pn2", pn2}
 };
 
+
+double Simulation::get_time_passed(){
+    return time_passed;
+}
 
 /*
 * set screen's height, width and bg color (optional)

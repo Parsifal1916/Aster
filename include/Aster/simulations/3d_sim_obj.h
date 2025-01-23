@@ -46,6 +46,7 @@ class Simulation3d{
 
     vec3 get_center() const;
     vec3 get_corner(int n) const;
+    double get_time_passed();
 
     virtual void step(){assert(1);}
 

@@ -170,7 +170,7 @@ void Renderer2d::draw_detailed(){
 		glVertex2f(
 		    2.f * p.position.x/ (_s -> data.WIDTH) - 1, 
 		    2.f * p.position.y/ (_s -> data.HEIGHT) - 1
-		);
+		); 
     }
 
     if (_s -> data.show_graph) {
