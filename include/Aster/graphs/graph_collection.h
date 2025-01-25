@@ -5,14 +5,12 @@
 #include <functional>
 
 #include "Aster/physics/body.h"
-#include "Aster/simulations/sim_obj.h"
-#include "Aster/simulations/3d_sim_obj.h"
 
 namespace Aster{
+struct Simulation;
+struct Simulation3d;
+
 namespace Graphs{
-
-
-using listener3d_fptr = std::function<double(struct Graph3d*, Simulation3d*,Body3d*)>;
 
 struct Graph2d{
     using listener2d_fptr = std::function<double(struct Graph2d*, Simulation*  ,Body*)>;
@@ -32,7 +30,34 @@ struct Graph2d{
     std::ofstream file;
     int buffer_size = 1000;
     bool save = true;
+    bool done = false;
 
+    void init();
+    void flush_to_file();
+    void update_data();
+};
+
+struct Graph3d{
+    using listener3d_fptr = std::function<double(struct Graph3d*, Simulation3d*  ,Body3d*)>;
+    bool for_each_body = false;
+
+    Simulation3d* _s = nullptr; 
+    
+    listener3d_fptr listener;
+    std::vector<std::vector<double>> data;
+    std::string name = "Graph";
+
+    Graph3d(Simulation3d* _s, listener3d_fptr listener,  bool for_each_body = false);
+
+    void trigger();
+
+    private:
+    std::ofstream file;
+    int buffer_size = 1000;
+    bool save = true;
+    bool done = false;
+
+    void init();
     void flush_to_file();
     void update_data();
 };

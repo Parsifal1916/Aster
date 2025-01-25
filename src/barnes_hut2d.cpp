@@ -94,8 +94,8 @@ void Barnes_Hut::step(){
     update_bodies();
     nodes.clear();
 
+    this -> trigger_all_graphs();
     time_passed++;
-    //std::cout << "stepped!";
 }
 
 //===---------------------------------------------------------===//
@@ -264,6 +264,8 @@ void update_bundle(Barnes_Hut* _s, unsigned short index){
     mult = _s -> obj/_s -> data.NUM_THREADS;
     start = index * mult;
     stop = (index + 1) * mult;
+
+    stop = (stop + mult > _s -> obj) ? _s -> obj : stop;
               
     for (int i = start; i < stop; ++i){  
         Body* body = &_s -> bodies[i];
@@ -328,6 +330,7 @@ void BHT::step(){
     update_bodies();
     nodes.clear();
 
+    this -> trigger_all_graphs();
     time_passed++;
 }
 
@@ -339,6 +342,7 @@ BHT::BHT(sim_meta m){
 
     threads.reserve(data.NUM_THREADS);
     obj = bodies.size(); 
+
 }
 
 BHT::BHT(){

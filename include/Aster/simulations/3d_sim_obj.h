@@ -1,12 +1,13 @@
 #pragma once
 #include <random>
-#include <string>
 #include <cassert>
 #include <string>
+#include <vector>
 
 #include "Aster/simulations/basic.h"
 #include "Aster/building-api/sim_meta.h"
 #include "Aster/building-api/clusters.h"
+#include "Aster/graphs/graph_collection.h"
 
 namespace Aster{
 
@@ -39,13 +40,18 @@ class Simulation3d{
     Simulation3d* set_vacuum_density(float d_);
     Simulation3d* set_max_frames(unsigned int f_);
     Simulation3d* set_sim_type(short type);
+    Simulation3d* load();
+
+    Simulation3d* add_graph(Graphs::Graph3d::listener3d_fptr listener, bool for_each_body = false);
 
     bool has_loaded_yet() const;
 
-    Simulation3d* load();
+
 
     vec3 get_center() const;
     vec3 get_corner(int n) const;
+
+    double get_time_passed() const ;
 
     virtual void step(){assert(1);}
 
@@ -72,6 +78,8 @@ class Simulation3d{
     Queue3d loading_queue;
 
     protected:
+    void trigger_all_graphs();
+    std::vector<Graphs::Graph3d> graphs;
     bool has_loaded = false;
 };
 

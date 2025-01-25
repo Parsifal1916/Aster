@@ -8,6 +8,10 @@
 #include <Aster.hpp>
 using namespace Aster;
 
+double collect(Graphs::Graph2d* graph, Simulation* sim, Body* body){
+    return body -> velocity.sqr_magn();
+}
+
 int main(){
     auto* sim = bake(BARNES_HUT);
     cosmic_web(sim, 1e4, 10e10);
@@ -17,7 +21,8 @@ int main(){
     //rng_sphere(sim, 10e3, {meta.WIDTH, meta.HEIGHT, meta.depth}, 10e2);
     
     sim 
-    -> set_dt(0)
+    -> set_dt(.1)
+    -> add_graph(collect, true)
     -> load();
     
     render(sim)
