@@ -9,20 +9,25 @@
 using namespace Aster;
 
 double collect(Graphs::Graph2d* graph, Simulation* sim, Body* body){
-    return body -> velocity.sqr_magn();
+    double retval = 0;
+
+    for (const auto& body : sim -> bodies)
+        retval += body.velocity.sqr_magn();
+
+    return retval / sim -> bodies.size(); 
 }
 
 int main(){
     auto* sim = bake(BARNES_HUT);
-    cosmic_web(sim, 1e4, 10e10);
+    //cosmic_web(sim, 1e4, 10e10);
     //add_disk3d(sim, 1e4, sim -> get_center(), 60e1, .3, {}, 10e10);
     //add_disk3d(sim, 1e4, sim -> get_corner(0), 60e1, .3, {90, 45, 0}, 10e10);
-    //add_disk(sim, 1e3, sim -> get_center(), 100, 10);
+    add_disk(sim, 1e4, sim -> get_center(), 100, 10);
     //rng_sphere(sim, 10e3, {meta.WIDTH, meta.HEIGHT, meta.depth}, 10e2);
     
     sim 
     -> set_dt(.1)
-    -> add_graph(collect, true)
+    -> add_graph(collect)
     -> load();
     
     render(sim)

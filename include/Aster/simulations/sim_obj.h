@@ -20,8 +20,7 @@ namespace Aster{
 class Simulation{
     public:
     float current_a = 0;
-
-    std::vector<double> lagrangians;
+    
     std::vector<Body> bodies;
 
     Simulation* set_numof_objs(unsigned int n_);
@@ -60,7 +59,6 @@ class Simulation{
             ) / b1 -> mass;
     
         }
-        lagrangian += .5 * b1 -> velocity.sqr_magn() * b1 -> mass - b1 -> acceleration.magnitude() * b1 -> mass;
     }
 
     func_ptr update_body;
@@ -68,8 +66,7 @@ class Simulation{
     
     sim_meta data;
     int obj;
-    
-    double lagrangian, highest_lagrangian;
+
     struct Queue2d loading_queue;
     std::pair<std::string, double> loading_meta = {"", 0};
 

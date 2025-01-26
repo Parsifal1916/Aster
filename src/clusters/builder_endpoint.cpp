@@ -137,16 +137,8 @@ void SingleThread3d::step(){
         if (body.temp >  this -> max_temp) this -> max_temp = body.temp;
         body.temp /= this -> max_temp;
     }
-
-    if (this -> lagrangian > this -> highest_lagrangian) this -> highest_lagrangian = this -> lagrangian;
-        
-    this -> lagrangians.push_back(this -> lagrangian);
-        
-    if (this -> lagrangians.size() > data.WIDTH)
-        this -> lagrangians.erase(this -> lagrangians.begin());
         
     data.max_temp = 1;
-    this -> lagrangian = 0;
 
     this -> trigger_all_graphs();
     time_passed++;
@@ -378,16 +370,8 @@ void SingleThread::step(){
         if (body.temp >  this -> max_temp) this -> max_temp = body.temp;
         body.temp /= this -> max_temp;
     }
-
-    if (this -> lagrangian > this -> highest_lagrangian) this -> highest_lagrangian = this -> lagrangian;
     
-    this -> lagrangians.push_back(this -> lagrangian);
-    
-    if (this -> lagrangians.size() > data.WIDTH)
-        this -> lagrangians.erase(this -> lagrangians.begin());
-    
-    data.max_temp = 1;
-    this -> lagrangian = 0;
+    data.max_temp = .1;
 
     this -> trigger_all_graphs();
     time_passed++;

@@ -19,13 +19,11 @@ class Simulation3d{
     double
         c_squared,
         time_passed = 0,
-        max_temp = 10e5,
-        lagrangian, highest_lagrangian
+        max_temp = 10e5
     ;
 
     float current_a = 0;
 
-    std::vector<double> lagrangians;
     std::vector<Body3d> bodies;
 
     std::uniform_real_distribution<double> get_rndX;
@@ -67,7 +65,6 @@ class Simulation3d{
             ) / b1 -> mass;
     
         }
-        lagrangian += .5 * b1 -> velocity.sqr_magn() * b1 -> mass - b1 -> acceleration.magnitude() * b1 -> mass;
     }
 
     func_ptr3d update_body;
