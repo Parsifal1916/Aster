@@ -120,6 +120,8 @@ void Graph2d::update_data(){
 
 
 
+
+
 Graph3d::Graph3d(Simulation3d* _s, listener3d_fptr listener, bool for_each_body)
 : _s(_s), listener(listener), for_each_body(for_each_body) {
     assert(_s  && "No simulation object specified! seams to be nullptr");
@@ -138,7 +140,7 @@ void Graph3d::init(){
 
     if (for_each_body) {
         size_t num = _s -> bodies.size();
-        if (num > (int)10e3)
+        if (num >= (int)10e3)
             std::cout << "[ ! ] WARN: specified for_each_body=true, the amount of bodies in the simulation results to be very high (>=10e3). large amounts of data are going to be written to disk";
     
         data.resize(num);
@@ -148,7 +150,7 @@ void Graph3d::init(){
                 file << "Body" << i << ", ";
             }
 
-        file << "\n";
+        file << "\n";  
     } else {
         data.resize(1);
         data[0].reserve(buffer_size);
@@ -159,20 +161,25 @@ void Graph3d::init(){
 
 void Graph3d::flush_to_file(){
     assert(data.size() && "empty graphing data! possible data corruption occurred");
+    if (for_each_body){ 
+        for (int timestep = 0; timestep < data[0].size(); ++timestep){
 
-    file << _s -> get_time_passed() << ","; 
-    if (for_each_body){
-        for (auto& container : data){
-            for (int i = 0; i < container.size(); i++)
-                file << container[i] << (i == container.size() - 1) ? "\n" : ",";
-
-            container.clear();
+            file << _s -> get_time_passed() + timestep - data[0].size() << ","; 
+            for (int container = 0; container < data.size(); container++)
+                file << data[container][timestep] << ((timestep == data[0].size() - 1) ? "\n" : ",");
         }
+
+        for (auto& c : data)
+            c.clear();
+
         return;
     }
 
-    for (int i = 0; i < data[0].size(); i++)
-        file << data[0][i] << (i == data[0].size() - 1) ? "\n" : ",";
+    for (int i = 0; i < data[0].size(); i++){
+        file << _s -> get_time_passed() + i - data[0].size() << ","; 
+        file << data[0][i] << "\n";
+    }
+    
     data[0].clear();
 }
 
@@ -211,10 +218,5 @@ void Graph3d::update_data(){
 
     data[0].push_back(listener(this, _s, nullptr));
 }
-
-
-
-
-
 }
 }

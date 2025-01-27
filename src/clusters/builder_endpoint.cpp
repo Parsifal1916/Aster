@@ -1,5 +1,6 @@
 #include <map>
 #include <stdexcept>
+#include <string>
 
 #include "Aster/building-api/3d_builder.h"
 #include "Aster/building-api/builder.h"
@@ -104,6 +105,7 @@ Simulation3d* Simulation3d::load(){
 
 Simulation3d* Simulation3d::add_graph(Graphs::Graph3d::listener3d_fptr listener, bool for_each_body){
     this -> graphs.push_back({this, listener, for_each_body});
+    this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
     return this;
 }
 
@@ -311,6 +313,7 @@ Simulation* Simulation::load(){
 
 Simulation* Simulation::add_graph(Graphs::Graph2d::listener2d_fptr listener, bool for_each_body){
     this -> graphs.push_back({this, listener, for_each_body});
+    this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
     return this;
 }
 
