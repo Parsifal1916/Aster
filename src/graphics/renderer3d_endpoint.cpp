@@ -323,7 +323,6 @@ void Renderer3d::handle_keyboard_input(GLFWwindow* window, int key, int scancode
 
 void Renderer3d::body_update_func(){
     _s -> step();
-    _s -> time_passed++;
 }
 
 }

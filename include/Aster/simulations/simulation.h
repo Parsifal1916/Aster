@@ -8,8 +8,6 @@
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/physics/body.h"
 
-struct Body;
-
 namespace Aster{
 
 //===---------------------------------------------------------===//
@@ -23,10 +21,6 @@ bool
 
 using func_ptr = void(*)(Body*, Simulation*);
 using force_func = vec2(*)(double, double, vec2, vec2, vec2, vec2, Simulation*);
-
-double lagrangian = 0;
-double highest_lagrangian = 0;
-std::vector<double> lagrangians = {0};
 
 std::mt19937 rng;
 

@@ -105,9 +105,8 @@ void Barnes_Hut3d::step(){
     update_bodies();
     nodes3d.clear();
 
-
+    this -> trigger_all_graphs();
     time_passed++;
-    //std::cout << "stepped!";
 }
 
 //===---------------------------------------------------------===//

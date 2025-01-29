@@ -1,5 +1,6 @@
 #include <map>
 #include <stdexcept>
+#include <string>
 
 #include "Aster/building-api/3d_builder.h"
 #include "Aster/building-api/builder.h"
@@ -13,6 +14,8 @@
 #include "Aster/simulations/sim_helper.h"
 
 #include "Aster/physics/tool-chain.h"
+
+#include "Aster/graphs/graph_collection.h"
 
 namespace Aster{
 
@@ -45,6 +48,10 @@ Simulation3d* Simulation3d::set_screen_size(unsigned int w_, unsigned int h_){
 
 bool Simulation3d::has_loaded_yet() const {
     return has_loaded;
+}
+
+double Simulation3d::get_time_passed() const {
+    return time_passed;
 }
 
 Simulation3d* Simulation3d::set_dt(float dt_){
@@ -96,6 +103,19 @@ Simulation3d* Simulation3d::load(){
     return this;
 }
 
+Simulation3d* Simulation3d::add_graph(Graphs::Graph3d::listener3d_fptr listener, bool for_each_body){
+    this -> graphs.push_back({this, listener, for_each_body});
+    this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
+    return this;
+}
+
+void Simulation3d::trigger_all_graphs(){
+    for (auto& graph : graphs)
+        graph.trigger();
+}
+
+
+
 
 SingleThread3d::SingleThread3d(sim3d_meta m){
     this -> data = m;
@@ -119,19 +139,10 @@ void SingleThread3d::step(){
         if (body.temp >  this -> max_temp) this -> max_temp = body.temp;
         body.temp /= this -> max_temp;
     }
-
-    if (this -> lagrangian > this -> highest_lagrangian) this -> highest_lagrangian = this -> lagrangian;
-        
-    this -> lagrangians.push_back(this -> lagrangian);
-        
-    if (this -> lagrangians.size() > data.WIDTH)
-        this -> lagrangians.erase(this -> lagrangians.begin());
         
     data.max_temp = 1;
-    //update_scale(this);
-    this -> lagrangian = 0;
 
-
+    this -> trigger_all_graphs();
     time_passed++;
 }
 
@@ -165,7 +176,7 @@ void Parallelized3d::step(){
 
     this -> threads.clear();
 
-
+    this -> trigger_all_graphs();
     time_passed++;
 }
     
@@ -189,6 +200,8 @@ void Parallelized3d::update_bundle(Simulation3d* _s, unsigned short index){
     mult = _s -> obj/_s -> data.NUM_THREADS;
     start = index * mult;
     stop = (index + 1) * mult;
+
+    stop = (stop + mult > _s -> obj) ? _s -> obj : stop;
           
     for (int i = start; i < stop; ++i){  
        Body3d* body = &_s -> bodies[i];
@@ -298,6 +311,18 @@ Simulation* Simulation::load(){
     return this;
 }
 
+Simulation* Simulation::add_graph(Graphs::Graph2d::listener2d_fptr listener, bool for_each_body){
+    this -> graphs.push_back({this, listener, for_each_body});
+    this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
+    return this;
+}
+
+void Simulation::trigger_all_graphs(){
+    for (auto& graph : graphs)
+        graph.trigger();
+}
+
+
 
 bool Simulation::has_loaded_yet() const {
     return has_loaded;
@@ -318,6 +343,10 @@ vec2 Simulation::get_corner(int n) const{
         data.WIDTH * (n % 2),
         data.HEIGHT * (n > 2)
     };
+}
+
+double Simulation::get_time_passed() const {
+    return time_passed;
 }
 
 SingleThread::SingleThread(sim_meta m){
@@ -344,18 +373,10 @@ void SingleThread::step(){
         if (body.temp >  this -> max_temp) this -> max_temp = body.temp;
         body.temp /= this -> max_temp;
     }
+    
+    data.max_temp = .1;
 
-    if (this -> lagrangian > this -> highest_lagrangian) this -> highest_lagrangian = this -> lagrangian;
-    
-    this -> lagrangians.push_back(this -> lagrangian);
-    
-    if (this -> lagrangians.size() > data.WIDTH)
-        this -> lagrangians.erase(this -> lagrangians.begin());
-    
-    data.max_temp = 1;
-    //update_scale(this);
-    this -> lagrangian = 0;
-
+    this -> trigger_all_graphs();
     time_passed++;
 }
 
@@ -385,6 +406,8 @@ void update_bundle(Simulation* _s, unsigned short index){
     start = index * mult;
     stop = (index + 1) * mult;
           
+    stop = (stop + mult > _s -> obj) ? _s -> obj : stop;
+
     for (int i = start; i < stop; ++i){  
        Body* body = &_s -> bodies[i];
        _s -> update_pair(body);
@@ -404,6 +427,7 @@ void Parallelized::step(){
 
     this -> threads.clear();
 
+    this -> trigger_all_graphs();
     time_passed++;
 }
     
