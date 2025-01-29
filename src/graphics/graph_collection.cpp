@@ -94,7 +94,7 @@ void Graph2d::trigger(){
 
 void Graph2d::update_data(){
     if (for_each_body){
-        assert(bodies.size() == data.size() && "The number of bodies has changed over time, cannot generate the graph properly");
+        assert(_s -> bodies.size() == data.size() && "The number of bodies has changed over time, cannot generate the graph properly");
 
         std::vector<std::thread> ts;
         int step = _s -> bodies.size() / _s -> data.NUM_THREADS; 
@@ -195,7 +195,7 @@ void Graph3d::trigger(){
 
 void Graph3d::update_data(){
     if (for_each_body){
-        assert(bodies.size() == data.size() && "The number of bodies has changed over time, cannot generate the graph properly");
+        assert(_s -> bodies.size() == data.size() && "The number of bodies has changed over time, cannot generate the graph properly");
 
         std::vector<std::thread> ts;
         int step = _s -> bodies.size() / _s -> data.NUM_THREADS; 
