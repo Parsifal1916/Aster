@@ -114,12 +114,12 @@ bool Simulation<T>::has_loaded_yet() const {
 }
 
 template <>
-vec2 Simulation<vec2>::get_center() const{
+inline vec2 Simulation<vec2>::get_center() const{
     return {data.size.x, data.size.y};
 }
 
 template <>
-vec3 Simulation<vec3>::get_center() const{
+inline vec3 Simulation<vec3>::get_center() const{
     return data.size;
 }
 
@@ -134,7 +134,7 @@ vec2 Simulation<vec2>::get_corner(int n) const{
 }
 
 template <>
-vec3 Simulation<vec3>::get_corner(int n) const{
+inline vec3 Simulation<vec3>::get_corner(int n) const{
     assert(n >= 0 && n < 9);
 
     return {

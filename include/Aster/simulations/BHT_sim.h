@@ -31,7 +31,7 @@ class BHT final : public Barnes_Hut<T> { public:
     int get_to_best_leaf(Body<T>* _b);
     void insert(Body<T>* body);
     void calculate_com();
-    void get_node_body(size_t node, Body<T>* body);
+    void get_node_body(size_t node, Body<T>* body) override ;
     void update_bodies();
     void make_tree();
     void init_node(Node<T>& _n, Body<T>* b) const;
