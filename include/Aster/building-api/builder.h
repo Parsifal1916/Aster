@@ -13,11 +13,14 @@ namespace Aster{
 extern std::uniform_real_distribution<double> angle_rnd;
 extern std::uniform_real_distribution<double> normalized_rnd;
 
-extern std::map<std::string, func_ptr> update_funcs;
-extern std::map<std::string, force_func> force_funcs;
+template <typename T>
+extern std::map<std::string, func_ptr<T>> update_funcs;
 
+template <typename T>
+extern std::map<std::string, force_func<T>> force_funcs;
 
-class SingleThread : public Simulation {
+template <typename T>
+class SingleThread final : public Simulation<T> {
     public:
     SingleThread(sim_meta m);
     SingleThread();
@@ -25,7 +28,8 @@ class SingleThread : public Simulation {
     void step() override ;
 };
 
-class Parallelized : public Simulation {
+template <typename T>
+class Parallelized final : public Simulation<T> {
     public:
     std::vector<std::thread> threads;
 
@@ -38,8 +42,7 @@ class Parallelized : public Simulation {
     * if the given number is higher than the number of objs
     * it will be topped at the number of objs
     */
-    Parallelized* set_max_threads(unsigned int t_);
-    friend void update_bundle(Simulation* _s, unsigned short index);
+    Parallelized<T>* set_max_threads(unsigned int t_);
 };
 
 }

@@ -12,10 +12,12 @@ namespace Barnes{
 .                    // Barnes-Hut termal definition                                  //
 .                    //===---------------------------------------------------------===*/
 
-class BHT : public Simulation {public:
+
+template <typename T>
+class BHT final : public Barnes_Hut<T> { public:
     double theta = 0.8;
     std::vector<std::thread> threads;
-    std::vector<struct Node> nodes;
+    std::vector<Node<T>> nodes;
     static constexpr double kelvin_to_joule = 1e-22/7.2419716667;
 
     BHT(sim_meta m);
@@ -23,18 +25,21 @@ class BHT : public Simulation {public:
 
     void step() override;
 
-    private:
-    int opt_position(vec2 p, vec2 center);
-    int get_to_best_leaf(Body* _b);
-    void insert(Body* body);
+    protected:
+    int num_childs;
+    int opt_position(T p, T center);
+    int get_to_best_leaf(Body<T>* _b);
+    void insert(Body<T>* body);
     void calculate_com();
-    virtual void get_node_body(size_t node, Body* body);
+    virtual void get_node_body(size_t node, Body<T>* body);
     void update_bodies();
     void make_tree();
-    void init_node(Node& _n, Body* b) const;
+    void init_node(Node<T>& _n, Body<T>* b) const;
     size_t subdivide(int n);
-    static double update_bundle(BHT* _s, unsigned short index);
+    static double update_bundle(BHT<T>* _s, unsigned short index);
 };
 
 }
 }
+
+#include "Aster/impl/BHT_impl.tpp"

@@ -18,7 +18,7 @@ class Renderer2d{
     GLFWwindow* window;
     int current_height, current_width;
 
-    Renderer2d(Simulation* _s);
+    Renderer2d(Simulation<vec2>* _s);
 
     Renderer2d* show_axis();
     bool does_show_axis();
@@ -44,13 +44,13 @@ class Renderer2d{
     void draw_axis();
 
     bool show_axis_b = false;    
-    Simulation* _s = nullptr;
+    Simulation<vec2>* _s = nullptr;
     render_func render = nullptr;
     
 };
 
 }
 
-Renderer::Renderer2d* render(Simulation*);
+Renderer::Renderer2d* render(Simulation<vec2>*);
 
 }

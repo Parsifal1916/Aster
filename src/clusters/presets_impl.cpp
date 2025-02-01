@@ -1,12 +1,20 @@
 #include <cmath>
 #include <iostream>
 #define FNL_IMPL
+
 #include "Aster/thirdparty/FastNoiseLite.h"
+
+#include "Aster/impl/barnes_hut.tpp"
+#include "Aster/impl/BHT_impl.tpp"
+
 #include "Aster/physics/body.h"
-#include "Aster/simulations/simulation.h"
 #include "Aster/building-api/clusters.h"
 
+
 namespace Aster{
+
+std::uniform_real_distribution<double> angle_rnd(0.0f, 360.0f);
+std::uniform_real_distribution<double> normalized_rnd(0.0f, 1.f);
 
 const double PI = 3.141592653589793238462643383279;
 const int digit_precision = 4;
@@ -102,18 +110,18 @@ vec3 rng_point_in_sphere(double max_r, double min_r = 1){
     };
 }
 
-vec2 rng_vec2(Simulation* _s){
+vec2 rng_vec(Simulation<vec2>* _s){
     return {
-        double(std::rand() % (int)(_s -> data.WIDTH)), 
-        double(std::rand() % (int)_s -> data.HEIGHT)
+        double(std::rand() % (int)(_s -> data.size.x)), 
+        double(std::rand() % (int)_s -> data.size.y)
     };
 }
 
-vec3 rng_vec3(Simulation3d* _s){
+vec3 rng_vec(Simulation<vec3>* _s){
     return {
-        double(std::rand() % (int)_s -> data.WIDTH), 
-        double(std::rand() % (int)_s -> data.HEIGHT), 
-        double(std::rand() % (int)_s -> data.depth)
+        double(std::rand() % (int)_s -> data.size.x), 
+        double(std::rand() % (int)_s -> data.size.y), 
+        double(std::rand() % (int)_s -> data.size.z)
     };
 }
 
@@ -122,16 +130,16 @@ vec3 rng_vec3(Simulation3d* _s){
 .                    // premade clusters 2d                                           //
 .                    //===---------------------------------------------------------===*/
 
-void add_disk(Simulation* _s, size_t nums, vec2 center, double outer, double inner, double avr_mass = 10e6, vec2 v = {0,0}){
+void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, double inner, double avr_mass = 10e6, vec2 v = {0,0}){
     _s -> bodies.reserve(_s -> bodies.size() + nums);
 
-    Cluster2d cluster;
+    Cluster<vec2> cluster;
     cluster.number = nums;
     cluster.name = "Disk";
 
     double g_pull = nums *  _s -> data.G  * avr_mass;
 
-    cluster.builder = [g_pull, outer, inner, v, avr_mass, center ](Cluster2d cl2d, size_t _) {
+    cluster.builder = [g_pull, outer, inner, v, avr_mass, center ](Cluster<vec2> cl2d, size_t _) {
         vec2 pos = rng_point_in_circle(outer, inner);
 
         double radius = pos.sqr_magn();
@@ -139,7 +147,7 @@ void add_disk(Simulation* _s, size_t nums, vec2 center, double outer, double inn
 
         vec2 vel = vec2(-pos.x/radius *magn_vel, pos.y/radius* magn_vel) + v;
 
-        return Body({
+        return Body<vec2>({
             avr_mass, 
             pos + center,
             vel
@@ -149,7 +157,7 @@ void add_disk(Simulation* _s, size_t nums, vec2 center, double outer, double inn
     _s -> loading_queue.add_cluster(cluster);
 }
 
-void cosmic_web(Simulation* _s, int nums, double avr_mass){
+void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass){
     fnl_state noise = fnlCreateState();
     noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
 
@@ -157,7 +165,7 @@ void cosmic_web(Simulation* _s, int nums, double avr_mass){
 
     _s -> bodies.reserve(_s -> bodies.size() + nums);
 
-    Cluster2d cluster;
+    Cluster<vec2> cluster;
     cluster.number = nums;
     cluster.avr_mass = avr_mass;
     cluster.size = _s -> get_center() *2;
@@ -165,13 +173,13 @@ void cosmic_web(Simulation* _s, int nums, double avr_mass){
 
     double g_pull = nums *  _s -> data.G  * avr_mass;
 
-    cluster.builder = [&noise, _s, avr_mass](Cluster2d cl2d, size_t _) {
-        vec2 pos = rng_vec2(_s);
+    cluster.builder = [&noise, _s, avr_mass](Cluster<vec2> cl2d, size_t _) {
+        vec2 pos = rng_vec(_s);
 
         while ((fnlGetNoise2D(&noise, pos.x, pos.y) + 1)/2 < rng_percent()) 
-            pos = rng_vec2(_s);
+            pos = rng_vec(_s);
 
-        return Body({
+        return Body<vec2>({
             avr_mass,
             pos,
             vec2({0,0}),
@@ -187,16 +195,16 @@ void cosmic_web(Simulation* _s, int nums, double avr_mass){
 .                    //===---------------------------------------------------------===*/
 
 
-void add_disk3d(Simulation3d* _s, size_t nums, vec3 center, double radius, double thickness, vec3 rotation, double avr_mass = 10e6, vec3 v = {0,0,0}){
+void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, double thickness, vec3 rotation, double avr_mass = 10e6, vec3 v = {0,0,0}){
     _s -> bodies.reserve(_s -> bodies.size() + nums);
 
-    Cluster3d cluster;
+    Cluster<vec3> cluster;
     cluster.number = nums;
     cluster.name = "Disk";
 
     double g_pull = nums *  _s -> data.G  * avr_mass;
 
-    cluster.builder = [g_pull, radius, v, avr_mass, center, thickness, rotation ](Cluster3d cl3d, size_t _) {
+    cluster.builder = [g_pull, radius, v, avr_mass, center, thickness, rotation ](Cluster<vec3> cl3d, size_t _) {
         vec3 pos = rng_point_in_cylinder(radius, 1, thickness);
 
         double r = pos.sqr_magn();
@@ -207,7 +215,7 @@ void add_disk3d(Simulation3d* _s, size_t nums, vec3 center, double radius, doubl
         pos = rotate_point(pos, rotation.x, rotation.z);
         vel = rotate_point(vel, rotation.x, rotation.z);
 
-        return Body3d({
+        return Body<vec3>({
             avr_mass, 
             pos + center,
             vel
@@ -218,30 +226,30 @@ void add_disk3d(Simulation3d* _s, size_t nums, vec3 center, double radius, doubl
 }
 
 
-void add_body(Simulation* _s, double mass, vec2 pos, vec2 vel, bool still = false){
+void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, bool still = false){
     _s -> bodies.push_back(Body(mass, pos, vel));
     _s -> obj ++;
 }
 
-void add_body(Simulation* _s, Body b){
+void add_body(Simulation<vec2>* _s, Body<vec2> b){
     _s -> bodies.push_back(b);
     _s -> obj ++;
 }
 
 
 
-void add_body(Simulation3d* _s, double mass, vec3 pos, vec3 vel, double theta, double phi){
-    _s -> bodies.push_back(Body3d(mass, pos, vel));
+void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double theta, double phi){
+    _s -> bodies.push_back(Body<vec3>(mass, pos, vel));
     _s -> obj ++;
 }
 
-void add_body(Simulation3d* _s, Body3d b){
+void add_body(Simulation<vec3>* _s, Body<vec3> b){
     _s -> bodies.push_back(b);
     _s -> obj ++;
 }
 
 
-void cosmic_web3d(Simulation3d* _s, int nums, double avr_mass){
+void cosmic_web(Simulation<vec3>* _s, int nums, double avr_mass){
     fnl_state noise = fnlCreateState();
     noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
 
@@ -249,7 +257,7 @@ void cosmic_web3d(Simulation3d* _s, int nums, double avr_mass){
 
     _s -> bodies.reserve(_s -> bodies.size() + nums);
 
-    Cluster3d cluster;
+    Cluster<vec3> cluster;
     cluster.number = nums;
     cluster.avr_mass = avr_mass;
     cluster.size = _s -> get_center() *2;
@@ -257,13 +265,13 @@ void cosmic_web3d(Simulation3d* _s, int nums, double avr_mass){
 
     double g_pull = nums *  _s -> data.G  * avr_mass;
 
-    cluster.builder = [&noise, _s, avr_mass](Cluster3d cl3d, size_t _) {
-        vec3 pos = rng_vec3(_s);
+    cluster.builder = [&noise, _s, avr_mass](Cluster<vec3> cl3d, size_t _) {
+        vec3 pos = rng_vec(_s);
 
         while ((fnlGetNoise3D(&noise, pos.x, pos.y, pos.z) + 1)/2 < rng_percent()) 
-            pos = rng_vec3(_s);
+            pos = rng_vec(_s);
 
-        return Body3d({
+        return Body<vec3>({
             avr_mass,
             pos,
             vec3({0,0,0}),
@@ -272,6 +280,52 @@ void cosmic_web3d(Simulation3d* _s, int nums, double avr_mass){
     };
 
     _s -> loading_queue.add_cluster(cluster);
+}
+
+//===---------------------------------------------------------===//
+// baking                                                        //
+//===---------------------------------------------------------===//
+
+
+Simulation<vec2>* bake(simulation_types s){
+    switch (s){
+     
+    case LIGHT:
+        return new SingleThread<vec2>();
+     
+    case HEAVY:
+        return new Parallelized<vec2>(); 
+
+    case BARNES_HUT:
+        return new Barnes::Barnes_Hut<vec2>();
+
+    case BH_termal:
+        return new Barnes::BHT<vec2>();
+
+    default:
+        throw std::runtime_error("Invalid Simulation Type");
+        return nullptr;
+    }
+}
+
+Simulation<vec3>* bake3d(simulation_types s){
+    switch (s){
+    
+    case LIGHT:
+        return new SingleThread<vec3>();
+    
+    case HEAVY:
+        return new Parallelized<vec3>(); 
+
+    case BARNES_HUT:
+        return new Barnes::Barnes_Hut<vec3>();   
+
+    default:
+        break;  
+    }
+
+    throw std::runtime_error("Invalid Simulation Type");
+    return nullptr;
 }
 
 }

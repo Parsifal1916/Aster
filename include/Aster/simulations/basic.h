@@ -5,9 +5,12 @@
 
 
 namespace Aster{
-using func_ptr3d = void(*)(class Body3d*, class Simulation3d*);
-using force_func3d = vec3(*)(double, double, vec3, vec3, vec3, vec3, class Simulation3d*);
+template <typename T> class Body;
+template <typename T> class Simulation;
 
-using func_ptr = void(*)(class Body*, class Simulation*);
-using force_func = vec2(*)(double, double, vec2, vec2, vec2, vec2, class Simulation*);
+template <typename T>
+using func_ptr = void(*)(class Body<T>*, Simulation<T>*);
+
+template <typename T>
+using force_func = T(*)(double, double, T, T, T, T, Simulation<T>*);
 }

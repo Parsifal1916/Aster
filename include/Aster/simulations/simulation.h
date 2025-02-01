@@ -14,20 +14,6 @@ namespace Aster{
 // Backend initialization                                        //
 //===---------------------------------------------------------===//
 
-bool 
-    leave_traces = false,
-    save = false
-;
-
-using func_ptr = void(*)(Body*, Simulation*);
-using force_func = vec2(*)(double, double, vec2, vec2, vec2, vec2, Simulation*);
-
-std::mt19937 rng;
-
-int 
-    WIDTH = 1366, 
-    HEIGHT = 768
-;
 
 std::string format_time(int totalSeconds) {
     int hours = totalSeconds / 3600;

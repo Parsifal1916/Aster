@@ -26,6 +26,8 @@ struct vec2 {
     vec2 direction(vec2 v2);
     vec2 normalize();
     double sqr_magn() const;
+    void reset();
+    vec2 update_by(vec2* v, double delta);
 
 };
 
@@ -55,5 +57,6 @@ struct vec3 {
     vec3 direction(vec3 v3);
     vec3 normalize();
     double sqr_magn() const;
+    void reset();
 };
 }

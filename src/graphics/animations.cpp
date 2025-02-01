@@ -39,7 +39,7 @@ void draw_quad(GLFWwindow* window, double percent){
     glEnd();  
 }
 
-void show_loadingbar(GLFWwindow* window, Simulation* _s ){
+void show_loadingbar(GLFWwindow* window, Simulation<vec2>* _s ){
     while (!_s -> has_loaded_yet()){
         glClear(GL_COLOR_BUFFER_BIT);
             

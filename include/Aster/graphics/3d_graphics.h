@@ -7,9 +7,10 @@
 #include <unordered_map>
 #include <functional>
 #include <string>
-
-#include "Aster/simulations/3d_sim_obj.h"
     
+#include "Aster/physics/vectors.h"
+#include "Aster/simulations/sim_obj.h"
+
 #define DIS_SCALE .05
 #define FOV 1
 
@@ -20,7 +21,7 @@ class Renderer3d{
     public: 
 
     using render_func3d = void(Renderer3d::*)();
-    Simulation3d* _s = nullptr;
+    Simulation<vec3>* _s = nullptr;
     render_func3d render3d = nullptr;
 
     GLFWwindow* window;
@@ -37,7 +38,7 @@ class Renderer3d{
         distance = 1000
     ;   
 
-    Renderer3d(Simulation3d* _s);
+    Renderer3d(Simulation<vec3>* _s);
     void body_update_func();
 
     Renderer3d* show_axis();
@@ -88,6 +89,6 @@ class Renderer3d{
 //    void clear_graph3d(Simulation3d* _s);
 //    void draw_graph3d(Simulation3d* _s);
 }
-Renderer::Renderer3d* render(Simulation3d*);
+Renderer::Renderer3d* render(Simulation<vec3>*);
 
 }
