@@ -263,6 +263,7 @@ void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
               
     for (int i = start; i < stop; ++i){  
         Body<T>* body = &_s -> bodies[i];
+        body -> acceleration.reset();
         _s -> get_node_body(0, body);
         _s -> update_body(body, _s);
 

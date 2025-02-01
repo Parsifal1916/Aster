@@ -23,14 +23,12 @@ template <>
 void update_euler(Body<vec2>* b, Simulation<vec2>* _s){
     b -> velocity += b -> acceleration* _s -> data.dt;
     b -> position += b -> velocity * _s -> data.dt;
-    b -> acceleration.reset();
 }
 
 template <>
 void update_leapfrog(Body<vec2>* b, Simulation<vec2>* _s){
    b -> position += b -> velocity * _s -> data.dt + b -> acceleration * _s -> data.dt * _s -> data.dt * .5;
    b -> velocity += (b -> acceleration + b -> prev_acc)* _s -> data.dt * .5;
-   b -> acceleration.reset();
 }
 
 template <>

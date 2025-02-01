@@ -174,6 +174,7 @@ void SingleThread<T>::step(){
     T prev;
     for (Body<T>& body : this -> bodies){  
         prev = body.acceleration;
+        body.acceleration.reset();
         this -> update_pair(&body);
         this -> update_body(&body, this );
 
@@ -256,6 +257,7 @@ void update_bundle(Simulation<T>* _s, unsigned short index){
 
     for (int i = start; i < stop; ++i){  
        Body<T>* body = &_s -> bodies[i];
+       body -> acceleration.reset();
        _s -> update_pair(body);
        _s -> update_body(body, _s);
     }
