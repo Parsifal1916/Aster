@@ -124,7 +124,7 @@ inline vec3 Simulation<vec3>::get_center() const{
 }
 
 template <>
-vec2 Simulation<vec2>::get_corner(int n) const{
+inline vec2 Simulation<vec2>::get_corner(int n) const{
     assert(n >= 0 && n < 5);
 
     return {
