@@ -182,9 +182,15 @@ void Renderer2d::draw_detailed(){
         glColor3f(1.0, 0.0, 0.0);    
         glPointSize(std::log(p.mass)/10);  
 		glVertex2f(
+<<<<<<< HEAD
 		    2.f * p.position.x/ (_s -> data.size.x) - 1, 
 		    2.f * p.position.y/ (_s -> data.size.y) - 1
 		);
+=======
+		    2.f * p.position.x/ (_s -> data.WIDTH) - 1, 
+		    2.f * p.position.y/ (_s -> data.HEIGHT) - 1
+		); 
+>>>>>>> main
     }
 
     glEnd();

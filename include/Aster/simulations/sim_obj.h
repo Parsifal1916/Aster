@@ -35,6 +35,20 @@ class Simulation{
 
     Simulation<T>* add_graph(typename Graphs::Graph<T>::listener_fptr listener, bool for_each_body = false);
 
+<<<<<<< HEAD
+=======
+    Simulation* set_numof_objs(unsigned int n_);
+    Simulation* set_screen_size(unsigned int w_, unsigned int h_);
+    Simulation* set_dt(float dt_);
+    Simulation* set_omega_m(float om_);
+    Simulation* set_omega_l(float ol_);
+    Simulation* set_hubble(float h_);
+    Simulation* set_vacuum_density(float d_);
+    Simulation* set_max_frames(unsigned int f_);
+    Simulation* set_sim_type(short type);
+    Simulation* load();
+    double get_time_passed();
+>>>>>>> main
     bool has_loaded_yet() const;
     
     T get_center() const;
@@ -78,7 +92,12 @@ class Simulation{
         max_temp = 10e5
     ;
 
+<<<<<<< HEAD
     void trigger_all_graphs();
+=======
+    std::vector<struct Graph2d*> graphs;
+
+>>>>>>> main
     bool has_loaded = false;
 
 };
