@@ -229,7 +229,7 @@ double BHT<T>::update_bundle(BHT<T>* _s, unsigned short index){
         Body<T>* body = &_s -> bodies[i];
         body -> acceleration.reset();
         _s -> get_node_body(0, body);
-        _s -> update_body(body, _s);
+        _s -> update_body(body, _s); 
 
         body -> temp -= body -> temp * body -> temp * body -> temp * body -> temp * _s -> data.boltzmann * _s -> data.dt;
     }

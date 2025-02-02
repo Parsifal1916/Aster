@@ -8,6 +8,79 @@
 
 namespace Aster{
 
+template <typename T>
+double get_eccentricity(sim_meta* meta, Body<T>* body, T relv_sq, T w_squared,  double radius, double mass2){
+    double mu =  meta -> G * (body -> mass + mass2);
+    double reduced_mass  = body -> mass * mass2 / (body -> mass + mass2); 
+    double orbital_energy = relv_sq / 2 - mu / radius;
+
+    return 1 + 2 * orbital_energy * w_squared / (reduced_mass * mu * mu); // TADA!!
+}
+
+template <typename T>
+void get_new_temp(sim_meta* meta, Body<T>* body, Body<T>* body2){
+    /*
+    * we are trying to compute the delta T so we use the formula 
+    *  21 * G * M * m * n * e²
+    *  ------------------------ = E_t
+    *         2 * r^6
+
+    * from here it is trival, we can just divide by the mass and a coeff and multiply 
+    * byt dt to get the delta T 
+    */
+
+    T rel_v = body -> velocity - body2 -> velocity;
+    double relv_sq = rel_v.sqr_magn();
+    double r = (body -> position - body2 -> position).magnitude();
+    /*
+    * omega^2 = |V|^2 - (V x A / |A|) ^2 
+    * omega being the hypotenuse of a right triangle
+    * of sidelenghts equal to the velocity and the
+    * projection of the velocity onto the acceleration
+    */
+    double w_squared = relv_sq - std::pow((rel_v * body -> acceleration)/ body -> acceleration.magnitude(), 2);
+
+    double eccentricity = get_eccentricity<T>(meta, body, relv_sq, w_squared, r, body2 -> mass);
+
+    double delta_temperature = 21.0 / 2.0 * meta -> G * body -> mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    delta_temperature *= meta -> dt; // we want it to be per unit of time
+    delta_temperature /= body -> mass; // then we get how many K the body got in dt 
+
+    body -> temperature += delta_temperature; // done! 
+}
+
+template <typename T>
+void get_new_temp(sim_meta* meta, Body<T>* body, T pos, T vel, double temp, double mass){
+    /*
+    * we are trying to compute the delta T so we use the formula 
+    *  21 * G * M * m * n * e²
+    *  ------------------------ = E_t
+    *         2 * r^6
+
+    * from here it is trival, we can just divide by the mass and a coeff and multiply 
+    * byt dt to get the delta T 
+    */
+
+    T rel_v = body -> velocity - vel;
+    double relv_sq = rel_v.sqr_magn();
+    double r = (body -> position - pos).magnitude();
+    /*
+    * omega^2 = |V|^2 - (V x A / |A|) ^2 
+    * omega being the hypotenuse of a right triangle
+    * of sidelenghts equal to the velocity and the
+    * projection of the velocity onto the acceleration
+    */
+    double w_squared = relv_sq - std::pow((rel_v * body -> acceleration)/ body -> acceleration.magnitude(), 2);
+
+    double eccentricity = get_eccentricity(meta, body, relv_sq, w_squared, r, mass);
+
+    double delta_temperature = 21.0 / 2.0 * meta -> G * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    delta_temperature *= meta -> dt; // we want it to be per unit of time
+    delta_temperature /= body -> mass; // then we get how many K the body got in dt 
+
+    body -> temperature += delta_temperature; // done! 
+}
+
 //===---------------------------------------------------------===//
 // Cosmology stuff                                               //
 //===---------------------------------------------------------===//

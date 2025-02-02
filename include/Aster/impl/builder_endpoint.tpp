@@ -177,12 +177,7 @@ void SingleThread<T>::step(){
         body.acceleration.reset();
         this -> update_pair(&body);
         this -> update_body(&body, this );
-
-        if (body.temp >  this -> max_temp) this -> max_temp = body.temp;
-        body.temp /= this -> max_temp;
     }
-    
-    this -> data.max_temp = .1;
 
     this -> trigger_all_graphs();
     this -> time_passed++;

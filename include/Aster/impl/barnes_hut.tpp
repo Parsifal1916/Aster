@@ -267,7 +267,6 @@ void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
         _s -> get_node_body(0, body);
         _s -> update_body(body, _s);
 
-        body -> temp -= body -> temp * body -> temp * body -> temp * body -> temp * _s -> data.boltzmann * _s -> data.dt;
     }
 }
 
