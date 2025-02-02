@@ -19,6 +19,7 @@ struct sim_meta{
     };
 
     double  
+        avr_heat_capacity = 1,
         H_0 = 10,
         G = 6e-11,
         c = 299'792'458,

@@ -31,9 +31,9 @@ bool Renderer3d::does_show_axis(){
 void Renderer3d::draw_axis(){
     vec3 origin = {0, 0, 0};
 
-    vec3 point1 = {_s -> data.size.x,      0.0,               0.0        };
-    vec3 point2 = {       0.0,      _s -> data.size.y,       0.0        };
-    vec3 point3 = {       0.0,            0.0,          _s -> data.size.z};
+    vec3 point1 = {_s -> get_width(),      0.0,               0.0        };
+    vec3 point2 = {       0.0,      _s -> get_height(),       0.0        };
+    vec3 point3 = {       0.0,            0.0,          _s -> get_depth()};
 
     point1 = map_point(point1);
     point2 = map_point(point2);
@@ -84,17 +84,17 @@ bool Renderer3d::is_unitary_bound(vec3 v){
 }
 
 Renderer3d::Renderer3d(Simulation<vec3>* _s) : _s(_s){
-    render3d = render_modes3d[_s -> data.type];
+    render3d = render_modes3d[_s -> get_type()];
     rot_center = {
-        _s -> data.size.x / 4,
-        _s -> data.size.y/ 4,
-        _s -> data.size.z / 4
+        _s -> get_width() / 4,
+        _s -> get_height()/ 4,
+        _s -> get_depth() / 4
     };
 
     if (!glfwInit()) 
         return;
 
-    window = glfwCreateWindow(_s -> data.size.x, _s -> data.size.y, "Aster's simulation", nullptr, nullptr);
+    window = glfwCreateWindow(_s -> get_width(), _s -> get_height(), "Aster's simulation", nullptr, nullptr);
     
     if (!window) {
         glfwTerminate();
@@ -148,7 +148,7 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
 
     renderer -> distance += static_cast<float>(yoffset) * 100.0f * renderer -> distance / (renderer -> distance +1000);
     renderer -> distance = (renderer -> distance < .5) ? .5 : renderer -> distance;
-    renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> data.size.x) ?  10 * renderer -> _s -> data.size.x : renderer -> distance;
+    renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> get_width()) ?  10 * renderer -> _s -> get_width() : renderer -> distance;
 }
 
 void Renderer3d::draw_termal3d(){
@@ -159,7 +159,7 @@ void Renderer3d::draw_termal3d(){
     vec3 temp = {0,0,0};
     for (const auto& p : _s -> bodies){
 
-        double mult = _s -> data.size.z/std::max(temp.z, .001) + .2;
+        double mult = _s -> get_depth()/std::max(temp.z, .001) + .2;
         glColor3f(
             mult, mult, mult
         );
@@ -229,7 +229,7 @@ void Renderer3d::draw_minimal3d(){
     for (const auto& p : _s -> bodies){
         // if it's in the canva range it draws it 
         temp = map_point(p.position);
-        double mult = _s -> data.size.z/std::max(temp.z, .001) + .2;
+        double mult = _s -> get_depth()/std::max(temp.z, .001) + .2;
         glColor3f(
             mult, mult, mult
         );

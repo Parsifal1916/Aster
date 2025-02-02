@@ -31,8 +31,8 @@ class Simulation{
     Simulation<T>* set_vacuum_density(float d_);
     Simulation<T>* set_max_frames(unsigned int f_);
     Simulation<T>* set_sim_type(short type);
+    Simulation<T>* set_heat_capacity(double c_);
     Simulation<T>* load();
-
     Simulation<T>* add_graph(typename Graphs::Graph<T>::listener_fptr listener, bool for_each_body = false);
 
     bool has_loaded_yet() const;
@@ -40,8 +40,22 @@ class Simulation{
     T get_center() const;
     T get_corner(int n) const;
 
-    double get_time_passed() const ;
+    double get_height() const;
+    double get_width() const;
+    double get_depth() const;
+    double get_G() const;
+    double get_time_passed() const;
+    double get_c() const;
+    double get_c_sqr() const;
+    double get_dt() const;
+    double get_e_sqr() const;
+    double get_takeover() const;
+    double get_scale() const;
+
+    simulation_types get_type() const;
     
+    int get_cores() const;
+
     virtual void step() {}
 
     virtual void update_pair(Body<T>* b1){
@@ -60,8 +74,6 @@ class Simulation{
 
     func_ptr<T> update_body;
     force_func<T> get_force;
-    
-    sim_meta data;
     int obj;
 
     ClusterQueue<T> loading_queue;
@@ -69,7 +81,7 @@ class Simulation{
 
 
     protected:
-
+    sim_meta data;
     std::vector<Graphs::Graph<T>> graphs;
     
     double

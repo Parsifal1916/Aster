@@ -112,16 +112,16 @@ vec3 rng_point_in_sphere(double max_r, double min_r = 1){
 
 vec2 rng_vec(Simulation<vec2>* _s){
     return {
-        double(std::rand() % (int)(_s -> data.size.x)), 
-        double(std::rand() % (int)_s -> data.size.y)
+        double(std::rand() % (int)(_s  -> get_width())), 
+        double(std::rand() % (int)_s  -> get_height())
     };
 }
 
 vec3 rng_vec(Simulation<vec3>* _s){
     return {
-        double(std::rand() % (int)_s -> data.size.x), 
-        double(std::rand() % (int)_s -> data.size.y), 
-        double(std::rand() % (int)_s -> data.size.z)
+        double(std::rand() % (int)_s  -> get_width()), 
+        double(std::rand() % (int)_s  -> get_height()), 
+        double(std::rand() % (int)_s -> get_depth())
     };
 }
 
@@ -137,7 +137,7 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
     cluster.number = nums;
     cluster.name = "Disk";
 
-    double g_pull = nums *  _s -> data.G  * avr_mass;
+    double g_pull = nums *  _s -> get_G()  * avr_mass;
 
     cluster.builder = [g_pull, outer, inner, v, avr_mass, center ](Cluster<vec2> cl2d, size_t _) {
         vec2 pos = rng_point_in_circle(outer, inner);
@@ -171,7 +171,7 @@ void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass){
     cluster.size = _s -> get_center() *2;
     cluster.name = "cosmic web";
 
-    double g_pull = nums *  _s -> data.G  * avr_mass;
+    double g_pull = nums *  _s -> get_G()  * avr_mass;
 
     cluster.builder = [&noise, _s, avr_mass](Cluster<vec2> cl2d, size_t _) {
         vec2 pos = rng_vec(_s);
@@ -202,7 +202,7 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
     cluster.number = nums;
     cluster.name = "Disk";
 
-    double g_pull = nums *  _s -> data.G  * avr_mass;
+    double g_pull = nums *  _s -> get_G()  * avr_mass;
 
     cluster.builder = [g_pull, radius, v, avr_mass, center, thickness, rotation ](Cluster<vec3> cl3d, size_t _) {
         vec3 pos = rng_point_in_cylinder(radius, 1, thickness);
@@ -263,7 +263,7 @@ void cosmic_web(Simulation<vec3>* _s, int nums, double avr_mass){
     cluster.size = _s -> get_center() *2;
     cluster.name = "cosmic web";
 
-    double g_pull = nums *  _s -> data.G  * avr_mass;
+    double g_pull = nums *  _s -> get_G()  * avr_mass;
 
     cluster.builder = [&noise, _s, avr_mass](Cluster<vec3> cl3d, size_t _) {
         vec3 pos = rng_vec(_s);

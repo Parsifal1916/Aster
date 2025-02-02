@@ -93,7 +93,7 @@ Barnes_Hut<T>::Barnes_Hut(){
     this -> update_body = update_funcs<T>[this -> data.selected_update];
     this -> data.graph_height *= this -> data.size.y;
 
-    this -> threads.reserve(this -> data.NUM_THREADS);
+    this -> threads.reserve(this -> get_cores());
     this -> obj = this -> bodies.size(); 
 }
 
@@ -113,9 +113,9 @@ void Barnes_Hut<T>::step(){
 template <typename T> 
 void Barnes_Hut<T>::make_sections(){
     sections.clear();
-    int mult = this -> bodies.size() / this -> data.NUM_THREADS;
+    int mult = this -> bodies.size() / this -> get_cores();
 
-    for (int i = 0; i < this -> data.NUM_THREADS-1; ++i)
+    for (int i = 0; i < this -> get_cores()-1; ++i)
         sections.emplace_back(i*mult);
 
     sections.emplace_back(this -> bodies.size());
@@ -255,7 +255,7 @@ void Barnes_Hut<T>::get_node_body(size_t node, Body<T>* body){
 template <typename T>
 void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
     unsigned int mult, start, stop;
-    mult = _s -> obj/_s -> data.NUM_THREADS;
+    mult = _s -> obj/_s -> get_cores();
     start = index * mult;
     stop = (index + 1) * mult;
 
@@ -274,7 +274,7 @@ template <typename T>
 void Barnes_Hut<T>::update_bodies(){
     this -> obj = this ->bodies.size();
 
-    for (int i = 0; i < this -> data.NUM_THREADS; ++i)
+    for (int i = 0; i < this -> get_cores(); ++i)
         this -> threads.emplace_back(std::thread(update_bundle<T> , this, i));
 
     for (auto& t : threads)

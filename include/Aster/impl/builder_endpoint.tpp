@@ -103,6 +103,76 @@ Simulation<T>* Simulation<T>::add_graph(typename Graphs::Graph<T>::listener_fptr
 }
 
 template <typename T>
+Simulation<T>* Simulation<T>::set_heat_capacity(double c_){
+    assert(c_ && "heat capacity cannot be 0");
+    data.avr_heat_capacity = c_;
+    return this;
+}
+
+template <typename T>
+double Simulation<T>::get_height() const{
+    return this -> data.size.y;
+}
+
+template <typename T>
+double Simulation<T>::get_width() const{
+    return this -> data.size.x;
+}
+
+template <typename T>
+double Simulation<T>::get_depth() const{
+    return this -> data.size.z;
+}
+
+template <typename T>
+int Simulation<T>::get_cores() const{
+    return this -> data.NUM_THREADS;
+};
+
+template <typename T>
+double Simulation<T>::get_G() const{
+    return this -> data.G;
+};
+
+template <typename T>
+simulation_types Simulation<T>::get_type() const{
+    return this -> data.type;
+};
+
+
+template <typename T>
+double Simulation<T>::get_c() const{
+    return this -> data.c;
+}
+
+template <typename T>
+double Simulation<T>::get_c_sqr() const{
+    return this -> data.c_squared;
+}
+
+template <typename T>
+double Simulation<T>::get_dt() const{
+    return this -> data.dt;
+}
+
+template <typename T>
+double Simulation<T>::get_e_sqr() const{
+    return this -> data.e_squared;
+}
+
+template <typename T>
+double Simulation<T>::get_takeover() const{
+    return this -> data.takeover;
+}
+
+template <typename T>
+double Simulation<T>::get_scale() const{
+    return this -> data.simulation_scale;
+}
+
+
+
+template <typename T>
 void Simulation<T>::trigger_all_graphs(){
     for (auto& graph : graphs)
         graph.trigger();
@@ -194,7 +264,7 @@ Parallelized<T>::Parallelized(sim_meta m){
     this -> update_body = update_funcs<T>[this -> data.selected_update];
     this -> data.graph_height *= this -> data.size.y;
 
-    this -> threads.reserve(this -> data.NUM_THREADS); 
+    this -> threads.reserve(this -> get_cores()); 
     this -> obj = this -> bodies.size();
 }
 
@@ -205,14 +275,14 @@ Parallelized<T>::Parallelized(){
     this -> update_body = update_funcs<T>[this -> data.selected_update];
     this -> data.graph_height *= this -> data.size.y;
 
-    this -> threads.reserve(this -> data.NUM_THREADS); 
+    this -> threads.reserve(this -> get_cores()); 
     this -> obj = this -> bodies.size();
 }
 
 template <typename T>
 void Parallelized<T>::step(){
     this -> obj = this -> bodies.size(); 
-    for (int i = 0; i < this -> data.NUM_THREADS; ++i)
+    for (int i = 0; i < this -> get_cores(); ++i)
         this -> threads.push_back(std::thread(update_bundle<T>, this, i));
 
     for (auto& t : threads)
@@ -231,11 +301,11 @@ void Parallelized<T>::step(){
 */
 template <typename T>
 Parallelized<T>* Parallelized<T>::set_max_threads(unsigned int t_){
-    this -> data.NUM_THREADS = t_;
+    this -> get_cores() = t_;
     if (t_ == 0)
-        this -> data.NUM_THREADS = 1;
-    if (this -> obj < this -> data.NUM_THREADS)
-        this -> data.NUM_THREADS = this -> obj;
+        this -> get_cores() = 1;
+    if (this -> obj < this -> get_cores())
+        this -> get_cores() = this -> obj;
 
         return this;
 }
@@ -244,7 +314,7 @@ Parallelized<T>* Parallelized<T>::set_max_threads(unsigned int t_){
 template <typename T> 
 void update_bundle(Simulation<T>* _s, unsigned short index){
     unsigned int mult, start, stop;
-    mult = _s -> obj/_s -> data.NUM_THREADS;
+    mult = _s -> obj/_s -> get_cores();
     start = index * mult;
     stop = (index + 1) * mult;
           

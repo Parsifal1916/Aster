@@ -94,10 +94,10 @@ void Graph<T>::update_data(){
         assert(_s -> bodies.size() == data.size() && "The number of bodies has changed over time, cannot generate the graph properly");
 
         std::vector<std::thread> ts;
-        int step = _s -> bodies.size() / _s -> data.NUM_THREADS; 
+        int step = _s -> bodies.size() / _s -> get_cores(); 
         int tot = _s -> bodies.size();
 
-        for (int i = 0; i < _s -> data.NUM_THREADS; ++i)
+        for (int i = 0; i < _s -> get_cores(); ++i)
             ts.emplace_back([this, i, step, tot](){
                 int start = step*i;
                 int stop = (step*(i+2) > tot) ? tot : step*(i*1);
