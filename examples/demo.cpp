@@ -18,7 +18,7 @@ double collect(Graphs::Graph<vec2>* graph, Simulation<vec2>* sim, Body<vec2>* bo
 }
 
 int main(){
-    auto* sim = bake3d(LIGHT);
+    auto* sim = bake3d(BARNES_HUT);
     cosmic_web(sim, 1e4, 10e10);
     //add_disk3d(sim, 1e4, sim -> get_center(), 60e1, .3, {}, 10e10);
     //add_disk3d(sim, 1e4, sim -> get_corner(0), 60e1, .3, {90, 45, 0}, 10e10);
