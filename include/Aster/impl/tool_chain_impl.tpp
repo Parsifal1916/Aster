@@ -19,6 +19,144 @@ double d2 = -std::pow(2.0, 1.0/3.0) *d1;
 //===---------------------------------------------------------===//
 
 
+const double PI = 3.141592653589793238462643383279;
+
+template <typename T>
+double get_eccentricity(Simulation<T>* _s, Body<T>* body, double relv_sq, double w_squared,  double radius, double mass2){
+    double mu = _s -> get_G() * (body -> mass + mass2);
+    double reduced_mass  = body -> mass * mass2 / (body -> mass + mass2 ); 
+    double orbital_energy = relv_sq / 2 - mu / radius;
+
+    return 1 + 2 * orbital_energy * w_squared / (reduced_mass * mu * mu + _s -> get_e_sqr());
+}
+
+
+
+template <typename T>
+void compute_rad_pressure(Simulation<T>* _s, Body<T>* body, T pos, double temp){
+    T vec = (pos - body -> position);
+    double r_sq = vec.sqr_magn();
+    double force = _s -> get_boltzmann() * std::pow(body -> temp, 4) / (4 * PI * r_sq * _s -> get_c());
+
+    body -> acceleration += - vec.normalize() * force / body -> mass;
+}
+
+template <>
+void compute_rad_pressure(Simulation<vec2>* _s, Body<vec2>* body, vec2 pos, double temp){
+    vec2 vec = (pos - body -> position);
+    double r_sq = vec.sqr_magn();
+    double force = _s -> get_boltzmann() * std::pow(body -> temp, 4) / (4 * PI * r_sq * _s -> get_c());
+
+    body -> acceleration += - vec.normalize() * force / body -> mass;
+}
+
+template <typename T>
+void get_new_temp(Simulation<T>* _s, Body<T>* body, Body<T>* body2){
+    /*
+    * we are trying to compute the delta T so we use the formula 
+    *  21 * G * M * m * n * e²
+    *  ------------------------ = E_t
+    *         2 * r^6
+
+    * from here it is trival, we can just divide by the mass and a coeff and multiply 
+    * byt dt to get the delta T 
+    */
+
+    T rel_v = body2 -> velocity - body -> velocity;
+    double relv_sq = rel_v.sqr_magn();
+    double r = (body -> position - body2 -> position).magnitude();
+    /*
+    * omega^2 = |V|^2 - (V x A / |A|) ^2 
+    * omega being the hypotenuse of a right triangle
+    * of sidelenghts equal to the velocity and the
+    * projection of the velocity onto the acceleration
+    */
+    double ang_speed= std::sqrt(relv_sq - std::pow((rel_v * body -> acceleration)/ body -> acceleration.magnitude(), 2));
+
+    double eccentricity = get_eccentricity<T>(_s, body, relv_sq, ang_speed, r, body2 -> mass);
+
+    double delta_temperature = 21.0 / 2.0 * _s -> get_G()  * body -> mass * body -> mass * eccentricity * ang_speed / (r*r*r*r*r*r);
+    delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
+    delta_temperature /= body -> mass* _s -> get_heat_capacity(); // then we get how many K the body got in dt 4
+
+    // boltzmann
+    delta_temperature -= _s -> get_boltzmann() * std::pow(body -> temp, 4) / ( _s -> get_heat_capacity() * body -> mass);
+
+    body -> temp += delta_temperature; // done! 
+}
+
+template <>
+void get_new_temp<vec3>(Simulation<vec3>* _s, Body<vec3>* body, vec3 pos, vec3 vel, double temp, double mass){ 
+    /*
+    * we are trying to compute the delta T so we use the formula 
+    *  21 * G * M * m * n * e²
+    *  ------------------------ = E_t
+    *         2 * r^6
+
+    * from here it is trival, we can just divide by the mass and a coeff and multiply 
+    * byt dt to get the delta T 
+    */
+
+    vec3 rel_v = body -> velocity - vel;
+    double relv_sq = rel_v.sqr_magn();
+    double r = (body -> position - pos).magnitude();
+    /*
+    * omega^2 = |V|^2 - (V x A / |A|) ^2 
+    * omega being the hypotenuse of a right triangle
+    * of sidelenghts equal to the velocity and the
+    * projection of the velocity onto the acceleration
+    */
+    double w_squared = std::sqrt(relv_sq - std::pow((rel_v * body -> acceleration)/ body -> acceleration.magnitude(), 2));
+
+    double eccentricity = get_eccentricity<vec3>(_s, body, relv_sq, w_squared, r, mass);
+
+    double delta_temperature = 21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
+    delta_temperature /= body -> mass * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
+
+    // boltzmann
+    delta_temperature -= _s -> get_boltzmann() * std::pow(body -> temp, 4) / ( _s -> get_heat_capacity() * body -> mass);
+
+    body -> temp +=  delta_temperature; // done! 
+}
+
+template <>
+void get_new_temp<vec2>(Simulation<vec2>* _s, Body<vec2>* body, vec2 pos, vec2 vel, double temp, double mass){
+    /*
+    * we are trying to compute the delta T so we use the formula 
+    *  21 * G * M * m * n * e²
+    *  ------------------------ = E_t
+    *         2 * r^6
+
+    * from here it is trival, we can just divide by the mass and a coeff and multiply 
+    * byt dt to get the delta T 
+    */
+
+    vec2 rel_v = body -> velocity - vel;
+    double relv_sq = rel_v.sqr_magn();
+    double r = (body -> position - pos).magnitude();
+    /*
+    * omega^2 = |V|^2 - (V x A / |A|) ^2 
+    * omega being the hypotenuse of a right triangle
+    * of sidelenghts equal to the velocity and the
+    * projection of the velocity onto the acceleration
+    */
+    double w_squared = (body -> acceleration * (rel_v * body -> acceleration) / body -> acceleration.sqr_magn()).sqr_magn();
+
+    double eccentricity = get_eccentricity<vec2>(_s, body, relv_sq, w_squared, r, mass);
+
+    double delta_temperature = 21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
+    delta_temperature /= body -> mass * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
+
+    // boltzmann
+    delta_temperature -= _s -> get_boltzmann() * std::pow(body -> temp, 4) / ( _s -> get_heat_capacity() * body -> mass);
+
+    body -> temp +=  delta_temperature; // done! 
+}
+
+
+
 template <>
 void update_euler(Body<vec2>* b, Simulation<vec2>* _s){
     b -> velocity += b -> acceleration* _s -> get_dt() ;
@@ -69,10 +207,10 @@ vec2 pn2(double m1, double m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2, Simulation<ve
 
     double correction = std::exp(-r*r/_s -> get_takeover())*_s -> get_e_sqr();
     vec2 a_newton = n * _s -> get_G() *m1*m2/(r*r);
-    vec2 pn1 = ( n*(4 + 2*m_ratio)*term1*_s -> get_c_sqr() - v*n*(1+ 3*m_ratio) + v*n*v*4 - v*n*n*3/2) * term1 ;
-    vec2 pn25 = (v*n)*v*-8/5 * _s -> get_G()* _s -> get_G()*m1*m2*(m1+m2)/(_s -> get_c_sqr() * _s -> get_c_sqr()* _s -> get_c()*r*r*r);
+    //vec2 pn1 = ( n*(4 + 2*m_ratio)*term1*_s -> get_c_sqr() - v*n*(1+ 3*m_ratio) + v*n*v*4 - v*n*n*3/2) * term1 ;
+    //vec2 pn25 = (v*n)*v*-8/5 * _s -> get_G()* _s -> get_G()*m1*m2*(m1+m2)/(_s -> get_c_sqr() * _s -> get_c_sqr()* _s -> get_c()*r*r*r);
 
-    return a_newton + pn1 + pn25 + n*correction;
+    return a_newton;// + pn1 + pn25 + n*correction;
 }
 
 template <>
@@ -154,10 +292,10 @@ vec3 pn2(double m1, double m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<ve
 
     double correction = std::exp(-r*r/_s -> get_takeover())*_s -> get_e_sqr();
     vec3 a_newton = n * _s -> get_G() *m1*m2/(r*r);
-    vec3 pn1 = ( n*(4 + 2*m_ratio)*term1*_s -> get_c_sqr() - v*n*(1+ 3*m_ratio) + v*n*v*4 - v*n*n*3/2) * term1 ;
-    vec3 pn25 = (v*n)*v*-8/5 * _s -> get_G()* _s -> get_G()*m1*m2*(m1+m2)/(_s -> get_c_sqr() * _s -> get_c_sqr()* _s -> get_c()*r*r*r);
+    //vec3 pn1 = ( n*(4 + 2*m_ratio)*term1*_s -> get_c_sqr() - v*n*(1+ 3*m_ratio) + v*n*v*4 - v*n*n*3/2) * term1 ;
+    //vec3 pn25 = (v*n)*v*-8/5 * _s -> get_G()* _s -> get_G()*m1*m2*(m1+m2)/(_s -> get_c_sqr() * _s -> get_c_sqr()* _s -> get_c()*r*r*r);
 
-    return a_newton + pn1 + pn25 + n*correction;
+    return a_newton;// + pn1 + pn25 + n*correction;
 }
 
 template <>

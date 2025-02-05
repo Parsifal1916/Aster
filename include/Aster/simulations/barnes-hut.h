@@ -15,7 +15,10 @@ namespace Barnes{
 .                    // Nodes definition                                              //
 .                    //===---------------------------------------------------------===*/
 
+template <typename T> class Barnes_Hut;
+
 template <typename T> T pick_newpos(Simulation<T>* _s);
+template <typename T> void compute_tidal_heating(Barnes_Hut<T>* _s, Body<T>* body);
 
 template <typename T>
 struct Node{
@@ -71,6 +74,7 @@ class Barnes_Hut: public Simulation<T>{
     void init_node(Node<T>& _n, Body<T>* b) const;
     void make_sections();
     size_t subdivide(int n);
+    friend void compute_tidal_heating<T>(Barnes_Hut<T>* _s, Body<T>* body);
 };
 
 template <typename T>

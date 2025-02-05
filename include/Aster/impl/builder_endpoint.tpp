@@ -170,7 +170,15 @@ double Simulation<T>::get_scale() const{
     return this -> data.simulation_scale;
 }
 
+template <typename T>
+double Simulation<T>::get_heat_capacity() const{
+    return this -> data.avr_heat_capacity;
+}
 
+template <typename T>
+double Simulation<T>::get_boltzmann() const{
+    return this -> data.boltzmann;
+}
 
 template <typename T>
 void Simulation<T>::trigger_all_graphs(){
@@ -234,6 +242,7 @@ SingleThread<T>::SingleThread(sim_meta m){
 template <typename T>
 SingleThread<T>::SingleThread(){
     this -> data = sim_meta();
+        this -> data.type = LIGHT;
     this -> get_force = force_funcs<T>[this -> data.selected_force];
     this -> update_body = update_funcs<T>[this -> data.selected_update];
     this -> data.graph_height *= this -> data.size.y;
@@ -271,6 +280,7 @@ Parallelized<T>::Parallelized(sim_meta m){
 template <typename T>
 Parallelized<T>::Parallelized(){
     this -> data = sim_meta();
+    this -> data.type = HEAVY;
     this -> get_force = force_funcs<T>[this -> data.selected_force];
     this -> update_body = update_funcs<T>[this -> data.selected_update];
     this -> data.graph_height *= this -> data.size.y;

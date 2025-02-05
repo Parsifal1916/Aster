@@ -20,7 +20,7 @@ TEST_CASE("Simulation inits and destructors test", "[building]") {
             -> set_max_frames(2)
         ;
 
-        REQUIRE(simulation -> data.dt == Approx(.1));
+        REQUIRE(simulation -> get_dt() == Approx(.1));
 
         free(simulation);
     }
@@ -36,7 +36,7 @@ TEST_CASE("Simulation inits and destructors test", "[building]") {
             -> set_max_frames(2)
         ;
 
-        REQUIRE(simulation -> data.dt == Approx(.1));
+        REQUIRE(simulation -> get_dt() == Approx(.1));
 
         free(simulation);
     }

@@ -28,6 +28,8 @@ bool Renderer3d::does_show_axis(){
     return show_axis_b;
 }
 
+
+
 void Renderer3d::draw_axis(){
     vec3 origin = {0, 0, 0};
 

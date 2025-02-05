@@ -19,7 +19,7 @@ struct vec2 {
     vec2 operator-() const;
     vec2& operator+=(const vec2& other);
     bool operator==(const vec2& other) const;
-    vec2 operator*(const vec2& other) const;
+    double operator*(const vec2& other) const;
     vec2 operator*(const int& other) const;
     vec2& operator/=(const double& other);
     float magnitude();
@@ -49,7 +49,7 @@ struct vec3 {
     vec3 operator-() const;
     vec3& operator+=(const vec3& other);
     bool operator==(const vec3& other) const;
-    vec3 operator*(const vec3& other) const;
+    double operator*(const vec3& other) const;
     vec3 operator*(const int& other) const;
     vec3& operator/=(const double& other);
     float magnitude();

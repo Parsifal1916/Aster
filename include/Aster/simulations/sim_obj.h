@@ -51,6 +51,8 @@ class Simulation{
     double get_e_sqr() const;
     double get_takeover() const;
     double get_scale() const;
+    double get_heat_capacity() const;
+    double get_boltzmann() const;
 
     simulation_types get_type() const;
     

@@ -63,7 +63,7 @@ void Node<T>::merge(Body<T>* _b){
     center_of_mass = (_b -> position * _b -> mass + center_of_mass * mass) / (mass + _b -> mass); 
     mass += _b -> mass;
     velocity += _b -> velocity;
-    temp = (temp + _b -> temp) / 2;
+    temp = std::max(double(temp), _b -> temp);
 }
 
 template <typename T>
@@ -71,7 +71,7 @@ void Node<T>::add_twob(Body<T>* _b, Node<T>* _n){
     assert(this -> is_empty());
     mass = _b -> mass + _n -> mass;
     velocity = _b -> velocity + _n -> velocity;
-    temp = (_b -> temp + _n -> temp)/2;
+    temp = std::max(double(temp), _b -> temp);
     center_of_mass = (_b -> position * _b -> mass  + _n -> center_of_mass * _n -> mass) / mass;
 }
 
@@ -89,6 +89,7 @@ Barnes_Hut<T>::Barnes_Hut(){
         num_childs = 8;
     
     this -> data = sim_meta();
+    this -> data.type = BARNES_HUT;
     this -> get_force = force_funcs<T>[this -> data.selected_force];
     this -> update_body = update_funcs<T>[this -> data.selected_update];
     this -> data.graph_height *= this -> data.size.y;
@@ -267,6 +268,8 @@ void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
         _s -> get_node_body(0, body);
         _s -> update_body(body, _s);
 
+        compute_tidal_heating(_s, body);
+
     }
 }
 
@@ -283,6 +286,19 @@ void Barnes_Hut<T>::update_bodies(){
     this -> threads.clear();
 }
 
+template <typename T> 
+void compute_tidal_heating(Barnes_Hut<T>* _s, Body<T>* body ){
+    for (int i = _s -> nodes[0].child; i < _s -> num_childs + _s -> nodes[0].child; ++i){
+        if (i > _s -> bodies.size()) return;
+        Node<T>& cnode = _s -> nodes[i];
+        
+        get_new_temp<T>(_s,
+            body, cnode.center_of_mass, 
+            cnode.velocity, cnode.temp, 
+            cnode.mass
+        );
+    }
+}
 
 template <typename T>
 void Barnes_Hut<T>::make_tree(){

@@ -7,7 +7,7 @@
 
 #include "Aster/graphics/3d_graphics.h"
 #include "Aster/graphics/2d_graphics.h"
-#include "Aster/graphics/inferno_scale.h"
+#include "Aster/graphics/color_scale.h"
 #include "Aster/graphics/animations.h"
 
 #include "Aster/simulations/BHT_sim.h"
@@ -136,19 +136,22 @@ void Renderer2d::body_update_func(){
     
 
 void Renderer2d::draw_termal(){
-    glClearColor(0.f, 0.f, 0.f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glBegin(GL_POINTS);
 
     glPointSize(10);
+    double temp = 0;
     
     for (const auto& p : _s -> bodies){
-        glColor3f(1.0, 1.0, 1.0);
-        // if it's in the canva range it draws it  
+        temp += p.temp;
+        int index = int(get_coloring_index(p.temp)*255);
+        glColor3f(color_scale[index][0], color_scale[index][1], color_scale[index][2]);
 		glVertex2f(
-		    2.f * p.position.x/ (_s -> get_height()) - 1, 
-		    2.f * p.position.y/ (_s -> get_width()) - 1
+		    2.f *p.position.x/ (_s -> get_width()) - 1, 
+		    2.f * p.position.y/ (_s -> get_height()) - 1
 		);
+
+
     }
 
     glEnd();
@@ -164,8 +167,8 @@ void Renderer2d::draw_minimal(){
     for (const auto& p : _s -> bodies){
         glColor3f(1.0, 1.0, 1.0);
 		glVertex2f(
-		    2.f * p.position.x/ (_s -> get_height()) - 1, 
-		    2.f * p.position.y/ (_s -> get_width()) - 1
+		    2.f * p.position.x/ (_s -> get_width()) - 1, 
+		    2.f * p.position.y/ (_s -> get_height()) -1
 		);
     }
 
@@ -182,8 +185,8 @@ void Renderer2d::draw_detailed(){
         glColor3f(1.0, 0.0, 0.0);    
         glPointSize(std::log(p.mass)/10);  
 		glVertex2f(
-		    2.f * p.position.x/ (_s -> get_height()) - 1, 
-		    2.f * p.position.y/ (_s -> get_width()) - 1
+		    2.f * p.position.x/ (_s -> get_width()) - 1, 
+		    2.f * p.position.y/ (_s -> get_height()) - 1
 		);
     }
 

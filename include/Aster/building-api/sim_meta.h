@@ -19,12 +19,12 @@ struct sim_meta{
     };
 
     double  
-        avr_heat_capacity = 1,
+        avr_heat_capacity = 2e3,
         H_0 = 10,
         G = 6e-11,
         c = 299'792'458,
         c_squared = c*c,
-        boltzmann = 5.67e-8,
+        boltzmann = 1.380649e-23,
         pi = 3.141592,
         simulation_scale = 2, // meters / meters
         graph_height = 3/4

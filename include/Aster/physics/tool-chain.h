@@ -64,14 +64,20 @@ std::map<std::string, force_func<T>> force_funcs = {
     {"Pn2", pn2<T>}
 };
 
-template <typename T>
-double get_eccentricity(struct sim_meta* meta, Body<T>* body, T vel, double radius);
+
 
 template <typename T>
-void get_new_temp(struct sim_meta* meta, Body<T>* body, Body<T>* body2);
+double get_eccentricity(Simulation<T>* _s, Body<T>* body, double relv_sq, double w_squared,  double radius, double mass2);
 
 template <typename T>
-void get_new_temp(struct sim_meta* meta, Body<T>* body, T pos, T vel, double temp);
+void get_new_temp(Simulation<T>* _s, Body<T>* body, Body<T>* body2);
+
+template <typename T>
+void get_new_temp(Simulation<T>* _s, Body<T>* body, T pos, T vel, double temp, double mass);
+
+template <typename T>
+void compute_rad_pressure(Simulation<T>* _s, Body<T>* body, T pos, double temp);
+ 
 
 //===---------------------------------------------------------===//
 // Cosmology stuff                                               //
