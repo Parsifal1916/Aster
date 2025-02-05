@@ -3,8 +3,6 @@
 #include <vector>
 #include <unordered_map>
 #include <iomanip>
-
-#include "Aster/graphics/inferno_scale.h"
 #include "Aster/simulations/sim_obj.h"
 
 namespace Aster{

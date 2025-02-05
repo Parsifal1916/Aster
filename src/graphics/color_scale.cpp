@@ -1,4 +1,4 @@
-#include "Aster/graphics/inferno_scale.h"
+#include "Aster/graphics/color_scale.h"
 #include <vector>
 
 namespace Aster{

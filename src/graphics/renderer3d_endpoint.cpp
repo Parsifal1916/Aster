@@ -6,7 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Aster/graphics/3d_graphics.h"
-#include "Aster/graphics/inferno_scale.h"
+#include "Aster/graphics/color_scale.h"
 
 
 namespace Aster{
