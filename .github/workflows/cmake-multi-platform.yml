@@ -24,7 +24,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2 
-
     - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
@@ -33,14 +32,12 @@ jobs:
         echo "CPATH=/System/Library/Frameworks/GLUT.framework/Headers:/opt/homebrew/include" >> $GITHUB_ENV
         echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
         echo "LIBRARY_PATH=/System/Library/Frameworks" >> $GITHUB_ENV
-
-    - name: Setup MinGW and GLEW (Windows)
+    - name: Setup dependencies (Windows)
       if: matrix.os == 'windows-latest'
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: MINGW64
-        install: mingw-w64-x86_64-gcc mingw-w64-x86_64-glew mingw-w64-x86_64-glfw
-
+      shell: pwsh
+      run: |
+        vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows freeglut:x64-windows catch2:x64-windows
+        "CMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
     - name: Configure CMake (macOS)
       if: matrix.os == 'macos-latest'
       run: |
@@ -48,19 +45,15 @@ jobs:
               -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }} \
               -DCPATH=${{ env.CPATH }} \
               -DLIBRARY_PATH=${{ env.LIBRARY_PATH }}
-
-    - name: Configure CMake (Windows - MinGW)
+    - name: Configure CMake (Windows)
       if: matrix.os == 'windows-latest'
-      shell: msys2 {0}
+      shell: pwsh
       run: |
-        cmake -G "MinGW Makefiles" -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-              -DCMAKE_PREFIX_PATH=/mingw64
-
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }}
     - name: Configure CMake (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }}
 
@@ -69,7 +62,6 @@ jobs:
       shell: bash
       run: |
         ctest -C ${{ matrix.build_type }} --output-on-failure
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
