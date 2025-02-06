@@ -38,7 +38,6 @@ jobs:
       if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
-        vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows freeglut:x64-windows catch2:x64-windows
         choco install mingw -y
         echo "C:\ProgramData\chocolatey\bin" >> $GITHUB_PATH
 
