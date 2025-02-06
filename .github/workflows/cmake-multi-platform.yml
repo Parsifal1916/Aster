@@ -34,12 +34,12 @@ jobs:
         echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
         echo "LIBRARY_PATH=/System/Library/Frameworks" >> $GITHUB_ENV
 
-    - name: Setup dependencies (Windows - MinGW)
+    - name: Setup MinGW and GLEW (Windows)
       if: matrix.os == 'windows-latest'
-      shell: pwsh
-      run: |
-        choco install mingw -y
-        echo "C:\ProgramData\chocolatey\bin" >> $GITHUB_PATH
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        install: mingw-w64-x86_64-gcc mingw-w64-x86_64-glew mingw-w64-x86_64-glfw
 
     - name: Configure CMake (macOS)
       if: matrix.os == 'macos-latest'
@@ -51,9 +51,10 @@ jobs:
 
     - name: Configure CMake (Windows - MinGW)
       if: matrix.os == 'windows-latest'
-      shell: pwsh
+      shell: msys2 {0}
       run: |
-        cmake -G "MinGW Makefiles" -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        cmake -G "MinGW Makefiles" -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DCMAKE_PREFIX_PATH=/mingw64
 
     - name: Configure CMake (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
