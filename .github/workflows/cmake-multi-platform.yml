@@ -34,12 +34,12 @@ jobs:
         echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/glew:/opt/homebrew/opt/glfw:/opt/homebrew/opt/catch2" >> $GITHUB_ENV
         echo "LIBRARY_PATH=/System/Library/Frameworks" >> $GITHUB_ENV
 
-    - name: Setup dependencies (Windows)
+    - name: Setup dependencies (Windows - MinGW)
       if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
-        vcpkg install opengl:x64-windows glew:x64-windows glfw3:x64-windows freeglut:x64-windows catch2:x64-windows
-        "CMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        choco install mingw -y
+        echo "C:\ProgramData\chocolatey\bin" >> $GITHUB_PATH
 
     - name: Configure CMake (macOS)
       if: matrix.os == 'macos-latest'
@@ -49,11 +49,11 @@ jobs:
               -DCPATH=${{ env.CPATH }} \
               -DLIBRARY_PATH=${{ env.LIBRARY_PATH }}
 
-    - name: Configure CMake (Windows)
+    - name: Configure CMake (Windows - MinGW)
       if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }}
+        cmake -G "MinGW Makefiles" -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Configure CMake (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
