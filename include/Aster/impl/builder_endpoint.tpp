@@ -193,12 +193,12 @@ bool Simulation<T>::has_loaded_yet() const {
 
 template <>
 inline vec2 Simulation<vec2>::get_center() const{
-    return {data.size.x, data.size.y};
+    return {data.size.x/2, data.size.y/2};
 }
 
 template <>
 inline vec3 Simulation<vec3>::get_center() const{
-    return data.size;
+    return data.size/2;
 }
 
 template <>

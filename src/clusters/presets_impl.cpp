@@ -320,6 +320,9 @@ Simulation<vec3>* bake3d(simulation_types s){
     case BARNES_HUT:
         return new Barnes::Barnes_Hut<vec3>();   
 
+    case BH_termal:
+        return new Barnes::BHT<vec3>();   
+
     default:
         break;  
     }

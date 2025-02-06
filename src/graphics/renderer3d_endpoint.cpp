@@ -153,30 +153,6 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
     renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> get_width()) ?  10 * renderer -> _s -> get_width() : renderer -> distance;
 }
 
-void Renderer3d::draw_termal3d(){
-    glBegin(GL_POINTS);
-
-    glPointSize(10);    
-
-    vec3 temp = {0,0,0};
-    for (const auto& p : _s -> bodies){
-
-        double mult = _s -> get_depth()/std::max(temp.z, .001) + .2;
-        glColor3f(
-            mult, mult, mult
-        );
-    
-    
-        if (is_unitary_bound(temp))        // if it's in the canva range it draws it 
-            glVertex2f(
-                temp.x, 
-                temp.y
-            );
-    }
-
-    glEnd();
-}
-
 void Renderer3d::reset_mouse(){
     clicked = false;
     mouse_init_pos = {0,0};
@@ -215,6 +191,32 @@ void Renderer3d::handle_displacement(){
 
     sin_x_theta = sin(x_theta);
     sin_y_theta = sin(y_theta); 
+}
+
+
+void Renderer3d::draw_termal3d(){
+    glBegin(GL_POINTS);
+
+    glPointSize(10);    
+
+    vec3 temp = {0,0,0};
+    int index;
+    for (const auto& p : _s -> bodies){
+        // if it's in the canva range it draws it 
+        temp = map_point(p.position);
+
+        index = int(get_coloring_index(p.temp)*255);
+        glColor3f(color_scale[index][0], color_scale[index][1], color_scale[index][2]);
+    
+        //std::cout << std::abs(distance/(temp.z*temp.z)) << "\n";
+        if (is_unitary_bound(temp))
+            glVertex2f( 
+                temp.x, 
+                temp.y
+            );
+    }
+
+    glEnd();
 }
 
 /*

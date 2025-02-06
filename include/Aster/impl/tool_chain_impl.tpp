@@ -50,41 +50,6 @@ void compute_rad_pressure(Simulation<vec2>* _s, Body<vec2>* body, vec2 pos, doub
     body -> acceleration += - vec.normalize() * force / body -> mass;
 }
 
-template <typename T>
-void get_new_temp(Simulation<T>* _s, Body<T>* body, Body<T>* body2){
-    /*
-    * we are trying to compute the delta T so we use the formula 
-    *  21 * G * M * m * n * e²
-    *  ------------------------ = E_t
-    *         2 * r^6
-
-    * from here it is trival, we can just divide by the mass and a coeff and multiply 
-    * byt dt to get the delta T 
-    */
-
-    T rel_v = body2 -> velocity - body -> velocity;
-    double relv_sq = rel_v.sqr_magn();
-    double r = (body -> position - body2 -> position).magnitude();
-    /*
-    * omega^2 = |V|^2 - (V x A / |A|) ^2 
-    * omega being the hypotenuse of a right triangle
-    * of sidelenghts equal to the velocity and the
-    * projection of the velocity onto the acceleration
-    */
-    double ang_speed= std::sqrt(relv_sq - std::pow((rel_v * body -> acceleration)/ body -> acceleration.magnitude(), 2));
-
-    double eccentricity = get_eccentricity<T>(_s, body, relv_sq, ang_speed, r, body2 -> mass);
-
-    double delta_temperature = 21.0 / 2.0 * _s -> get_G()  * body -> mass * body -> mass * eccentricity * ang_speed / (r*r*r*r*r*r);
-    delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
-    delta_temperature /= body -> mass* _s -> get_heat_capacity(); // then we get how many K the body got in dt 4
-
-    // boltzmann
-    delta_temperature -= _s -> get_boltzmann() * std::pow(body -> temp, 4) / ( _s -> get_heat_capacity() * body -> mass);
-
-    body -> temp += delta_temperature; // done! 
-}
-
 template <>
 void get_new_temp<vec3>(Simulation<vec3>* _s, Body<vec3>* body, vec3 pos, vec3 vel, double temp, double mass){ 
     /*
@@ -96,28 +61,34 @@ void get_new_temp<vec3>(Simulation<vec3>* _s, Body<vec3>* body, vec3 pos, vec3 v
     * from here it is trival, we can just divide by the mass and a coeff and multiply 
     * byt dt to get the delta T 
     */
+    // sketchy edge case...
+    if (body -> acceleration.sqr_magn()) return;
 
     vec3 rel_v = body -> velocity - vel;
     double relv_sq = rel_v.sqr_magn();
     double r = (body -> position - pos).magnitude();
+    
     /*
-    * omega^2 = |V|^2 - (V x A / |A|) ^2 
-    * omega being the hypotenuse of a right triangle
-    * of sidelenghts equal to the velocity and the
-    * projection of the velocity onto the acceleration
+    * omega is the angular velocity of the body
+    * thus it can be calculated by getting the perpendicular
+    * vector to the projection of the velocity onto the acceleration
+    * assuming the acceleration comes purely from the mutual
+    * attraction between the bodies
+    * ergo 
+    * W  = V x a / a x a * vec(a)
     */
-    double w_squared = std::sqrt(relv_sq - std::pow((rel_v * body -> acceleration)/ body -> acceleration.magnitude(), 2));
+    double w_squared = (body -> acceleration * (rel_v * body -> acceleration) / (body -> acceleration.sqr_magn())).sqr_magn();
 
     double eccentricity = get_eccentricity<vec3>(_s, body, relv_sq, w_squared, r, mass);
 
-    double delta_temperature = 21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    double delta_temperature = 1;//21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
     delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
     delta_temperature /= body -> mass * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
 
     // boltzmann
     delta_temperature -= _s -> get_boltzmann() * std::pow(body -> temp, 4) / ( _s -> get_heat_capacity() * body -> mass);
 
-    body -> temp +=  delta_temperature; // done! 
+    body -> temp += delta_temperature; // done! 
 }
 
 template <>
