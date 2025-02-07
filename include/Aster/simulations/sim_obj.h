@@ -34,6 +34,9 @@ class Simulation{
     Simulation<T>* set_heat_capacity(double c_);
     Simulation<T>* load();
     Simulation<T>* add_graph(typename Graphs::Graph<T>::listener_fptr listener, bool for_each_body = false);
+    
+    Simulation<T>* get_force_with(force_type t);
+    Simulation<T>* update_with(update_type t);
 
     bool has_loaded_yet() const;
     

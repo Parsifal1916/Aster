@@ -5,19 +5,11 @@
 #include <thread>
 
 #include "Aster/simulations/basic.h"
-#include "Aster/physics/tool-chain.h"
 
 namespace Aster{
 
-
 extern std::uniform_real_distribution<double> angle_rnd;
 extern std::uniform_real_distribution<double> normalized_rnd;
-
-template <typename T>
-extern std::map<std::string, func_ptr<T>> update_funcs;
-
-template <typename T>
-extern std::map<std::string, force_func<T>> force_funcs;
 
 template <typename T>
 class SingleThread final : public Simulation<T> {

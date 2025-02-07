@@ -26,6 +26,8 @@ int main(){
     //rng_sphere(sim, 10e3, {meta.WIDTH, meta.HEIGHT, meta.depth}, 10e2);
     
     sim 
+    -> update_with(SYMPLECTIC4)
+    -> get_force_with(PN2)
     -> set_dt(.0007)
     -> load();
     

@@ -56,8 +56,8 @@ struct sim_meta{
     ; 
     simulation_types type = HEAVY;
 
-    std::string selected_update = "Leapfrog";
-    std::string selected_force = "Pn2"; 
+    update_type selected_update;
+    force_type selected_force; 
 };
 
 }

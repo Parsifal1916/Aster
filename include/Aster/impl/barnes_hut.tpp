@@ -10,11 +10,13 @@
 
 #include "Aster/physics/vectors.h"
 #include "Aster/physics/body.h"
-#include "Aster/physics/tool-chain.h"
 
 #include "Aster/simulations/barnes-hut.h"
 
 namespace Aster{   
+
+template <typename T> void get_new_temp(Simulation<T>* _s, Body<T>* body, T pos, T vel, double temp, double mass);
+
 namespace Barnes{
 
 
@@ -90,8 +92,8 @@ Barnes_Hut<T>::Barnes_Hut(){
     
     this -> data = sim_meta();
     this -> data.type = BARNES_HUT;
-    this -> get_force = force_funcs<T>[this -> data.selected_force];
-    this -> update_body = update_funcs<T>[this -> data.selected_update];
+    this -> get_force = get_force_func<T>(this -> data.selected_force);
+    this -> update_body = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
 
     this -> threads.reserve(this -> get_cores());

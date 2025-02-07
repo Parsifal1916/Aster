@@ -4,9 +4,9 @@
 #include "Aster/physics/vectors.h"
 
 #include "Aster/simulations/sim_obj.h"
-#include "Aster/impl/tool_chain_impl.tpp"
 
 namespace Aster{
+const double PI = 3.141592653589793238462643383279;
 
 //===---------------------------------------------------------===//
 // Cosmology stuff                                               //
@@ -218,6 +218,15 @@ vec3 vec3::update_by(vec3* v, double delta){
         y + v -> y *delta,
         z + v -> z *delta
     };
+}
+
+
+vec2 operator*(double scalar, vec2 v){
+    return v * scalar;
+}
+
+vec3 operator*(double scalar, vec3 v){
+    return v * scalar;
 }
 
 

@@ -59,4 +59,8 @@ struct vec3 {
     double sqr_magn() const;
     void reset();
 };
+
+vec2 operator*(double scalar, vec2 v);
+
+vec3 operator*(double scalar, vec3 v);
 }

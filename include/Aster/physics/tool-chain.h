@@ -51,19 +51,6 @@ std::vector<T> get_new_pos(T* position, T* velocity, T* acceleration, double ste
 template <typename T>
 T rk4(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s);
 
-template <typename T>
-std::map<std::string, func_ptr<T>> update_funcs = {
-    {"Euler", update_euler<T>} , 
-    {"Leapfrog", update_leapfrog<T>},
-    {"Symplectic4", update_symplectic4<T>}
-};
-
-template <typename T>
-std::map<std::string, force_func<T>> force_funcs = {
-    {"Newton", newtonian<T>} , 
-    {"Pn2", pn2<T>}
-};
-
 
 
 template <typename T>
@@ -102,3 +89,5 @@ void update_scale(Simulation<T>* _s);
 
 
 }
+
+#include "Aster/impl/tool_chain_impl.tpp"

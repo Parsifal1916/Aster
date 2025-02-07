@@ -21,8 +21,8 @@ BHT<T>::BHT(){
     
     this -> data = sim_meta();
     this -> data.type = BH_termal;
-    this -> get_force = force_funcs<T>[this -> data.selected_force];
-    this -> update_body = update_funcs<T>[this -> data.selected_update];
+    this -> get_force = get_force_func<T>(this -> data.selected_force);
+    this -> update_body = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> get_height();
 
     this -> threads.reserve(this -> get_cores());

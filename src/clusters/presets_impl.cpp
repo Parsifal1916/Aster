@@ -12,11 +12,10 @@
 
 
 namespace Aster{
-
+extern const double PI;
 std::uniform_real_distribution<double> angle_rnd(0.0f, 360.0f);
 std::uniform_real_distribution<double> normalized_rnd(0.0f, 1.f);
 
-const double PI = 3.141592653589793238462643383279;
 const int digit_precision = 4;
 const double digit_coefficient = std::pow(10, digit_precision);
 

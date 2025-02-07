@@ -7,7 +7,6 @@
 
 #include "Aster/simulations/basic.h"
 
-#include "Aster/physics/tool-chain.h"
 #include "Aster/building-api/builder.h"
 
 #include "Aster/graphs/graph_collection.h"
@@ -17,11 +16,6 @@ namespace Aster{
 template class Simulation<vec2>;
 template class Simulation<vec3>;
 
-template <typename T>
-extern  std::map<std::string, func_ptr<T>> update_funcs;
-
-template <typename T>
-extern std::map<std::string, force_func<T>> force_funcs;
 
 /*
 * set screen's height, width and bg color (optional)
@@ -227,6 +221,20 @@ double Simulation<T>::get_time_passed() const {
     return time_passed;
 }
 
+template <typename T>
+Simulation<T>* Simulation<T>::get_force_with(force_type t){
+    this -> data.selected_force = t;
+    this -> get_force = get_force_func<T>(t);
+    return this;
+}
+
+template <typename T>
+Simulation<T>* Simulation<T>::update_with(update_type t){
+    this -> data.selected_update = t;
+    this -> update_body = get_update_func<T>(t);
+    return this;
+}
+
 /*                   //===---------------------------------------------------------===//
 .                    // SINGLE THREAD IMPLEMENTATION                                  //
 .                    //===---------------------------------------------------------===*/
@@ -234,8 +242,8 @@ double Simulation<T>::get_time_passed() const {
 template <typename T>
 SingleThread<T>::SingleThread(sim_meta m){
     this -> data = m;
-    this -> get_force = force_funcs<T>[this -> data.selected_force];
-    this -> update_body = update_funcs<T>[this -> data.selected_update];
+    this -> get_force = get_force_func<T>(this -> data.selected_force);
+    this -> update_body = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.HEIGHT;
 }
 
@@ -243,8 +251,8 @@ template <typename T>
 SingleThread<T>::SingleThread(){
     this -> data = sim_meta();
         this -> data.type = LIGHT;
-    this -> get_force = force_funcs<T>[this -> data.selected_force];
-    this -> update_body = update_funcs<T>[this -> data.selected_update];
+    this -> get_force = get_force_func<T>(this -> data.selected_force);
+    this -> update_body = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
 }
 
@@ -269,8 +277,8 @@ void SingleThread<T>::step(){
 template <typename T>
 Parallelized<T>::Parallelized(sim_meta m){
     this -> data = m;
-    this -> get_force = force_funcs<T>[this -> data.selected_force];
-    this -> update_body = update_funcs<T>[this -> data.selected_update];
+    this -> get_force = get_force_func<T>(this -> data.selected_force);
+    this -> update_body = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
 
     this -> threads.reserve(this -> get_cores()); 
@@ -281,8 +289,8 @@ template <typename T>
 Parallelized<T>::Parallelized(){
     this -> data = sim_meta();
     this -> data.type = HEAVY;
-    this -> get_force = force_funcs<T>[this -> data.selected_force];
-    this -> update_body = update_funcs<T>[this -> data.selected_update];
+    this -> get_force = get_force_func<T>(this -> data.selected_force);
+    this -> update_body = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
 
     this -> threads.reserve(this -> get_cores()); 
