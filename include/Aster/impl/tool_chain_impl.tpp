@@ -38,10 +38,10 @@ template <typename T>
 inline double get_A2(double eta, T v, double r_dot, double m, double r){
     // -η(3 - 4η)v^4 + .5η(13 - 4η)v²m/r + 3/2η(3 - 4η)v²r_dot² + (2 + 25η + 2η²)r_dot²m/r - 15/8η(1 - 3η)r_dot^4 - 3/4 (12 + 29η)(m/r)²
     double retval = - eta * (3 - 4 * eta) * std::pow(v.sqr_magn(), 2);
-    retval += 1/2 * eta * (13 - 4*eta) * v.sqr_magn() * m / r;
-    retval += 3/2 * eta * (3 - 4*eta) * v.sqr_magn() * r_dot * r_dot;
+    retval += 1.0/2.0 * eta * (13 - 4*eta) * v.sqr_magn() * m / r;
+    retval += 3.0/2.0 * eta * (3 - 4*eta) * v.sqr_magn() * r_dot * r_dot;
     retval += (2 + 25*eta + 2 *eta *eta) * r_dot * r_dot * m /r;
-    retval += - 15/8 * eta * (1 - 3*eta) * std::pow(r_dot, 4) - 3/4 * (12 + 29 * eta) * (m /r) * (m/r);
+    retval += - 15.0/8.0 * eta * (1 - 3*eta) * std::pow(r_dot, 4) - 3.0/4.0 * (12 + 29 * eta) * (m /r) * (m/r);
 
     return retval;
 }
@@ -49,15 +49,15 @@ inline double get_A2(double eta, T v, double r_dot, double m, double r){
 template <typename T> 
 inline double get_B2(double eta, T v, double r_dot, double m, double r){
     double retval = 1/2 * eta * (15 + 4 *eta) * v.sqr_magn();
-    retval += -3/2 * eta * (3+ 2*eta) * r_dot *r_dot;
-    retval += -1/2 * (4 + 41*eta + 8*eta*eta) * m /r;
+    retval += -3.0/2.0 * eta * (3+ 2*eta) * r_dot *r_dot;
+    retval += -1.0/2 * (4 + 41*eta + 8*eta*eta) * m /r;
 
     return retval;
 }
 
 template <typename T> 
 inline double get_A25(double eta, T v, double r_dot, double m, double r){
-    return 3 * v.sqr_magn() + 17/3 * m /r;
+    return 3 * v.sqr_magn() + 17.0/3.0 * m /r;
 }
 
 template <typename T> 
@@ -68,13 +68,13 @@ inline double get_B25(double eta, T v, double r_dot, double m, double r){
 template <typename T> 
 inline T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T x = p1 - p2;
-    double r = x.magnitude();
+    double r = x.magnitude() + 1;
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
     
     T v = v1 - v2;
     T n = x / r;
-    double r_dot = v.magnitude();
+    double r_dot = v * n;
 
     double a_components = get_A1<T>(eta, v, r_dot, m, r) + get_A2<T>(eta, v, r_dot, m, r);
     double b_components = get_B1<T>(eta                ) + get_B2<T>(eta, v, r_dot, m, r);
@@ -83,50 +83,50 @@ inline T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     double half_b = get_B25<T>(eta, v, r_dot, m, r);
 
     T acc = - n* m / (r*r); 
-    acc += m / (r*r) * (n * a_components + v * r_dot * b_components);  
-    acc += 8.0/5.0 * eta * (m*m) / (r*r*r) * (n * r_dot * half_a - v * half_b);
+    acc +=  ((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3); 
+    acc += ( 8.0/5.0 * eta * (m*m) / (r*r*r) * (n * r_dot * half_a - v * half_b)) / (std::pow(_s -> get_c(), 5));
 
-    return acc * _s -> get_G();
+    return acc * _s -> get_G() * m1;
 }
 
 template <typename T> 
 inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T x = p1 - p2;
-    double r = x.magnitude();
+    double r = x.magnitude() + 1;
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
     
     T v = v1 - v2;
     T n = x / r;
-    double r_dot = v.magnitude();
+    double r_dot = v * n;
 
     double a_components = get_A1<T>(eta, v, r_dot, m, r) + get_A2<T>(eta, v, r_dot, m, r);
     double b_components = get_B1<T>(eta                ) + get_B2<T>(eta, v, r_dot, m, r);
 
 
     T acc = - n* m / (r*r); 
-    acc += (n * a_components + v*r_dot * b_components) * m / (r*r);  
-    return acc* _s -> get_G();
+    acc +=  ((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
+    return acc* _s -> get_G() * m1;
 }
 
 template <typename T> 
 inline T pn1(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T x = p1 - p2;
-    double r = x.magnitude();
+    double r = x.magnitude() + 1;
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
     
     T v = v1 - v2;
     T n = x / r;
-    double r_dot = v.magnitude();
+    double r_dot = v * n;
 
     double a_components = get_A1<T>(eta, v, r_dot, m, r);
     double b_components = get_B1<T>(eta                );
 
 
     T acc = - n * m / (r*r); 
-    acc +=  (n * a_components + v *r_dot * b_components) * m / (r*r);  
-    return acc* _s -> get_G();
+    acc +=  ((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
+    return acc* _s -> get_G() * m1;
 }
 
 

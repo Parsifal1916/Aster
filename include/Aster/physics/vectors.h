@@ -8,6 +8,7 @@ struct vec2 {
 
     vec2() : x(0), y(0) {}
 
+    vec2(double scalar) : x(scalar), y(scalar) {}
     vec2(double x, double y) : x(x), y(y) {}
 
     vec2 operator*(double scalar) const;
@@ -38,6 +39,7 @@ struct vec3 {
 
     vec3() : x(0), y(0), z(0) {}
 
+    vec3(double scalar) : x(scalar), y(scalar), z(scalar) {}
     vec3(double x, double y, double z) : x(x), y(y), z(z) {}
 
     vec3 operator*(double scalar) const;
