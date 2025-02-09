@@ -8,7 +8,9 @@
 namespace Aster{
 
 namespace Renderer{
-    
+
+extern float rng_colors[15][3];
+
 class Renderer2d{
     public: 
     using render_func = void(Renderer2d::*)();
@@ -29,7 +31,7 @@ class Renderer2d{
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     
     std::vector<render_func> render_modes = {
-        &Renderer2d::draw_minimal,
+        &Renderer2d::draw_detailed,      
         &Renderer2d::draw_minimal,
         &Renderer2d::draw_minimal,
         &Renderer2d::draw_minimal,

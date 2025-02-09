@@ -33,7 +33,7 @@ struct sim_meta{
     double
         divergence = 14.f,
         takeover = 100,
-        e_squared = 10e-6,
+        e_squared = 1,
         dt = .001,
         max_temp = 1,
         curvature_factor = 1,

@@ -13,6 +13,8 @@
 #include "Aster/simulations/BHT_sim.h"
 #include "Aster/simulations/barnes-hut.h"
 
+#define NUM_SEGMENTS 15
+
 namespace Aster{
     
 Renderer::Renderer2d* render(Simulation<vec2>* s){
@@ -24,6 +26,24 @@ Renderer::Renderer3d* render(Simulation<vec3>* s){
 }
 
 namespace Renderer{
+
+float rng_colors[15][3] = {
+    {1.0, 0.0, 0.0},
+    {0.0, 1.0, 0.0},
+    {0.0, 0.0, 1.0},
+    {1.0, 1.0, 0.0},
+    {1.0, 0.0, 1.0},
+    {1.0, 1.0, 1.0},
+    {0.0, 1.0, 1.0},
+    {1.0,  .5, 0.0},
+    {1.0, 0.0, 0.5},
+    {0.5, 1.0, 0.0},
+    {0.5, 1.0, 0.5},
+    {1.0, 0.5, 1.0},
+    {0.5, 1.0, 1.0},
+    {0.5, 0.5, 1.0},
+    {1.0, 0.5, 0.5},
+};
 
 //===---------------------------------------------------------===//
 // 2d rendering impl                                             //
@@ -176,21 +196,38 @@ void Renderer2d::draw_minimal(){
 }
 
 
-void Renderer2d::draw_detailed(){
+void Renderer2d::draw_detailed(){        
     glClear(GL_COLOR_BUFFER_BIT);
+
     glClearColor(0.f, 0.f, 0.f, 1.0f);
-    glBegin(GL_POINTS);
+    
+    for (int i = 0; i < _s -> bodies.size(); i++){
+        auto& p = _s -> bodies[i];
 
-    for (const auto& p : _s -> bodies){
-        glColor3f(1.0, 0.0, 0.0);    
-        glPointSize(std::log(p.mass)/10);  
-		glVertex2f(
-		    2.f * p.position.x/ (_s -> get_width()) - 1, 
-		    2.f * p.position.y/ (_s -> get_height()) - 1
-		);
+        glColor3f(rng_colors[i % 14][0], rng_colors[i % 14][1], rng_colors[i % 14][2]); 
+        double radius = std::log10(p.mass)/200;
+
+        vec2 mapped_pos = {
+            2.f * p.position.x/ _s -> get_width() - 1, 
+		    2.f * p.position.y/ _s -> get_height() - 1
+        };
+
+        glBegin(GL_TRIANGLE_FAN);
+
+        glVertex2f(
+            mapped_pos.x,
+            mapped_pos.y
+        );
+
+        for (int j = 0; j <= NUM_SEGMENTS; j++) {
+            float angle = 2.0f * M_PI * j / NUM_SEGMENTS;
+            float vx = mapped_pos.x + cos(angle) * radius;
+            float vy = mapped_pos.y + sin(angle) * radius;
+            glVertex2f(vx, vy);
+        }
+        
+       glEnd(); 
     }
-
-    glEnd();
 }
 
 //===---------------------------------------------------------===//

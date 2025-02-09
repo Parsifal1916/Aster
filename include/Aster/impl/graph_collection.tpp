@@ -14,8 +14,14 @@ namespace Aster{
 namespace Graphs{
 
 template <typename T>
-Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::listener_fptr listener, bool for_each_body)
-: _s(_s), listener(listener), for_each_body(for_each_body) {
+Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::listener_fptr listener, graph_type type)
+: _s(_s), listener(listener), type(type) {
+    assert(_s  && "No simulation object specified! seams to be nullptr");
+}
+
+template <typename T>
+Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::collector_fptr listener, graph_type type)
+: _s(_s), collector(listener), type(type) {
     assert(_s  && "No simulation object specified! seams to be nullptr");
 }
 
@@ -31,7 +37,7 @@ void Graph<T>::init(){
         file << "time,";
     }
 
-    if (for_each_body) {
+    if (type == FOR_EACH) {
         size_t num = _s -> bodies.size();
         if (num >= (int)10e3)
             std::cout << "[ ! ] WARN: specified for_each_body=true, the amount of bodies in the simulation results to be very high (>=10e3). large amounts of data are going to be written to disk";
@@ -55,7 +61,8 @@ void Graph<T>::init(){
 template <typename T>
 void Graph<T>::flush_to_file(){
     assert(data.size() && "empty graphing data! possible data corruption occurred");
-    if (for_each_body){ 
+
+    if (type == FOR_EACH){ 
         for (int timestep = 0; timestep < data[0].size(); ++timestep){
 
             file << _s -> get_time_passed() + timestep - data[0].size() << ","; 
@@ -73,12 +80,14 @@ void Graph<T>::flush_to_file(){
         file << _s -> get_time_passed() + i - data[0].size() << ","; 
         file << data[0][i] << "\n";
     }
-    
+
     data[0].clear();
 }
 
 template <typename T>
 void Graph<T>::trigger(){
+    assert(this -> type != BETWEEN && "cannot trigger on graph with type BETWEEN. HINT: try using trigger_on(Body*, Body*)");
+
     if (!done) init();
     assert(data.size() && "The internal graphing data is empty!");
 
@@ -89,8 +98,28 @@ void Graph<T>::trigger(){
 }
 
 template <typename T>
+void Graph<T>::trigger_on(Body<T>* b1, Body<T>* b2){
+    assert(this -> type == BETWEEN && "invalid call to trigger_on: the graph is not of type BETWEEN");
+
+    this -> internal_counter += collector(this, _s, b1, b2);
+}
+
+template <typename T>
+void Graph<T>::end_batch(){
+    assert(this -> type == BETWEEN && "invalid call to end_batch: the graph is not of type BETWEEN");
+
+    this -> data[0].push_back(this -> internal_counter);
+    internal_counter = 0;
+    
+    if (data[0].size() >= buffer_size)
+        flush_to_file();
+}
+
+template <typename T>
 void Graph<T>::update_data(){
-    if (for_each_body){
+    assert(this -> type != BETWEEN && "cannot call update data on graph with type BETWEEN");
+
+    if (type == FOR_EACH){
         assert(_s -> bodies.size() == data.size() && "The number of bodies has changed over time, cannot generate the graph properly");
 
         std::vector<std::thread> ts;
@@ -113,6 +142,11 @@ void Graph<T>::update_data(){
     }
 
     data[0].push_back(listener(this, _s, nullptr));
+}
+
+template <typename T> 
+graph_type Graph<T>::get_type() const{
+    return this -> type;
 }
 
 }

@@ -32,9 +32,12 @@ class Simulation{
     Simulation<T>* set_max_frames(unsigned int f_);
     Simulation<T>* set_sim_type(short type);
     Simulation<T>* set_heat_capacity(double c_);
-    Simulation<T>* load();
-    Simulation<T>* add_graph(typename Graphs::Graph<T>::listener_fptr listener, bool for_each_body = false);
+    Simulation<T>* set_scale(double s);
     
+    Simulation<T>* load();
+    Simulation<T>* add_graph(typename Graphs::Graph<T>::listener_fptr listener, graph_type type = ONCE);
+    Simulation<T>* add_graph(typename Graphs::Graph<T>::collector_fptr listener, graph_type type = BETWEEN);
+
     Simulation<T>* get_force_with(force_type t);
     Simulation<T>* update_with(update_type t);
 
@@ -64,7 +67,7 @@ class Simulation{
     virtual void step() {}
 
     virtual void update_pair(Body<T>* b1){
-        for (const auto& b2 : bodies){
+        for (auto& b2 : bodies){
             if (&b2 == b1) continue;
     
             b1 -> acceleration += get_force(
@@ -73,6 +76,9 @@ class Simulation{
                 b1 -> position, b2.position,
                 this
             ) / b1 -> mass;
+
+            for (auto& graph : between_graphs)
+                graph.trigger_on(b1, &b2);
     
         }
     }
@@ -88,7 +94,8 @@ class Simulation{
     protected:
     sim_meta data;
     std::vector<Graphs::Graph<T>> graphs;
-    
+    std::vector<Graphs::Graph<T>> between_graphs;
+
     double
         c_squared,
         time_passed = 0,

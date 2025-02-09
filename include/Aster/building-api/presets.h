@@ -26,13 +26,13 @@ vec3 rng_vec(Simulation<vec3>* _s);
 
 void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass);
 
-void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, bool still = false);
+void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel);
 void add_body(Simulation<vec2>* _s, Body<vec2> b);
 
 void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, double inner, double avr_mass = 10e6, vec2 v = {0,0});
 
-void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double theta, double phi);
-void add_body(Simulation<vec3>* _s, Body<vec2> b);
+void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel);
+void add_body(Simulation<vec3>* _s, Body<vec3> b);
 vec3 rotate_point(vec3 v, double phi, double theta);
 Body<vec3> make_ring_helper3d(Simulation<vec3>* _s, int outer, int inner, vec3 center, double g_pull, int thickness,  double phi, double theta, double avr_mass = 10e6, vec3 v = {0,0,0});
 void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, double thickness, vec3 rotation, double avr_mass = 10e6, vec3 v = {0,0,0});

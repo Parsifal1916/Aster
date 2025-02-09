@@ -142,9 +142,9 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
         vec2 pos = rng_point_in_circle(outer, inner);
 
         double radius = pos.sqr_magn();
-        double magn_vel = g_pull*radius/1000 + std::exp(-(radius*radius)/80);
+        double magn_vel = g_pull*radius/100000 + std::exp(-(radius*radius)/80);
 
-        vec2 vel = vec2(-pos.x/radius *magn_vel, pos.y/radius* magn_vel) + v;
+        vec2 vel = vec2(-pos.y/radius *magn_vel, pos.x/radius* magn_vel) + v;
 
         return Body<vec2>({
             avr_mass, 
@@ -207,7 +207,7 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
         vec3 pos = rng_point_in_cylinder(radius, 1, thickness);
 
         double r = pos.sqr_magn();
-        double magn_vel = g_pull*r/10000 + std::exp(-(r*r)/80);
+        double magn_vel = g_pull*r/1000000 + std::exp(-(r*r)/80);
 
         vec3 vel = vec3(-pos.y/r *magn_vel, pos.x/r* magn_vel, rng_percent() - 1) + v;
 
@@ -237,7 +237,7 @@ void add_body(Simulation<vec2>* _s, Body<vec2> b){
 
 
 
-void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double theta, double phi){
+void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel){
     _s -> bodies.push_back(Body<vec3>(mass, pos, vel));
     _s -> obj ++;
 }

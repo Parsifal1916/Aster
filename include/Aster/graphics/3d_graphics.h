@@ -17,6 +17,9 @@
 namespace Aster{
 
 namespace Renderer{
+
+extern float rng_colors[15][3];
+
 class Renderer3d{
     public: 
 
@@ -52,7 +55,7 @@ class Renderer3d{
     void show();
     
     std::vector<render_func3d> render_modes3d = {
-        &Renderer3d::draw_minimal3d, 
+        &Renderer3d::draw_detailed3d,    
         &Renderer3d::draw_minimal3d, 
         &Renderer3d::draw_minimal3d, 
         &Renderer3d::draw_minimal3d, 

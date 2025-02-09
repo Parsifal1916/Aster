@@ -90,9 +90,26 @@ Simulation<T>* Simulation<T>::load(){
 }
 
 template <typename T>
-Simulation<T>* Simulation<T>::add_graph(typename Graphs::Graph<T>::listener_fptr listener, bool for_each_body){
-    this -> graphs.push_back({this, listener, for_each_body});
+Simulation<T>* Simulation<T>::add_graph(typename Graphs::Graph<T>::listener_fptr listener, graph_type type){
+    assert(type != BETWEEN && "cannot assign this specific function to a graph of type between. ");
+    this -> graphs.push_back({this, listener, type});
     this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
+    return this;
+}
+
+template < >
+Simulation<vec3>* Simulation<vec3>::add_graph(typename Graphs::Graph<vec3>::collector_fptr listener, graph_type type){
+    assert(type == BETWEEN && "cannot assign this specific function to anything other then a BETWEEN graph");
+    this -> between_graphs.push_back({this, listener, type});
+    this -> between_graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
+    return this;
+}
+
+template <>
+Simulation<vec2>* Simulation<vec2>::add_graph(typename Graphs::Graph<vec2>::collector_fptr listener, graph_type type){
+    assert(type == BETWEEN && "cannot assign this specific function to anything other then a BETWEEN graph");
+    this -> between_graphs.push_back({this, listener, type});
+    this -> between_graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
     return this;
 }
 
@@ -162,6 +179,12 @@ double Simulation<T>::get_takeover() const{
 template <typename T>
 double Simulation<T>::get_scale() const{
     return this -> data.simulation_scale;
+}
+
+template <typename T>
+Simulation<T>* Simulation<T>::set_scale(double s){
+    data.simulation_scale = s;
+    return this;
 }
 
 template <typename T>
@@ -250,7 +273,7 @@ SingleThread<T>::SingleThread(sim_meta m){
 template <typename T>
 SingleThread<T>::SingleThread(){
     this -> data = sim_meta();
-        this -> data.type = LIGHT;
+    this -> data.type = LIGHT;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
     this -> update_body = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;

@@ -19,6 +19,7 @@ double d2 = -std::pow(2.0, 1.0/3.0) *d1;
 // Update methods                                                //
 //===---------------------------------------------------------===//
 
+// !!! POSITIVE FORCE = ATTRACTION
 
 extern const double PI;
 
@@ -67,7 +68,7 @@ inline double get_B25(double eta, T v, double r_dot, double m, double r){
 
 template <typename T> 
 inline T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
-    T x = p1 - p2;
+    T x = (p2 - p1 + T(_s -> get_e_sqr())) * _s -> get_scale();
     double r = x.magnitude() + 1;
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
@@ -82,16 +83,16 @@ inline T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     double half_a = get_A25<T>(eta, v, r_dot, m, r);
     double half_b = get_B25<T>(eta, v, r_dot, m, r);
 
-    T acc = - n* m / (r*r); 
-    acc +=  ((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3); 
-    acc += ( 8.0/5.0 * eta * (m*m) / (r*r*r) * (n * r_dot * half_a - v * half_b)) / (std::pow(_s -> get_c(), 5));
+    T acc = x * m1*m2 / (r*r); 
+    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3); 
+    acc += -( 8.0/5.0 * eta * (m*m) / (r*r*r) * (n * r_dot * half_a - v * half_b)) / (std::pow(_s -> get_c(), 5));
 
     return acc * _s -> get_G() * m1;
 }
 
 template <typename T> 
 inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
-    T x = p1 - p2;
+    T x = (p2 - p1 + T(_s -> get_e_sqr())) * _s -> get_scale();
     double r = x.magnitude() + 1;
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
@@ -104,15 +105,15 @@ inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     double b_components = get_B1<T>(eta                ) + get_B2<T>(eta, v, r_dot, m, r);
 
 
-    T acc = - n* m / (r*r); 
-    acc +=  ((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
+    T acc = x * m1*m2 / (r*r); 
+    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
     return acc* _s -> get_G() * m1;
 }
 
 template <typename T> 
 inline T pn1(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
-    T x = p1 - p2;
-    double r = x.magnitude() + 1;
+    T x = (p2 - p1 + T(_s -> get_e_sqr())) * _s -> get_scale();
+    double r = x.magnitude();
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
     
@@ -124,12 +125,10 @@ inline T pn1(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     double b_components = get_B1<T>(eta                );
 
 
-    T acc = - n * m / (r*r); 
-    acc +=  ((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
-    return acc* _s -> get_G() * m1;
+    T acc = x * m1*m2 / (r*r); 
+    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
+    return acc* _s -> get_G();
 }
-
-
 
 template <typename T>
 double get_eccentricity(Simulation<T>* _s, Body<T>* body, double relv_sq, double w_squared,  double radius, double mass2){
@@ -139,8 +138,6 @@ double get_eccentricity(Simulation<T>* _s, Body<T>* body, double relv_sq, double
 
     return 1 + 2 * orbital_energy * w_squared / (reduced_mass * mu * mu + _s -> get_e_sqr());
 }
-
-
 
 template <typename T>
 void compute_rad_pressure(Simulation<T>* _s, Body<T>* body, T pos, double temp){
@@ -273,8 +270,10 @@ void update_symplectic4(Body<vec2>* body, Simulation<vec2>* _s){
 
 template <typename T>
 T newtonian(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
-    T d = p2 - p1;
-    return d.normalize() *_s -> get_G()* m1*m1/ (d.sqr_magn()+ 1);
+    T n = (p2 - p1) * _s -> get_scale();
+    double r = n.magnitude()+1;
+
+    return n * _s -> get_G() *m1*m2/(r*r);
 }
 
 template <>

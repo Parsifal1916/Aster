@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <GLFW/glfw3.h>
+#include <algorithm>
 
 #include "Aster/graphics/3d_graphics.h"
 #include "Aster/graphics/color_scale.h"
@@ -12,6 +13,7 @@
 namespace Aster{
 
 namespace Renderer{
+    #define NUM_SEGMENTS 15
 
     #define depth_factor 1.2
 
@@ -250,25 +252,45 @@ void Renderer3d::draw_minimal3d(){
     glEnd();
 }
 
-void Renderer3d::draw_detailed3d(){
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBegin(GL_POINTS);
+void Renderer3d::draw_detailed3d() { 
+    vec3 mapped_pos = {0, 0, 0};
 
-    vec3 temp = {0,0,0};
-    for (const auto& p : _s -> bodies){
-        glColor3f(1.0, 1.0, 1.0);
-        glPointSize(std::log(p.mass)/10);
-        // if it's in the canva range it draws it 
-        temp = map_point(p.position);
-        if (is_unitary_bound(temp))
-            glVertex2f(
-                temp.x, 
-                temp.y
-            );
+    std::vector<std::pair<int, Body<vec3>>> sorted_bodies;
+    for (int i = 0; i < _s->bodies.size(); i++) {
+        Body<vec3> b = _s->bodies[i];
+        b.position = map_point(b.position);
+        sorted_bodies.emplace_back(i, b); 
     }
 
-    glEnd();
+    std::sort(sorted_bodies.begin(), sorted_bodies.end(), 
+              [](const std::pair<int, Body<vec3>>& a, const std::pair<int, Body<vec3>>& b) {
+                  return a.second.position.z > b.second.position.z;
+              });
+
+    for (auto& [original_index, p] : sorted_bodies) {
+        mapped_pos = p.position;
+
+        glColor3f(rng_colors[original_index % 15][0], 
+                  rng_colors[original_index % 15][1], 
+                  rng_colors[original_index % 15][2]); 
+
+        double radius = std::log10(p.mass) / 300;
+
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(mapped_pos.x, mapped_pos.y);
+
+        for (int j = 0; j <= NUM_SEGMENTS; j++) {
+            float angle = 2.0f * M_PI * j / NUM_SEGMENTS;
+            float vx = mapped_pos.x + cos(angle) * radius;
+            float vy = mapped_pos.y + sin(angle) * radius;
+            glVertex2f(vx, vy);
+        }
+        
+        glEnd(); 
+    }
 }
+
+
 void Renderer3d::handle_keyboard_input(GLFWwindow* window, int key, int scancode, int action, int mods) {
     void* ptr = glfwGetWindowUserPointer(window);
     auto* renderer = static_cast<Renderer3d*>(ptr);
