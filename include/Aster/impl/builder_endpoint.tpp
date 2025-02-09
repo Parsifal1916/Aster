@@ -89,16 +89,8 @@ Simulation<T>* Simulation<T>::load(){
     return this;
 }
 
-template <typename T>
-Simulation<T>* Simulation<T>::add_graph(typename Graphs::Graph<T>::listener_fptr listener, graph_type type){
-    assert(type != BETWEEN && "cannot assign this specific function to a graph of type between. ");
-    this -> graphs.push_back({this, listener, type});
-    this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
-    return this;
-}
-
 template < >
-Simulation<vec3>* Simulation<vec3>::add_graph(typename Graphs::Graph<vec3>::collector_fptr listener, graph_type type){
+inline Simulation<vec3>* Simulation<vec3>::add_graph(typename Graphs::Graph<vec3>::collector_fptr listener, graph_type type){
     assert(type == BETWEEN && "cannot assign this specific function to anything other then a BETWEEN graph");
     this -> between_graphs.push_back({this, listener, type});
     this -> between_graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
@@ -106,7 +98,7 @@ Simulation<vec3>* Simulation<vec3>::add_graph(typename Graphs::Graph<vec3>::coll
 }
 
 template <>
-Simulation<vec2>* Simulation<vec2>::add_graph(typename Graphs::Graph<vec2>::collector_fptr listener, graph_type type){
+inline Simulation<vec2>* Simulation<vec2>::add_graph(typename Graphs::Graph<vec2>::collector_fptr listener, graph_type type){
     assert(type == BETWEEN && "cannot assign this specific function to anything other then a BETWEEN graph");
     this -> between_graphs.push_back({this, listener, type});
     this -> between_graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));

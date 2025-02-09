@@ -92,7 +92,7 @@ vec2 vec2::operator/(const int& other) const{
 
 
 double vec2::operator*(const vec2& other) const{
-    return x * other.x, y + other.y;
+    return x * other.x + y + other.y;
 }
 
 vec2& vec2::operator/=(const double& other){
