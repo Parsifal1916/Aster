@@ -8,21 +8,16 @@
 #include <Aster.hpp>
 using namespace Aster;
 
-double collect(Graphs::Graph<vec2>* graph, Simulation<vec2>* sim, Body<vec2>* body){
-    double retval = 0;
-
-    for (const auto& body : sim -> bodies)
-        retval += body.velocity.sqr_magn();
-
-    return retval / sim -> bodies.size(); 
+double collect(Graphs::Graph<vec2>* graph, Simulation<vec2>* sim, Body<vec2>* body, Body<vec2>* body2){
+    return 1;
 }
 
 int main(){
-    auto* sim = bake3d(LIGHT);
-    add_body(sim, 10e7, sim -> get_corner(1), {0,0, 0});
-    add_body(sim, 10e10, sim -> get_center(), {0,0, 0});
-    add_body(sim, 10e10, sim -> get_corner(3),{0,0, 0});
-    add_body(sim, 10e7, sim -> get_corner(4), {0,0, 0});
+    auto* sim = bake(LIGHT);
+    add_body(sim, 10e7, sim -> get_corner(1), {0,0});
+    add_body(sim, 10e10, sim -> get_center(), {0,0});
+    add_body(sim, 10e10, sim -> get_corner(3),{0,0});
+    add_body(sim, 10e7, sim -> get_corner(4), {0,0});
     //add_disk3d(sim, 1e4, sim -> get_center(), 60e1, .3, {}, 10e10);
     //add_disk3d(sim, 1e4, sim -> get_corner(0), 60e1, .3, {90, 45, 0}, 10e10);
   // add_disk(sim, 1e4, sim -> get_center(), 100, 10);
@@ -33,6 +28,7 @@ int main(){
     -> get_force_with(PN1)
     -> set_dt(1)
     -> set_scale(1)
+    -> add_graph(collect)
     -> load();
     
     render(sim)

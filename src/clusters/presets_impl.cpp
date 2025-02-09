@@ -225,7 +225,7 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
 }
 
 
-void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, bool still = false){
+void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel){
     _s -> bodies.push_back(Body(mass, pos, vel));
     _s -> obj ++;
 }

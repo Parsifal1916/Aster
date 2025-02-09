@@ -40,7 +40,7 @@ void Graph<T>::init(){
     if (type == FOR_EACH) {
         size_t num = _s -> bodies.size();
         if (num >= (int)10e3)
-            std::cout << "[ ! ] WARN: specified for_each_body=true, the amount of bodies in the simulation results to be very high (>=10e3). large amounts of data are going to be written to disk";
+            std::cout << "[ ! ] WARN: specified type is FOR_EACH, the amount of bodies in the simulation results to be very high (>=10e3). large amounts of data are going to be written to disk";
     
         data.resize(num);
         for (int i = 0; i < num; ++i){
@@ -77,7 +77,7 @@ void Graph<T>::flush_to_file(){
     }
 
     for (int i = 0; i < data[0].size(); i++){
-        file << _s -> get_time_passed() + i - data[0].size() << ","; 
+        file << _s -> get_time_passed() + i - data[0].size() +1 << ","; 
         file << data[0][i] << "\n";
     }
 
@@ -100,6 +100,10 @@ void Graph<T>::trigger(){
 template <typename T>
 void Graph<T>::trigger_on(Body<T>* b1, Body<T>* b2){
     assert(this -> type == BETWEEN && "invalid call to trigger_on: the graph is not of type BETWEEN");
+    if (!done){
+        this -> init();
+        done = true;
+    }
 
     this -> internal_counter += collector(this, _s, b1, b2);
 }

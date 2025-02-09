@@ -106,6 +106,14 @@ inline Simulation<vec2>* Simulation<vec2>::add_graph(typename Graphs::Graph<vec2
 }
 
 template <typename T>
+inline Simulation<T>* Simulation<T>::add_graph(typename Graphs::Graph<T>::listener_fptr listener, graph_type type){
+    assert(type != BETWEEN && "cannot assign this specific function to be BETWEEN graph");
+    this -> graphs.push_back({this, listener, type});
+    this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
+    return this;
+}
+
+template <typename T>
 Simulation<T>* Simulation<T>::set_heat_capacity(double c_){
     assert(c_ && "heat capacity cannot be 0");
     data.avr_heat_capacity = c_;
@@ -281,6 +289,9 @@ void SingleThread<T>::step(){
         this -> update_body(&body, this );
     }
 
+    for (auto& graph : this -> between_graphs)
+        graph.end_batch();
+
     this -> trigger_all_graphs();
     this -> time_passed++;
 }
@@ -322,6 +333,9 @@ void Parallelized<T>::step(){
         t.join();
 
     this -> threads.clear();
+
+    for (auto& graph : this -> between_graphs)
+        graph.end_batch();
 
     this -> trigger_all_graphs();
     this -> time_passed++;
