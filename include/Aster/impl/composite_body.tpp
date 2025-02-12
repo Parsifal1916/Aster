@@ -14,7 +14,7 @@ CompositeBody<vec2>::CompositeBody(Simulation<vec2>* _s, size_t segments, double
     double mass_per_body = mass / (segments + 1);
     init_childs = _s -> bodies.size();
 
-    internal_force = mass * mass_per_body* _s -> get_G() / (radius * radius * stiffness);
+    internal_force = mass * mass_per_body* _s -> get_G() / (radius * radius);
     sidelenght = 2 * M_PI * radius / segments;
 
     // pushes the center
@@ -79,7 +79,7 @@ void apply_spring(Composite2d* _s, Body<T>& b1, Body<T>& b2, double bound, doubl
     T arrow = b2.position - b1.position;
     double r = arrow.magnitude();
 
-    arrow = ( arrow / r * (r - bound) * stiffness + base ) * _s -> get_dt();
+    arrow = (arrow / r * (r - bound) * stiffness + base ) * _s -> get_dt();
 
     b1.acceleration +=  arrow / b1.mass;
     b2.acceleration += -arrow / b2.mass;
