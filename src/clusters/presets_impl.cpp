@@ -10,7 +10,6 @@
 #include "Aster/physics/body.h"
 #include "Aster/building-api/clusters.h"
 
-
 namespace Aster{
 extern const double PI;
 std::uniform_real_distribution<double> angle_rnd(0.0f, 360.0f);
@@ -25,8 +24,8 @@ const double digit_coefficient = std::pow(10, digit_precision);
 
 vec3 rotate_point(vec3 v, double phi, double theta){
     float x1, z1, y1, z2;
-    theta *= PI/180 ;
-    phi   *= PI/180 ; 
+    theta *= PI/180;
+    phi   *= PI/180; 
 
     x1 = v.x * std::cos(phi) + v.z * std::sin(phi);
     z1 = - v.x * std::sin(phi) + v.z *std::cos(phi);
@@ -193,7 +192,6 @@ void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass){
 .                    // premade clusters 2d                                           //
 .                    //===---------------------------------------------------------===*/
 
-
 void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, double thickness, vec3 rotation, double avr_mass = 10e6, vec3 v = {0,0,0}){
     _s -> bodies.reserve(_s -> bodies.size() + nums);
 
@@ -300,6 +298,7 @@ Simulation<vec2>* bake(simulation_types s){
 
     case BH_termal:
         return new Barnes::BHT<vec2>();
+
 
     default:
         throw std::runtime_error("Invalid Simulation Type");

@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <iomanip>
+#include <GLFW/glfw3.h>
 #include "Aster/simulations/sim_obj.h"
 
 namespace Aster{
@@ -27,6 +28,7 @@ class Renderer2d{
     void draw_termal();
     void draw_minimal();
     void draw_detailed();
+    void draw_composite();
     void show();
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     
@@ -36,6 +38,7 @@ class Renderer2d{
         &Renderer2d::draw_minimal,
         &Renderer2d::draw_minimal,
         &Renderer2d::draw_termal,
+        &Renderer2d::draw_composite,
     };
 
     private:

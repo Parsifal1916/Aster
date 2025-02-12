@@ -7,6 +7,7 @@
 
 namespace Aster{
 
+
 extern const double PI;
 extern const int digit_precision;
 extern const double digit_coefficient;
@@ -30,6 +31,8 @@ void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel);
 void add_body(Simulation<vec2>* _s, Body<vec2> b);
 
 void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, double inner, double avr_mass = 10e6, vec2 v = {0,0});
+
+class Composite2d* add_composite(class Composite2d* _s, size_t segments, double mass, double radius, vec2 initial_position, vec2 initial_velocity);
 
 void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel);
 void add_body(Simulation<vec3>* _s, Body<vec3> b);

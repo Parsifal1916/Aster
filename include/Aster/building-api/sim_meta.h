@@ -4,7 +4,7 @@
 
 namespace Aster{
 
-enum simulation_types: int {LIGHT = 0, MEDIUM = 1, HEAVY = 2, BARNES_HUT = 3, BH_termal = 4};
+enum simulation_types: int {LIGHT = 0, MEDIUM = 1, HEAVY = 2, BARNES_HUT = 3, BH_termal = 4, COMPOSITE2D = 5};
 
 struct sim_meta{
    int 

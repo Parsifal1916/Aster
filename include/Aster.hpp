@@ -10,6 +10,7 @@
 
 #include "Aster/physics/body.h"
 #include "Aster/physics/vectors.h"
+#include "Aster/physics/composite_body.h"
 #include "Aster/physics/tool-chain.h"
 
 #include "Aster/building-api/builder.h"
@@ -19,3 +20,4 @@
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/simulations/barnes-hut.h"
 #include "Aster/simulations/simulation.h"
+#include "Aster/simulations/composite.h"

@@ -59,7 +59,8 @@ class Renderer3d{
         &Renderer3d::draw_minimal3d, 
         &Renderer3d::draw_minimal3d, 
         &Renderer3d::draw_minimal3d, 
-        &Renderer3d::draw_termal3d
+        &Renderer3d::draw_termal3d,
+        &Renderer3d::draw_minimal3d
     };
     
     std::unordered_map<std::string,  bool> inputs = {
