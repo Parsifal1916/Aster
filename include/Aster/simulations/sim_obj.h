@@ -40,6 +40,8 @@ class Simulation{
 
     Simulation<T>* get_force_with(force_type t);
     Simulation<T>* update_with(update_type t);
+    Simulation<T>* get_force_with(force_func<T> p);
+    Simulation<T>* update_with(func_ptr<T> p);
 
     bool has_loaded_yet() const;
     
@@ -59,6 +61,8 @@ class Simulation{
     double get_scale() const;
     double get_heat_capacity() const;
     double get_boltzmann() const;
+
+
 
     simulation_types get_type() const;
     

@@ -8,10 +8,6 @@
 #include <Aster.hpp>
 using namespace Aster;
 
-double collect(Graphs::Graph<vec2>* graph, Simulation<vec2>* sim, Body<vec2>* body, Body<vec2>* body2){
-    return 1;
-}
-
 int main(){
     auto* sim = bake(LIGHT);
     add_body(sim, 10e7, sim -> get_corner(1), {0,0});
@@ -25,12 +21,13 @@ int main(){
     
     sim 
     -> update_with(LEAPFROG)
-    -> get_force_with(PN1)
-    -> set_dt(1)
-    -> set_scale(1)
-    -> add_graph(collect)
-    -> load();
-    
+    -> get_force_with([](double m1, double m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2, Simulation<vec2>* _s){
+        vec2 d = p2 - p1;
+        return d.normalize() *_s -> get_G()* m1*m1/ (d.sqr_magn());
+    })
+    -> set_dt(10)
+    ;
+
     render(sim)
     -> show_axis()
     -> show();

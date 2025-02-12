@@ -89,6 +89,18 @@ Simulation<T>* Simulation<T>::load(){
     return this;
 }
 
+template <typename T>
+Simulation<T>* Simulation<T>::get_force_with(force_func<T> p){
+    this -> get_force = p;
+    return this;
+}
+
+template <typename T> 
+Simulation<T>* Simulation<T>::update_with(func_ptr<T> p){
+    this -> update_body = p;
+    return this;
+}
+
 template < >
 inline Simulation<vec3>* Simulation<vec3>::add_graph(typename Graphs::Graph<vec3>::collector_fptr listener, graph_type type){
     assert(type == BETWEEN && "cannot assign this specific function to anything other then a BETWEEN graph");
@@ -374,6 +386,8 @@ void update_bundle(Simulation<T>* _s, unsigned short index){
        _s -> update_body(body, _s);
     }
 }
+
+
 
 
 }
