@@ -21,10 +21,7 @@ int main(){
     
     sim 
     -> update_with(LEAPFROG)
-    -> get_force_with([](double m1, double m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2, Simulation<vec2>* _s){
-        vec2 d = p2 - p1;
-        return d.normalize() *_s -> get_G()* m1*m1/ (d.sqr_magn());
-    })
+    -> get_force_with(PN1)
     -> set_dt(10)
     ;
 
