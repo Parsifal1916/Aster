@@ -68,7 +68,7 @@ inline double get_B25(double eta, T v, double r_dot, double m, double r){
 
 template <typename T> 
 inline T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
-    T x = (p2 - p1 + T(_s -> get_e_sqr())) * _s -> get_scale();
+    T x = (p2 - p1 + T(_s -> get_e_sqr()));
     double r = x.magnitude() + 1;
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
@@ -92,7 +92,7 @@ inline T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
 
 template <typename T> 
 inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
-    T x = (p2 - p1 + T(_s -> get_e_sqr())) * _s -> get_scale();
+    T x = (p2 - p1 + T(_s -> get_e_sqr()));
     double r = x.magnitude() + 1;
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
@@ -112,7 +112,7 @@ inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
 
 template <typename T> 
 inline T pn1(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
-    T x = (p2 - p1 + T(_s -> get_e_sqr())) * _s -> get_scale();
+    T x = (p2 - p1 + T(_s -> get_e_sqr()));
     double r = x.magnitude();
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
@@ -270,10 +270,10 @@ void update_symplectic4(Body<vec2>* body, Simulation<vec2>* _s){
 
 template <typename T>
 T newtonian(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
-    T n = (p2 - p1) * _s -> get_scale();
+    T n = (p2 - p1);
     double r = n.magnitude()+1;
 
-    return n * _s -> get_G() *m1*m2/(r*r);
+    return n.normalize() * _s -> get_G() *m1*m2/(r*r);
 }
 
 template <>
@@ -347,7 +347,7 @@ vec3 newtonian(double m1, double m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulat
 template <>
 vec3 pn2(double m1, double m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<vec3>* _s){ 
     vec3 n = p2 - p1;
-    double r = n.magnitude() * _s -> get_scale()+1;
+    double r = n.magnitude()+1;
 
     double term1 = _s -> get_G()*m2/(_s -> get_c_sqr()*r*r);
     double m_ratio = m1/m2;

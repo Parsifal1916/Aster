@@ -134,18 +134,34 @@ Simulation<T>* Simulation<T>::set_heat_capacity(double c_){
 
 template <typename T>
 double Simulation<T>::get_height() const{
-    return this -> data.size.y;
+    return this -> data.size.y * get_scale();
 }
 
 template <typename T>
 double Simulation<T>::get_width() const{
-    return this -> data.size.x;
+    return this -> data.size.x * get_scale();
 }
 
 template <typename T>
 double Simulation<T>::get_depth() const{
+    return this -> data.size.z * get_scale();
+}
+
+template <typename T>
+double Simulation<T>::get_render_height() const{
+    return this -> data.size.y;
+}
+
+template <typename T>
+double Simulation<T>::get_render_width() const{
+    return this -> data.size.x;
+}
+
+template <typename T>
+double Simulation<T>::get_render_depth() const{
     return this -> data.size.z;
 }
+
 
 template <typename T>
 int Simulation<T>::get_cores() const{
@@ -222,12 +238,16 @@ bool Simulation<T>::has_loaded_yet() const {
 
 template <>
 inline vec2 Simulation<vec2>::get_center() const{
-    return {data.size.x/2, data.size.y/2};
+    return {get_width()/2, get_height()/2};
 }
 
 template <>
 inline vec3 Simulation<vec3>::get_center() const{
-    return data.size/2;
+    return {
+        get_width()  /2,
+        get_height() /2,
+        get_depth()  /2
+    };
 }
 
 template <>
@@ -255,6 +275,19 @@ template <typename T>
 double Simulation<T>::get_time_passed() const {
     return time_passed;
 }
+
+template <typename T>
+Simulation<T>* Simulation<T>::collect_hamiltonian(){
+    this -> add_graph(Graphs::hamiltonian_collector<T>, ONCE);
+    return this;
+}
+
+template <typename T>
+Simulation<T>* Simulation<T>::collect_error(){
+    this -> add_graph(Graphs::error_collector<T>, ONCE);
+    return this;
+}
+
 
 template <typename T>
 Simulation<T>* Simulation<T>::get_force_with(force_type t){

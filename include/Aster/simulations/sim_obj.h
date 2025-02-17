@@ -43,6 +43,9 @@ class Simulation{
     Simulation<T>* get_force_with(force_func<T> p);
     Simulation<T>* update_with(func_ptr<T> p);
 
+    Simulation<T>* collect_hamiltonian();
+    Simulation<T>* collect_error();
+
     bool has_loaded_yet() const;
     
     T get_center() const;
@@ -51,6 +54,11 @@ class Simulation{
     double get_height() const;
     double get_width() const;
     double get_depth() const;
+
+    double get_render_height() const;
+    double get_render_width() const;
+    double get_render_depth() const;
+
     double get_G() const;
     double get_time_passed() const;
     double get_c() const;

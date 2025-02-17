@@ -46,6 +46,15 @@ struct Graph{
     void update_data();
 };
 
+template <typename T>
+double hamiltonian_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b);
+
+template <typename T>
+double get_total_energy(Simulation<T>* _s);
+
+template <typename T>
+double error_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b);
+
 }
 }
 

@@ -69,7 +69,7 @@ Renderer2d::Renderer2d(Simulation<vec2>* _s)  : _s(_s) {
         throw std::runtime_error("glfw failed to initialize");
 
 
-    window = glfwCreateWindow(_s -> get_height(), _s -> get_width(), "Aster's simulation", nullptr, nullptr);
+    window = glfwCreateWindow(_s -> get_render_height(), _s -> get_render_width(), "Aster's simulation", nullptr, nullptr);
 
     
     if (!window) {
@@ -81,8 +81,8 @@ Renderer2d::Renderer2d(Simulation<vec2>* _s)  : _s(_s) {
 
 void Renderer2d::draw_axis(){
     vec2 origin, point1, point2;
-    point1.x = _s -> get_height();
-    point2.y = _s -> get_width();
+    point1.x = _s -> get_render_height();
+    point2.y = _s -> get_render_width();
 
 	glBegin(GL_LINES);
         glColor3f(1.0, 0.0, 0.0);
@@ -123,7 +123,7 @@ void Renderer2d::show(){
 	}
 	glfwDestroyWindow(window);
 
- 	window = glfwCreateWindow(_s -> get_height(), _s -> get_width(), "Aster's simulation", nullptr, nullptr);
+ 	window = glfwCreateWindow(_s -> get_render_height(), _s -> get_render_width(), "Aster's simulation", nullptr, nullptr);
 
     glfwMakeContextCurrent(window);
 	glfwSetWindowUserPointer(window, this);
