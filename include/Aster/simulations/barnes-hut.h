@@ -57,6 +57,7 @@ class Barnes_Hut: public Simulation<T>{
     Barnes_Hut();
 
     void step() override;
+    void update_forces() override;
 
     virtual void get_node_body(size_t node, Body<T>* body);
 
@@ -69,7 +70,6 @@ class Barnes_Hut: public Simulation<T>{
     void insert(Body<T>* body);
     void calculate_com();
 
-    void update_bodies();
     void make_tree();
     void init_node(Node<T>& _n, Body<T>* b) const;
     void make_sections();

@@ -33,6 +33,7 @@ class Simulation{
     Simulation<T>* set_sim_type(short type);
     Simulation<T>* set_heat_capacity(double c_);
     Simulation<T>* set_scale(double s);
+    Simulation<T>* set_adaptive_coeff(double s);
     
     Simulation<T>* load();
     Simulation<T>* add_graph(typename Graphs::Graph<T>::listener_fptr listener, graph_type type = ONCE);
@@ -45,6 +46,11 @@ class Simulation{
 
     Simulation<T>* collect_hamiltonian();
     Simulation<T>* collect_error();
+    Simulation<T>* collect_distance();
+
+    Simulation<T>* calculate_total_mass();
+    double get_total_mass() const;
+    double get_adaptive_coeff() const;
 
     bool has_loaded_yet() const;
     
@@ -70,12 +76,11 @@ class Simulation{
     double get_heat_capacity() const;
     double get_boltzmann() const;
 
-
-
     simulation_types get_type() const;
     
     int get_cores() const;
 
+    virtual void update_forces() {}
     virtual void step() {}
 
     virtual void update_pair(Body<T>* b1){
@@ -95,7 +100,7 @@ class Simulation{
         }
     }
 
-    func_ptr<T> update_body;
+    func_ptr<T> update_bodies;
     force_func<T> get_force;
     int obj;
 
@@ -104,6 +109,7 @@ class Simulation{
 
 
     protected:
+    double total_mass = 0;
     sim_meta data;
     std::vector<Graphs::Graph<T>> graphs;
     std::vector<Graphs::Graph<T>> between_graphs;

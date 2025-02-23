@@ -17,7 +17,8 @@ class SingleThread final : public Simulation<T> {
     SingleThread(sim_meta m);
     SingleThread();
 
-    void step() override ;
+    void step() override;
+    void update_forces() override;
 };
 
 template <typename T>
@@ -28,6 +29,7 @@ class Parallelized final : public Simulation<T> {
     Parallelized(sim_meta m);
     Parallelized();
     void step() override;
+    void update_forces() override;
     
     /*
     * sets the maximum number of threads for the given simulation

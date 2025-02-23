@@ -86,6 +86,7 @@ Simulation<T>* Simulation<T>::load(){
     assert(!has_loaded && "the simulation has already been loaded");
     loading_queue.load(this);
     has_loaded = true;
+    this -> calculate_total_mass();
     return this;
 }
 
@@ -97,7 +98,7 @@ Simulation<T>* Simulation<T>::get_force_with(force_func<T> p){
 
 template <typename T> 
 Simulation<T>* Simulation<T>::update_with(func_ptr<T> p){
-    this -> update_body = p;
+    this -> update_bodies = p;
     return this;
 }
 
@@ -146,6 +147,7 @@ template <typename T>
 double Simulation<T>::get_depth() const{
     return this -> data.size.z * get_scale();
 }
+
 
 template <typename T>
 double Simulation<T>::get_render_height() const{
@@ -250,6 +252,33 @@ inline vec3 Simulation<vec3>::get_center() const{
     };
 }
 
+template <typename T>
+double Simulation<T>::get_total_mass() const{
+    return total_mass;
+}
+
+template <typename T>
+double Simulation<T>::get_adaptive_coeff() const{
+    return data.adaptive_coeff;
+}
+
+template <typename T>
+Simulation<T>* Simulation<T>::set_adaptive_coeff(double s){
+    data.adaptive_coeff = s;
+    return this;
+}
+
+
+template <typename T>
+Simulation<T>* Simulation<T>::calculate_total_mass(){
+    total_mass = 0;
+
+    for (const auto& body : this -> bodies)
+        total_mass += body.mass;
+    
+    return this;
+}
+
 template <>
 inline vec2 Simulation<vec2>::get_corner(int n) const{
     assert(n >= 0 && n < 5);
@@ -288,6 +317,13 @@ Simulation<T>* Simulation<T>::collect_error(){
     return this;
 }
 
+template <typename T>
+Simulation<T>* Simulation<T>::collect_distance(){
+    this -> add_graph(Graphs::distance_collector<T>, FOR_EACH);
+    return this;
+}
+
+
 
 template <typename T>
 Simulation<T>* Simulation<T>::get_force_with(force_type t){
@@ -299,7 +335,7 @@ Simulation<T>* Simulation<T>::get_force_with(force_type t){
 template <typename T>
 Simulation<T>* Simulation<T>::update_with(update_type t){
     this -> data.selected_update = t;
-    this -> update_body = get_update_func<T>(t);
+    this -> update_bodies = get_update_func<T>(t);
     return this;
 }
 
@@ -311,7 +347,7 @@ template <typename T>
 SingleThread<T>::SingleThread(sim_meta m){
     this -> data = m;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_body = get_update_func<T>(this -> data.selected_update);
+    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.HEIGHT;
 }
 
@@ -320,25 +356,28 @@ SingleThread<T>::SingleThread(){
     this -> data = sim_meta();
     this -> data.type = LIGHT;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_body = get_update_func<T>(this -> data.selected_update);
+    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
 }
 
 template <typename T>
 void SingleThread<T>::step(){
-    T prev;
-    for (Body<T>& body : this -> bodies){  
-        prev = body.acceleration;
-        body.acceleration.reset();
-        this -> update_pair(&body);
-        this -> update_body(&body, this );
-    }
+    this -> update_forces();
+    this -> update_bodies(this);
 
     for (auto& graph : this -> between_graphs)
         graph.end_batch();
 
     this -> trigger_all_graphs();
     this -> time_passed++;
+}
+
+template <typename T> 
+void SingleThread<T>::update_forces(){
+    for (Body<T>& body : this -> bodies){
+        body.acceleration.reset();
+        this -> update_pair(&body);
+    }    
 }
 
 /*                   //===---------------------------------------------------------===//
@@ -349,7 +388,7 @@ template <typename T>
 Parallelized<T>::Parallelized(sim_meta m){
     this -> data = m;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_body = get_update_func<T>(this -> data.selected_update);
+    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
 
     this -> threads.reserve(this -> get_cores()); 
@@ -361,7 +400,7 @@ Parallelized<T>::Parallelized(){
     this -> data = sim_meta();
     this -> data.type = HEAVY;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_body = get_update_func<T>(this -> data.selected_update);
+    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
 
     this -> threads.reserve(this -> get_cores()); 
@@ -370,6 +409,15 @@ Parallelized<T>::Parallelized(){
 
 template <typename T>
 void Parallelized<T>::step(){
+    this -> update_forces();
+    this -> update_bodies(this);
+
+    this -> trigger_all_graphs();
+    this -> time_passed++;
+}
+
+template <typename T>
+void Parallelized<T>::update_forces(){
     this -> obj = this -> bodies.size(); 
     for (int i = 0; i < this -> get_cores(); ++i)
         this -> threads.push_back(std::thread(update_bundle<T>, this, i));
@@ -381,11 +429,8 @@ void Parallelized<T>::step(){
 
     for (auto& graph : this -> between_graphs)
         graph.end_batch();
-
-    this -> trigger_all_graphs();
-    this -> time_passed++;
 }
-    
+
 /*
 * sets the maximum number of threads for the given simulation
 * if the given number is higher than the number of objs
@@ -416,7 +461,6 @@ void update_bundle(Simulation<T>* _s, unsigned short index){
        Body<T>* body = &_s -> bodies[i];
        body -> acceleration.reset();
        _s -> update_pair(body);
-       _s -> update_body(body, _s);
     }
 }
 

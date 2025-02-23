@@ -66,8 +66,10 @@ void Graph<T>::flush_to_file(){
         for (int timestep = 0; timestep < data[0].size(); ++timestep){
 
             file << _s -> get_time_passed() + timestep - data[0].size() << ","; 
-            for (int container = 0; container < data.size(); container++)
-                file << data[container][timestep] << ((timestep == data[0].size() - 1) ? "\n" : ",");
+            for (int container = 0; container < data.size() - 1; container++)
+                file << data[container][timestep] << ",";
+
+            file << data.back()[timestep] << "\n";
         }
 
         for (auto& c : data)
@@ -119,6 +121,8 @@ void Graph<T>::end_batch(){
         flush_to_file();
 }
 
+
+
 template <typename T>
 void Graph<T>::update_data(){
     assert(this -> type != BETWEEN && "cannot call update data on graph with type BETWEEN");
@@ -126,21 +130,8 @@ void Graph<T>::update_data(){
     if (type == FOR_EACH){
         assert(_s -> bodies.size() == data.size() && "The number of bodies has changed over time, cannot generate the graph properly");
 
-        std::vector<std::thread> ts;
-        int step = _s -> bodies.size() / _s -> get_cores(); 
-        int tot = _s -> bodies.size();
-
-        for (int i = 0; i < _s -> get_cores(); ++i)
-            ts.emplace_back([this, i, step, tot](){
-                int start = step*i;
-                int stop = (step*(i+2) > tot) ? tot : step*(i*1);
-
-                for (int j = start; j < stop; j++)
-                    this -> data[j].push_back(listener(this, this -> _s, &(this -> _s -> bodies[j])));    
-            });
-
-        for (auto& t : ts)
-            t.join();
+       for (int i = 0; i < _s -> bodies.size(); ++i)
+            this -> data[i].push_back(listener(this, this -> _s, &(this -> _s -> bodies[i])));    
 
         return;
     }

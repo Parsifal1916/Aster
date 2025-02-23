@@ -38,7 +38,7 @@ class Renderer3d{
         cos_x_theta = 0,
         sin_y_theta = 0,
         cos_y_theta = 0,
-        distance = 1000
+        distance = 10
     ;   
 
     Renderer3d(Simulation<vec3>* _s);

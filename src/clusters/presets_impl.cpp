@@ -206,7 +206,7 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
     cluster.builder = [g_pull, radius, v, avr_mass, center, thickness, rotation ](Cluster<vec3> cl3d, size_t _) {
         vec3 pos = rng_point_in_cylinder(radius, 1, thickness);
 
-        double r = pos.sqr_magn();
+        double r = pos.sqr_magn() + .1;
         double magn_vel = g_pull*r/1000000 + std::exp(-(r*r)/80);
 
         vec3 vel = vec3(-pos.y/r *magn_vel, pos.x/r* magn_vel, rng_percent() - 1) + v;

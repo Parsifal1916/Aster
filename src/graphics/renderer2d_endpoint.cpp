@@ -198,37 +198,35 @@ void Renderer2d::draw_minimal(){
 
 void Renderer2d::draw_detailed(){        
     glClear(GL_COLOR_BUFFER_BIT);
-
     glClearColor(0.f, 0.f, 0.f, 1.0f);
+    
+    float aspect_ratio = static_cast<float>(current_width) / current_height;
     
     for (int i = 0; i < _s -> bodies.size(); i++){
         auto& p = _s -> bodies[i];
 
         glColor3f(rng_colors[i % 14][0], rng_colors[i % 14][1], rng_colors[i % 14][2]); 
-        double radius = std::log10(p.mass)/200;
+        double radius = std::log10(p.mass) / 200;
 
         vec2 mapped_pos = {
-            2.f * p.position.x/ _s -> get_width() - 1, 
-		    2.f * p.position.y/ _s -> get_height() - 1
+            2.f * p.position.x / _s -> get_width() - 1, 
+            2.f * p.position.y / _s -> get_height() - 1
         };
 
         glBegin(GL_TRIANGLE_FAN);
-
-        glVertex2f(
-            mapped_pos.x,
-            mapped_pos.y
-        );
+        glVertex2f(mapped_pos.x, mapped_pos.y);
 
         for (int j = 0; j <= NUM_SEGMENTS; j++) {
             float angle = 2.0f * M_PI * j / NUM_SEGMENTS;
-            float vx = mapped_pos.x + cos(angle) * radius;
-            float vy = mapped_pos.y + sin(angle) * radius;
+            float vx = mapped_pos.x + radius * cos(angle) / (aspect_ratio > 1 ? aspect_ratio : 1);
+            float vy = mapped_pos.y + radius * sin(angle) * (aspect_ratio < 1 ? aspect_ratio : 1);
             glVertex2f(vx, vy);
         }
         
-       glEnd(); 
+        glEnd(); 
     }
 }
+
 
 //===---------------------------------------------------------===//
 // text rendering                                                //

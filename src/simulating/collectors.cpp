@@ -69,5 +69,27 @@ double error_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b){
     return std::abs(initial_energy - current_energy) / std::abs(initial_energy);
 }
 
+template <typename T>
+double distance_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b){
+    static std::mutex mtx;
+    static std::pair<double, T> baricenter = {-1, T(0)};
+
+    if (baricenter.first != _s -> get_time_passed()){
+        mtx.lock();
+        if (baricenter.first != _s -> get_time_passed()){
+            baricenter.first = _s -> get_time_passed();
+            baricenter.second = T(0);
+
+            for (const auto& body : _s -> bodies)
+                baricenter.second += body.position * body.mass;
+
+            baricenter.second = baricenter.second / _s -> get_total_mass();
+        }
+        mtx.unlock();
+    }
+
+    return (baricenter.second - b -> position + .1).magnitude();
+}
+
 }
 }

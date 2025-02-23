@@ -93,7 +93,7 @@ Barnes_Hut<T>::Barnes_Hut(){
     this -> data = sim_meta();
     this -> data.type = BARNES_HUT;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_body = get_update_func<T>(this -> data.selected_update);
+    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
 
     this -> threads.reserve(this -> get_cores());
@@ -106,8 +106,9 @@ void Barnes_Hut<T>::step(){
     make_tree();
     calculate_com();
         
-    update_bodies();
+    this -> update_forces();
     nodes.clear();
+    this -> update_bodies(this);
 
     this -> trigger_all_graphs();
     this -> time_passed++;
@@ -268,15 +269,11 @@ void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
         Body<T>* body = &_s -> bodies[i];
         body -> acceleration.reset();
         _s -> get_node_body(0, body);
-        _s -> update_body(body, _s);
-
-        compute_tidal_heating(_s, body);
-
     }
 }
 
 template <typename T>
-void Barnes_Hut<T>::update_bodies(){
+void Barnes_Hut<T>::update_forces(){
     this -> obj = this ->bodies.size();
 
     for (int i = 0; i < this -> get_cores(); ++i)

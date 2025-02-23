@@ -22,16 +22,52 @@ extern double d2;
 template <typename T> class Simulation;
 
 template <typename T>
-void update_euler(Body<T>* b, Simulation<T>* _s);
+void update_euler(Simulation<T>* _s);
 
 template <typename T>
-void update_leapfrog(Body<T>* b, Simulation<T>* _s);
+void update_leapfrog(Simulation<T>* _s);
 
 template <typename T>
-void update_symplectic4(Body<T>* body, Simulation<T>* _s);
+void update_symplectic4(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA1(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA2(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA3(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA4(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA4(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA5(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA6(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA7(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA8(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA9(Simulation<T>* _s);
+
+template <typename T>
+void update_SABA10(Simulation<T>* _s);
 
 template <typename T>
 T newtonian(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s);
+
+template <typename T> 
+T adaptive_euler(Simulation<vec2>* _s);
 
 /*
 * evaluates the post-newtonian approx.
@@ -51,7 +87,8 @@ std::vector<T> get_new_pos(T* position, T* velocity, T* acceleration, double ste
 template <typename T>
 T rk4(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s);
 
-
+template <typename T, typename F>
+void for_each_body(Simulation<T>* _s, F func);
 
 template <typename T>
 double get_eccentricity(Simulation<T>* _s, Body<T>* body, double relv_sq, double w_squared,  double radius, double mass2);
@@ -91,3 +128,4 @@ void update_scale(Simulation<T>* _s);
 }
 
 #include "Aster/impl/tool_chain_impl.tpp"
+#include "Aster/impl/SABA.tpp"

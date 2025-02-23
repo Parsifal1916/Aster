@@ -31,10 +31,11 @@ struct sim_meta{
     ;
 
     double
-        divergence = 14.f,
+        adaptive_coeff = 5,
+        divergence = 14,
         takeover = 100,
         e_squared = 1,
-        dt = .001,
+        dt = 1,
         max_temp = 1,
         curvature_factor = 1,
         field_eq_scalar = 8 * pi * G / (c*c*c*c),

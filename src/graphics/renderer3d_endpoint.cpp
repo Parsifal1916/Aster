@@ -34,7 +34,6 @@ bool Renderer3d::does_show_axis(){
 
 void Renderer3d::draw_axis(){
     vec3 origin = {0, 0, 0};
-
     vec3 point1 = {_s -> get_width(),      0.0,               0.0        };
     vec3 point2 = {       0.0,      _s -> get_height(),       0.0        };
     vec3 point3 = {       0.0,            0.0,          _s -> get_depth()};
@@ -42,17 +41,16 @@ void Renderer3d::draw_axis(){
     point1 = map_point(point1);
     point2 = map_point(point2);
     point3 = map_point(point3);
-
     origin = map_point(origin);
     
-    glLineWidth(0);
+    glLineWidth(2.0f);
 
     glBegin(GL_LINES);
         glColor3f(1.0, 0.0, 0.0);
         glVertex2f(origin.x, origin.y);
         glVertex2f(point1.x, point1.y);
 
-        glColor3f(0.0,1.0,0.0);
+        glColor3f(0.0, 1.0, 0.0);
         glVertex2f(origin.x, origin.y);
         glVertex2f(point2.x, point2.y);
 
@@ -60,26 +58,28 @@ void Renderer3d::draw_axis(){
         glVertex2f(origin.x, origin.y);
         glVertex2f(point3.x, point3.y);
     glEnd();
+
 }
 
-vec3 Renderer3d::map_point(vec3 v){
-    v =  v - _s -> get_center(); 
+vec3 Renderer3d::map_point(vec3 v) {
+    v = v - _s->get_center();
 
-    float x1, z1, y1, z2;
+    float x1 = v.x * cos_x_theta + v.z * sin_x_theta;
+    float z1 = -v.x * sin_x_theta + v.z * cos_x_theta;
 
-    x1 = v.x * cos_x_theta + v.z * sin_x_theta;
-    z1 = - v.x * sin_x_theta + v.z *cos_x_theta;
+    float y1 = v.y * cos_y_theta + z1 * sin_y_theta;
+    float z2 = -v.y * sin_y_theta + z1 * cos_y_theta;
 
-    y1 = v.y * cos_y_theta + z1 *sin_y_theta;
-    z2 = -v.y *sin_y_theta + z1 * cos_y_theta;
+    float scale = 1 / (distance + z2/ _s -> get_width() + .1);
 
-    float scale = distance/ std::pow(distance + z2, depth_factor);
 
-    v.x = (x1*scale) *2  / (double)current_width ; 
-    v.y = (y1*scale) *2  / (double)current_height; 
-    v.z = z2;
+    float scale_x = _s->get_render_width() / _s->get_width();
+    float scale_y = _s->get_render_height() / _s->get_height();
 
-    return v;
+    float ndc_x = (x1 * scale_x * scale) / (_s->get_render_width() / 2.0f);
+    float ndc_y = (y1 * scale_y * scale) / (_s->get_render_height() / 2.0f);
+
+    return { ndc_x, ndc_y, z2 };
 }
 
 bool Renderer3d::is_unitary_bound(vec3 v){
@@ -90,15 +90,15 @@ bool Renderer3d::is_unitary_bound(vec3 v){
 Renderer3d::Renderer3d(Simulation<vec3>* _s) : _s(_s){
     render3d = render_modes3d[_s -> get_type()];
     rot_center = {
-        _s -> get_width() / 4,
-        _s -> get_height()/ 4,
-        _s -> get_depth() / 4
+        _s -> get_width() / 2,
+        _s -> get_height()/ 2,
+        _s -> get_depth() / 2
     };
 
     if (!glfwInit()) 
         return;
 
-    window = glfwCreateWindow(_s -> get_width(), _s -> get_height(), "Aster's simulation", nullptr, nullptr);
+    window = glfwCreateWindow(_s -> get_render_width(), _s -> get_render_height(), "Aster's simulation", nullptr, nullptr);
     
     if (!window) {
         glfwTerminate();
@@ -115,6 +115,9 @@ void Renderer3d::show(){
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, handle_keyboard_input);
     glfwSetScrollCallback(window, handle_mouse_scroll);
+
+    if (!_s -> has_loaded_yet())
+        _s -> load();
 
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
@@ -150,7 +153,7 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
     
     if (!renderer) throw std::runtime_error("undefined reference to window"); 
 
-    renderer -> distance += static_cast<float>(yoffset) * 100.0f * renderer -> distance / (renderer -> distance +1000);
+    renderer -> distance += renderer -> distance * static_cast<float>(yoffset) / 1000;
     renderer -> distance = (renderer -> distance < .5) ? .5 : renderer -> distance;
     renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> get_width()) ?  10 * renderer -> _s -> get_width() : renderer -> distance;
 }
@@ -210,7 +213,6 @@ void Renderer3d::draw_termal3d(){
         index = int(get_coloring_index(p.temp)*255);
         glColor3f(color_scale[index][0], color_scale[index][1], color_scale[index][2]);
     
-        //std::cout << std::abs(distance/(temp.z*temp.z)) << "\n";
         if (is_unitary_bound(temp))
             glVertex2f( 
                 temp.x, 
@@ -224,7 +226,7 @@ void Renderer3d::draw_termal3d(){
 /*
 * draws every body in the Simulation::bodies
 * with white on the "image"
-* objectc
+* object
 */
 void Renderer3d::draw_minimal3d(){
     glBegin(GL_POINTS);
@@ -235,13 +237,12 @@ void Renderer3d::draw_minimal3d(){
     for (const auto& p : _s -> bodies){
         // if it's in the canva range it draws it 
         temp = map_point(p.position);
-        double mult = _s -> get_depth()/std::max(temp.z, .001) + .2;
+        double mult = _s -> get_render_depth()/std::max(temp.z, .001) + .2;
         glColor3f(
             mult, mult, mult
         );
     
     
-        //std::cout << std::abs(distance/(temp.z*temp.z)) << "\n";
         if (is_unitary_bound(temp))
             glVertex2f( 
                 temp.x, 
@@ -274,7 +275,7 @@ void Renderer3d::draw_detailed3d() {
                   rng_colors[original_index % 15][1], 
                   rng_colors[original_index % 15][2]); 
 
-        double radius = std::log10(p.mass) / 300;
+        double radius = std::log10(p.mass) / 3000;
 
         glBegin(GL_TRIANGLE_FAN);
         glVertex2f(mapped_pos.x, mapped_pos.y);

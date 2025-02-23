@@ -51,18 +51,19 @@ int main(){
     auto* sim = bake(LIGHT);
     
     sim 
-    -> update_with(EULER)
+    -> update_with(SABA5)
     -> get_force_with(NEWTON)
-    -> set_dt(5e6)
+    -> set_dt(5e5)
     -> collect_error()
-    -> set_scale(1.49e11 /4)
+    -> set_scale(1.49e11 / 4)
     ;
     
     add_body(sim, 2e30, sim -> get_center(), {0,0});
-    add_body(sim, 5e24, {sim -> get_width(), sim -> get_height() / 2},{0, 2000});
+    //add_body(sim, 5e24, {sim -> get_width() * 3/4, sim -> get_height()/2},{0, 2000});
+    add_body(sim, 5e24, {sim -> get_width(), sim -> get_height()/2},{0, 2790});
     //add_disk3d(sim, 1e4, sim -> get_center(), 60e1, .3, {}, 10e10);
     //add_disk3d(sim, 1e4, sim -> get_corner(0), 60e1, .3, {90, 45, 0}, 10e10);
-  // add_disk(sim, 1e4, sim -> get_center(), 100, 10);
+   // add_disk(sim, 1e3, sim -> get_center(), 100, 10, {0,0,0});
     //rng_sphere(sim, 10e3, {meta.WIDTH, meta.HEIGHT, meta.depth}, 10e2);
     
 
@@ -71,6 +72,7 @@ int main(){
     -> show_axis()
     -> show();
 }
+
 
 
 
