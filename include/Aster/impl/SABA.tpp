@@ -21,8 +21,8 @@ void update_SABA1(Simulation<T>* _s){
 
 template <typename T> 
 void update_SABA2(Simulation<T>* _s){
-    constexpr double c1 = .5 - std::sqrt(3) / 6;
-    constexpr double c2 = std::sqrt(3) / 3;
+    constexpr double c1 = 0.21132486540518713447056597942719236;
+    constexpr double c2 = 0.57735026918962573105886804114561528;
     constexpr double d1 = .5;
     const double dt = _s -> get_dt();
 
