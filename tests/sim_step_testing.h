@@ -14,6 +14,7 @@ TEST_CASE("Simulation step benchmarking", "[building]") {
         auto* simulation = bake(BARNES_HUT);
 
         cosmic_web(simulation, 1e3, 1e4);
+        simulation -> load();
 
         BENCHMARK("Steps 2d"){
             return simulation -> step();
@@ -24,8 +25,9 @@ TEST_CASE("Simulation step benchmarking", "[building]") {
 
     SECTION("3d simulations"){
         auto* simulation = bake3d(BARNES_HUT);
-
+        
         cosmic_web(simulation, 1e3, 1e4);
+        simulation -> load();
 
         BENCHMARK("Steps 3d"){
             return simulation -> step();

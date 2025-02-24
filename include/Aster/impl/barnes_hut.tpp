@@ -219,7 +219,7 @@ void Barnes_Hut<T>::calculate_com(){
 
 template <typename T>
 void Barnes_Hut<T>::get_node_body(size_t node, Body<T>* body){
-    assert(node < nodes.size() - 1);
+    assert(node < nodes.size());
     auto& cnode = nodes[node];
     
     if (cnode.is_empty()) return;

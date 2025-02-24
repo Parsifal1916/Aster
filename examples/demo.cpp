@@ -51,9 +51,9 @@ int main(){
     auto* sim = bake(LIGHT);
     
     sim 
-    -> update_with(SABA5)
+    -> update_with(SABA9)
     -> get_force_with(NEWTON)
-    -> set_dt(5e5)
+    -> set_dt(5e1)
     -> collect_error()
     -> set_scale(1.49e11 / 4)
     ;
