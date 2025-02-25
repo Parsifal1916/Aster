@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include <thread>
 #include <iostream>
+#define GL_SILENCE_DEPRECATION 
 
 #include "Aster/graphics/animations.h"
 #include "Aster/simulations/sim_obj.h"
