@@ -407,10 +407,10 @@ void update_leapfrog(Simulation<vec3>* _s){
 
 template <>
 void update_symplectic4(Simulation<vec3>* _s){
-    constexpr double c1 = 1 / (2 * (2 - std::pow(2.0, 1.0/3.0)));
-    constexpr double c2 = (1 - pow(2.0, 1.0/3.0)) * c1;
-    constexpr double d1 = 1 / (2 - std::pow(2.0, 1.0/3.0));
-    constexpr double d2 = -std::pow(2.0, 1.0/3.0) *d1;
+    constexpr double c1 = 0.675603595979828885909057589742587879;
+    constexpr double c2 = -0.175603595979828858153481974113674369;
+    constexpr double d1 = 1.35120719195965777181811517948517576;
+    constexpr double d2 = -1.70241438391931532159162543393904343;
     
     // first step 
     for_each_body(_s, [d1, c1, _s](Body<vec3>& body){
