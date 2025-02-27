@@ -510,6 +510,8 @@ func_ptr<vec2> get_update_func(update_type type){
         return update_SABA8<vec2>;
     case SABA9:
         return update_SABA9<vec2>;
+    case SABA10:
+        return update_SABA10<vec2>;
     default:
         std::cout << "update method not found";
         exit(-1);
@@ -562,6 +564,8 @@ func_ptr<vec3> get_update_func(update_type type){
         return update_SABA8<vec3>;
     case SABA9:
         return update_SABA9<vec3>;
+    case SABA10:
+        return update_SABA10<vec3>;
     default:
         std::cout << "update method not found";
         exit(-1);

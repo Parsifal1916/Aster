@@ -45,7 +45,7 @@ void Graph<T>::init(){
         data.resize(num);
         for (int i = 0; i < num; ++i){
             data[i].reserve(buffer_size);
-            if (save)
+            if (save) 
                 file << "Body" << i << ", ";
             }
 

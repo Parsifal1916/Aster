@@ -443,4 +443,89 @@ void update_SABA9(Simulation<T>* _s) {
     });  
 }
 
+
+template <typename T>
+void update_SABA10(Simulation<T>* _s) {
+    constexpr double c1 = 0.013046735741414139961017993957773973; 
+    constexpr double c2 = 0.054421580914093604672933661830479502; 
+    constexpr double c3 = 0.092826899194980052248884661654309736; 
+    constexpr double c4 = 0.123007087084888607717530710974544707; 
+    constexpr double c5 = 0.142260527573807989957219971018032089; 
+    constexpr double c6 = 0.148874338981631210884826001129719985;
+
+    constexpr double d1 = 0.033335672154344068796784404946665896;
+    constexpr double d2 = 0.074725674575290296572888169828848666;
+    constexpr double d3 = 0.109543181257991021997767467114081596;
+    constexpr double d4 = 0.134633359654998177545613460784734677;
+    constexpr double d5 = 0.147762112357376435086946497325669165;
+
+    const double dt = _s -> get_dt();
+
+    for_each_body(_s, [c1, dt](Body<T>& body) {
+        body.position += body.velocity * c1 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d1, c2, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d1 * dt;
+        body.position += body.velocity * c2 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d2, c3, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d2 * dt;
+        body.position += body.velocity * c3 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d3, c4, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d3 * dt;
+        body.position += body.velocity * c4 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d4, c5, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d4 * dt;
+        body.position += body.velocity * c5 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d5, c6, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d5 * dt;
+        body.position += body.velocity * c6 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d4, c5, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d5 * dt;
+        body.position += body.velocity * c4 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d3, c4, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d4 * dt;
+        body.position += body.velocity * c3 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d2, c3, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d2 * dt;
+        body.position += body.velocity * c3 * dt;
+    });
+
+    _s -> update_forces();
+
+    for_each_body(_s, [d1, c2, dt](Body<T>& body) {
+        body.velocity += body.acceleration * d1 * dt;
+        body.position += body.velocity * c2 * dt;
+    });
+}
 }
