@@ -8,6 +8,7 @@
 #include "Aster/graphs/graph_collection.h"
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/physics/body.h"
+#include "Aster/building-api/logging.h"
 
 namespace Aster{
 
@@ -16,19 +17,19 @@ namespace Graphs{
 template <typename T>
 Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::listener_fptr listener, graph_type type)
 : _s(_s), listener(listener), type(type) {
-    assert(_s  && "No simulation object specified! seams to be nullptr");
+    critical_if(!_s, "No simulation object specified! seams to be nullptr");
 }
 
 template <typename T>
 Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::collector_fptr listener, graph_type type)
 : _s(_s), collector(listener), type(type) {
-    assert(_s  && "No simulation object specified! seams to be nullptr");
+    critical_if(!_s, "No simulation object specified! seams to be nullptr");
 }
 
 template <typename T>
 void Graph<T>::init(){
-    assert(_s -> bodies.size() && "No bodies to listen to!");
-    assert(!done && "already loaded the graph!");
+    critical_if(!_s -> bodies.size(), "No bodies to listen to!");
+    critical_if(done, "already loaded the graph!");
 
     done = true;
 
@@ -39,8 +40,7 @@ void Graph<T>::init(){
 
     if (type == FOR_EACH) {
         size_t num = _s -> bodies.size();
-        if (num >= (int)10e3)
-            std::cout << "[ ! ] WARN: specified type is FOR_EACH, the amount of bodies in the simulation results to be very high (>=10e3). large amounts of data are going to be written to disk";
+        warn_if(num >= (int)10e3, "[ ! ] WARN: specified type is FOR_EACH, the amount of bodies in the simulation results to be very high (>=10e3). large amounts of data are going to be written to disk");
     
         data.resize(num);
         for (int i = 0; i < num; ++i){
@@ -60,7 +60,7 @@ void Graph<T>::init(){
 
 template <typename T>
 void Graph<T>::flush_to_file(){
-    assert(data.size() && "empty graphing data! possible data corruption occurred");
+    critical_if(!data.size(), "empty graphing data! possible data corruption occurred");
 
     if (type == FOR_EACH){ 
         for (int timestep = 0; timestep < data[0].size(); ++timestep){
@@ -88,10 +88,10 @@ void Graph<T>::flush_to_file(){
 
 template <typename T>
 void Graph<T>::trigger(){
-    assert(this -> type != BETWEEN && "cannot trigger on graph with type BETWEEN. HINT: try using trigger_on(Body*, Body*)");
+    critical_if(this -> type == BETWEEN, "cannot trigger on graph with type BETWEEN. HINT: try using trigger_on(Body*, Body*)");
 
     if (!done) init();
-    assert(data.size() && "The internal graphing data is empty!");
+    critical_if(!data.size(), "The internal graphing data is empty!");
 
     if (data[0].size() >= buffer_size)
         flush_to_file();
@@ -101,7 +101,7 @@ void Graph<T>::trigger(){
 
 template <typename T>
 void Graph<T>::trigger_on(Body<T>* b1, Body<T>* b2){
-    assert(this -> type == BETWEEN && "invalid call to trigger_on: the graph is not of type BETWEEN");
+    critical_if(this -> type != BETWEEN, "invalid call to trigger_on: the graph is not of type BETWEEN");
     if (!done){
         this -> init();
         done = true;
@@ -112,7 +112,7 @@ void Graph<T>::trigger_on(Body<T>* b1, Body<T>* b2){
 
 template <typename T>
 void Graph<T>::end_batch(){
-    assert(this -> type == BETWEEN && "invalid call to end_batch: the graph is not of type BETWEEN");
+    critical_if(this -> type != BETWEEN, "invalid call to end_batch: the graph is not of type BETWEEN");
 
     this -> data[0].push_back(this -> internal_counter);
     internal_counter = 0;
@@ -125,10 +125,10 @@ void Graph<T>::end_batch(){
 
 template <typename T>
 void Graph<T>::update_data(){
-    assert(this -> type != BETWEEN && "cannot call update data on graph with type BETWEEN");
+    critical_if(this -> type == BETWEEN, "cannot call update data on graph with type BETWEEN");
 
     if (type == FOR_EACH){
-        assert(_s -> bodies.size() == data.size() && "The number of bodies has changed over time, cannot generate the graph properly");
+        critical_if(_s -> bodies.size() != data.size(),"The number of bodies has changed over time, cannot generate the graph properly");
 
        for (int i = 0; i < _s -> bodies.size(); ++i)
             this -> data[i].push_back(listener(this, this -> _s, &(this -> _s -> bodies[i])));    

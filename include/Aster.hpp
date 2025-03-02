@@ -14,6 +14,7 @@
 
 #include "Aster/building-api/builder.h"
 #include "Aster/building-api/presets.h"
+#include "Aster/building-api/logging.h"
 
 #include "Aster/simulations/sim_helper.h"
 #include "Aster/simulations/sim_obj.h"

@@ -513,8 +513,7 @@ func_ptr<vec2> get_update_func(update_type type){
     case SABA10:
         return update_SABA10<vec2>;
     default:
-        std::cout << "update method not found";
-        exit(-1);
+        warn_if(true, "update method not found");
         return update_euler<vec2>;
     }
 }
@@ -531,6 +530,7 @@ force_func<vec2> get_force_func(force_type type){
     case PN25:
         return pn25<vec2>;
     default:
+        warn_if(true, "force method not found");
         return newtonian<vec2>;
     }   
 }
@@ -567,8 +567,7 @@ func_ptr<vec3> get_update_func(update_type type){
     case SABA10:
         return update_SABA10<vec3>;
     default:
-        std::cout << "update method not found";
-        exit(-1);
+        warn_if(true, "update method not found");
         return update_euler<vec3>;
     }
 }
@@ -585,6 +584,7 @@ force_func<vec3> get_force_func(force_type type){
     case PN25:
         return pn25<vec3>;
     default:
+        warn_if(true, "force method not found");
         return newtonian<vec3>;
     }   
 }
