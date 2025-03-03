@@ -20,14 +20,46 @@ class Renderer2d{
 
     Renderer2d(Simulation<vec2>* _s);
 
+    /**
+    * @brief tells the renderer to show the x and y axis
+    * @returns a pointer to the renderer
+    */
     Renderer2d* show_axis();
+
+    /**
+    * @brief returns true if show axis is true
+    * @returns wheter show axis is true
+    */
     bool does_show_axis();
 
+    /**
+    * @brief function that steps the simulation
+    */
     void body_update_func();
+
+    /**
+    * @brief rendering function made for thermal simualtions
+    */
     void draw_termal();
+
+    /**
+    * @brief rendering function made to fit most simulations
+    */
     void draw_minimal();
+
+    /**
+    * @brief slow rendering function with automatic random coloring and circle drawing
+    */
     void draw_detailed();
+
+    /**
+    * @brief creates a window and renderes the simulation
+    */
     void show();
+
+    /**
+    * @brief callback for when the window is resized
+    */
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     
     std::vector<render_func> render_modes = {
@@ -40,6 +72,9 @@ class Renderer2d{
 
     private:
 
+    /**
+    * @brief draws the x and y axis, automatically called if show_axis is called
+    */
     void draw_axis();
 
     bool show_axis_b = false;    
@@ -50,6 +85,10 @@ class Renderer2d{
 
 }
 
+/**
+* @brief bakes a renderer for a specific simulation
+* @param s: simulation to render
+*/ 
 Renderer::Renderer2d* render(Simulation<vec2>*);
 
 }

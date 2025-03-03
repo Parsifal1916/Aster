@@ -16,9 +16,9 @@ constexpr int time_characters = 7;
 extern error_type error_level;
 
 double get_time();
-void critical_if(bool cond, std::string msg);
-void warn_if(bool cond, std::string msg);
-void err_if(bool cond, std::string msg);
+bool critical_if(bool cond, std::string msg);
+bool warn_if(bool cond, std::string msg);
+bool err_if(bool cond, std::string msg);
 void log_info(std::string msg);
 
 extern const std::string ERROR;

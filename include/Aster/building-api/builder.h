@@ -8,12 +8,19 @@
 
 namespace Aster{
 
+//used to generate a random angle (0-360)
 extern std::uniform_real_distribution<double> angle_rnd;
+
+// returns a double from 0 to 1
 extern std::uniform_real_distribution<double> normalized_rnd;
 
+/*
+* basic gravity solver using a single thread
+*/
 template <typename T>
 class SingleThread final : public Simulation<T> {
     public:
+    // generate from a predeterminated meta obj
     SingleThread(sim_meta m);
     SingleThread();
 
@@ -24,10 +31,12 @@ class SingleThread final : public Simulation<T> {
 template <typename T>
 class Parallelized final : public Simulation<T> {
     public:
+    // contains the necessary threads, it is reserved for _s -> get_cores() items
     std::vector<std::thread> threads;
 
     Parallelized(sim_meta m);
     Parallelized();
+    
     void step() override;
     void update_forces() override;
     

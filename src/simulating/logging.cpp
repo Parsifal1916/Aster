@@ -21,8 +21,8 @@ double get_time(){
     return duration<double>(steady_clock::now().time_since_epoch()).count() / 1000000;
 }
 
-void critical_if(bool cond, std::string msg){
-    if (!cond) return;
+bool critical_if(bool cond, std::string msg){
+    if (!cond) return false ;
 
     std::cout << "("
               << std::fixed
@@ -30,10 +30,11 @@ void critical_if(bool cond, std::string msg){
               << std::setw(time_characters) 
               << get_time() << "s"
               << ")" << "[" << CRITICAL << "CRIT" << RESET << "] " << msg << "\n";
+    return true;
 }
 
-void warn_if(bool cond, std::string msg){
-    if (!cond) return;
+bool warn_if(bool cond, std::string msg){
+    if (!cond) return false;
 
     std::cout << "("
               << std::fixed
@@ -41,11 +42,12 @@ void warn_if(bool cond, std::string msg){
               << std::setw(time_characters) 
               << get_time() << "s" 
               << ")" << "[" << WARNING << "WARN" << RESET << "] " << msg << "\n";
+    return true;
 }
 
 
-void err_if(bool cond, std::string msg){
-    if (!cond) return;
+bool err_if(bool cond, std::string msg){
+    if (!cond) return false;
 
     std::cout << "("
               << std::fixed
@@ -53,6 +55,7 @@ void err_if(bool cond, std::string msg){
               << std::setw(time_characters) 
               << get_time() << "s"
               << ")" << "[" << ERROR << "ERR" << RESET << "] " << msg << "\n";
+    return true;
 }
 
 
