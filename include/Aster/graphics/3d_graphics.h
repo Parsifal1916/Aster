@@ -41,6 +41,10 @@ class Renderer3d{
     ;   
 
     Renderer3d(Simulation<vec3>* _s);
+
+    /**
+    * @brief wrapper function to step the simulation
+    */
     void body_update_func();
 
     /**
@@ -54,11 +58,20 @@ class Renderer3d{
     */
     bool does_show_axis();
  
+    /*
+    * @brief fast method to draw every body in the simulation 
+    */
     void draw_minimal3d();
+
+    /**
+    * @brief costly method to draw every body in the simulation, useful for few body problems
+    */
     void draw_detailed3d();
+
+    /**
+    * @brief rendering method to draw thermal simulations
+    */
     void draw_termal3d();
-
-
  
     /**
     * @brief tells the renderer to shwo the window and render the simulation
@@ -137,6 +150,9 @@ class Renderer3d{
     */
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     
+    /**
+    *  @brief internal function to handle keyboard inputs 
+    */
     static void handle_keyboard_input(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     /**

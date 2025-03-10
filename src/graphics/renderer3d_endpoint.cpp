@@ -290,21 +290,26 @@ void Renderer3d::handle_displacement(){
     sin_y_theta = sin(y_theta); 
 }
 
-
+/**
+* @brief rendering method to draw thermal simulations
+*/
 void Renderer3d::draw_termal3d(){
+    // sets up glfw configuration
     glBegin(GL_POINTS);
-
     glPointSize(10);    
 
-    vec3 temp = {0,0,0};
-    int index;
+    
+    vec3 temp = {0,0,0}; // only makes one instance of a vector
+    int index;// keeps track of the color index
     for (const auto& p : _s -> bodies){
-        // if it's in the canva range it draws it 
+        // maps the position to 2d space
         temp = map_point(p.position);
 
+        // calculates the associated color
         index = int(get_coloring_index(p.temp)*255);
         glColor3f(color_scale[index][0], color_scale[index][1], color_scale[index][2]);
     
+        // draws the point on screen if it is in the simulation
         if (is_unitary_bound(temp))
             glVertex2f( 
                 temp.x, 
@@ -316,25 +321,26 @@ void Renderer3d::draw_termal3d(){
 }
 
 /*
-* draws every body in the Simulation::bodies
-* with white on the "image"
-* object
+* @brief fast method to draw every body in the simulation 
 */
 void Renderer3d::draw_minimal3d(){
+    // sets up the glfw configuration
     glBegin(GL_POINTS);
-
     glPointSize(10);    
 
-    vec3 temp = {0,0,0};
+    vec3 temp = {0,0,0}; // makes only one instance of the position vector
+
     for (const auto& p : _s -> bodies){
-        // if it's in the canva range it draws it 
+        // maps the point in 2d space 
         temp = map_point(p.position);
+
+        // calculates the color based on parallax
         double mult = _s -> get_render_depth()/std::max(temp.z, .001) + .2;
         glColor3f(
             mult, mult, mult
         );
     
-    
+        // draws the point if it's in range
         if (is_unitary_bound(temp))
             glVertex2f( 
                 temp.x, 
@@ -344,46 +350,62 @@ void Renderer3d::draw_minimal3d(){
 
     glEnd();
 }
-
+/**
+* @brief costly method to draw every body in the simulation, useful for few body problems
+*/
 void Renderer3d::draw_detailed3d() { 
-    vec3 mapped_pos = {0, 0, 0};
+    vec3 mapped_pos = {0, 0, 0}; // only one instance
 
+    // makes a pair of int and bodies to link the body with its index in the array
     std::vector<std::pair<int, Body<vec3>>> sorted_bodies;
     for (int i = 0; i < _s->bodies.size(); i++) {
         Body<vec3> b = _s->bodies[i];
         b.position = map_point(b.position);
+        // also saves the index in a pair so that colors are consistent between frames 
         sorted_bodies.emplace_back(i, b); 
     }
 
+    // sorts the bodies based on thier z distance after being maped
+    // to keep the drawing order
     std::sort(sorted_bodies.begin(), sorted_bodies.end(), 
               [](const std::pair<int, Body<vec3>>& a, const std::pair<int, Body<vec3>>& b) {
                   return a.second.position.z > b.second.position.z;
               });
 
     for (auto& [original_index, p] : sorted_bodies) {
-        mapped_pos = p.position;
-
+        mapped_pos = p.position; //saves the position
+        
+        // fetches the color from rng colors array
         glColor3f(rng_colors[original_index % 15][0], 
                   rng_colors[original_index % 15][1], 
                   rng_colors[original_index % 15][2]); 
 
+        // calculates the radius based on the log_{10} of the mass by some constant
         double radius = std::log10(p.mass) / 3000;
 
+        // draws a circle around the body using a triangle fan
         glBegin(GL_TRIANGLE_FAN);
+        // draws the center of the fan
         glVertex2f(mapped_pos.x, mapped_pos.y);
 
         for (int j = 0; j <= NUM_SEGMENTS; j++) {
+            // calculates the points's position with polar coordinates where r = radius
             float angle = 2.0f * M_PI * j / NUM_SEGMENTS;
             float vx = mapped_pos.x + cos(angle) * radius;
             float vy = mapped_pos.y + sin(angle) * radius;
+
+            // draws the vertex
             glVertex2f(vx, vy);
         }
         
+        // ends the batch
         glEnd(); 
     }
 }
 
-
+/**
+*  @brief internal function to handle keyboard inputs 
+*/
 void Renderer3d::handle_keyboard_input(GLFWwindow* window, int key, int scancode, int action, int mods) {
     void* ptr = glfwGetWindowUserPointer(window);
     auto* renderer = static_cast<Renderer3d*>(ptr);
@@ -435,6 +457,9 @@ void Renderer3d::handle_keyboard_input(GLFWwindow* window, int key, int scancode
     }
 }
 
+/**
+* @brief wrapper function to step the simulation
+*/
 void Renderer3d::body_update_func(){
     _s -> step();
 }

@@ -127,8 +127,8 @@ vec2 rng_point_in_square(vec2 start, vec2 stop = {0,0}){
 * @returns the point
 */
 vec2 rng_point_in_circle(double max_r, double min_r = 1){
-    if (warn_if(max_r <= 0 || min_r <= 0 || min_r < max_r, "invalid radius value when generating random point"))
-        return {0,0};
+    //if (warn_if(max_r <= 0 || min_r <= 0 || min_r > max_r, "invalid radius value when generating random point"))
+    //    return {0,0};
 
     double theta = rng_val(0, 2*PI);
     double r = rng_val(min_r, max_r);
@@ -146,7 +146,7 @@ vec2 rng_point_in_circle(double max_r, double min_r = 1){
 * @param thickness: hight of the cylinder (default = 1)
 */
 vec3 rng_point_in_cylinder(double max_r, double min_r = 1, double thickness = 1){
-    if (warn_if(max_r <= 0 || min_r <= 0 || min_r < max_r, "invalid radius value when generating random point"))
+    if (warn_if(max_r <= 0 || min_r <= 0 || min_r > max_r, "invalid radius value when generating random point"))
         return {0,0,0};
 
     if (warn_if(thickness < 0, "negative thickness is not allowed, defaulting to its absolute value"));
@@ -170,7 +170,7 @@ vec3 rng_point_in_cylinder(double max_r, double min_r = 1, double thickness = 1)
 * @param min_r: inner radius (default = 1)
 */
 vec3 rng_point_in_sphere(double max_r, double min_r = 1){
-    if (warn_if(max_r <= 0 || min_r <= 0 || min_r < max_r, "invalid radius value when generating random point"))
+    if (warn_if(max_r <= 0 || min_r <= 0 || min_r > max_r, "invalid radius value when generating random point"))
         return {0,0,0};
 
     double theta = rng_val(0, 2*PI);
@@ -239,8 +239,8 @@ vec3 rng_vec(Simulation<vec3>* _s){
 * @param v: velocity of the cluster 
 */
 void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, double inner, double avr_mass = 10e6, vec2 v = {0,0}){
-    if (warn_if(outer <= 0 || inner <= 0 || outer < inner, "invalid radius value when generating random point"))
-        return;
+    //if (warn_if(outer <= 0 || inner <= 0 || outer < inner, "invalid radius value when generating random point"))
+    //    return;
 
     if (warn_if(!_s, "the simulation given to make a disk is nullptr!"))
         return;

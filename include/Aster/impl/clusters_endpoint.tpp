@@ -182,7 +182,8 @@ ClusterQueue<T>* ClusterQueue<T>::pop_cluster(){
 */
 template <typename T>
 ClusterQueue<T>* ClusterQueue<T>::load(Simulation<T>* _s){
-    warn_if(!data.size(), "no clusters to load from the queue");
+    warn_if(data.size() == 0, "no clusters to load from the queue"); 
+
     if (critical_if(!_s, "simulation given is nullptr"))
         exit(-1);
 
