@@ -9,6 +9,8 @@ build/
 *.tmp
 *.bin
 *.manifest
+*.csv
+galassia
 
 callgrind.out.*
 CMakeCache.txt
@@ -31,6 +33,7 @@ Thumbs.db
 *.user
 *.obj
 *.dll
+*.csv
 
 run.sh
 
