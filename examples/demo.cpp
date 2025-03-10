@@ -55,27 +55,25 @@ double collector(Graphs::Graph<vec2>* g, Simulation<vec2>* _s, Body<vec2>* b) {
     return retval;
 }
 int main(){
-    auto* sim = bake(LIGHT); //Composite2d* sim = new Composite2d();
+    Composite2d* sim = new Composite2d();
+
+    sim -> set_scale(10e2);
     
+    add_composite(sim, 15, 11e7, 75, {0, sim -> get_height() / 2}, {.01, -.008});
+    add_composite(sim, 15, 11e7, 75, {sim -> get_width(), sim -> get_height() / 2}, {-.01, .008});
+    //add_composite(sim, 15, 10e6, 50, sim -> get_center() * 3/4, {0,0});
+
     sim 
-    -> update_with(SYMPLECTIC4)
-    -> get_force_with(NEWTON)
-    -> set_dt(1e15)
-    -> set_scale(1.49e11)
-    -> add_graph(collector, ONCE)
+    -> update_with(LEAPFROG)
+    -> get_force_with(PN1)
+    -> set_dt(10)
+    -> set_scale(2)
     -> load();
     
-    add_body(sim, 2e39, sim -> get_center(), {0,0});
-    add_body(sim, 5.98e24, {sim -> get_width(), sim -> get_height()/2}, {0, 3e-4});
-
-    //add_composite(sim, 15, 10e6, 50, {0, sim -> get_height() / 2}, {.01, -.002}, 1);
-    //add_composite(sim, 15, 10e6, 50, {sim -> get_width(), sim -> get_height() / 2}, {-.01, .002}, 1);
-    //add_composite(sim, 15, 10e6, 50, sim -> get_center() * 3/4, {0,0});
-    //add_disk(sim, 1e4, sim -> get_center(), 300, 10);
-    
-    render(sim) -> show();
+    render(sim)
+    -> show_axis()
+    -> show();
 }
-
 
 
 
