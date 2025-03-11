@@ -48,16 +48,21 @@ double collector(Graphs::Graph<vec2>* g, Simulation<vec2>* _s, Body<vec2>* b) {
 }
 
 int main(){
+    auto* sim = bake(LIGHT);
 
-    auto* sim = bake(BH_termal);
-    //cosmic_web(sim, 1e4, 10e10);
-    add_disk(sim, 1e4, sim -> get_center(), 100, 0);
- 
+    vec2 velocity = vec2({600, -400})*3;
+
     sim 
-    -> get_force_with(PN1)
-    -> set_dt(.5)
+    -> set_scale(10e11)
+    -> get_force_with(NEWTON)
+    -> set_dt(1e8)
     -> load();
  
+    add_body(sim, 2e30, {10e10*1366 * 1/4, sim -> get_height() -  10e10*768 /2 }, vec2({0, 800}) + velocity);
+    add_body(sim, 2e30, {10e10*1366 *3/4,  sim -> get_height() - 10e10*768 /2 },  vec2({0,-800}) + velocity);
+
+    add_body(sim, 4e31, {sim -> get_width() * 3/4, sim -> get_height() * 1/4}, -velocity + vec2({0, 550}));
+
     render(sim) -> show();
 
     
