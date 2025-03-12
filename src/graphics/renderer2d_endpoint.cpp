@@ -147,6 +147,7 @@ void Renderer2d::framebuffer_size_callback(GLFWwindow* window, int width, int he
 * @brief creates a window and renderes the simulation
 */
 void Renderer2d::show(){
+
     if (critical_if(!_s, "the given simulation pointer is a nullptr"))
         exit(-1);
 
@@ -242,7 +243,7 @@ void Renderer2d::draw_termal(){
         // draws the point with the right color
         glVertex2f(
             // trasforms the coordinates to -> [-1, 1]
-		    2.f *p.position.x/ (_s -> get_width()) - 1, 
+		    2.f * p.position.x/ (_s -> get_width()) - 1, 
 		    2.f * p.position.y/ (_s -> get_height()) - 1
 		);
 
@@ -295,7 +296,13 @@ void Renderer2d::draw_detailed(){
 
         // chooses a random color from the array
         glColor3f(rng_colors[i % 14][0], rng_colors[i % 14][1], rng_colors[i % 14][2]); 
-        double radius = std::log10(p.mass) / 200; // scales the radius based on the log_{10} of the mass
+        double radius = std::max(
+            std::min(
+                std::log10(p.mass * _s -> get_render_width() / _s -> get_width() ) / 200,
+                .2
+            ),
+            0.005
+        ); // scales the radius based on the log_{10} of the mass
 
         // calculates the center 
         vec2 mapped_pos = {

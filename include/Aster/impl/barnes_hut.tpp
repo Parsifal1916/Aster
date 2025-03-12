@@ -290,18 +290,14 @@ void Barnes_Hut<T>::get_node_body(size_t node, Body<T>* body){
     if (critical_if(node >= nodes.size(), "got unexpected node index in get_node_body(size_t, Body<T>*)"))
         exit(-1);
 
-    // gets a reference to the current node
     auto& cnode = nodes[node];
-
-    // no need to calculate the force if it's empty
+    
     if (cnode.is_empty()) return;
 
-    // calculates the distance squared
     double d_squared = (body -> position - nodes[node].center_of_mass).sqr_magn();
 
-    // uses \frac{d^2}{\theta^2} > s^2 to decide
-    if (d_squared * theta * theta > nodes[node].size * nodes[node].size || cnode.is_leaf()){ // use the optmisation
-        body -> acceleration += this -> get_force( // calculates the force between the two
+    if (d_squared * theta * theta > nodes[node].size * nodes[node].size){ // use the optmisation
+        body -> acceleration += this -> get_force(
             body -> mass, nodes[node].mass,
             body -> velocity, nodes[node].velocity,
             body -> position, nodes[node].center_of_mass,
@@ -311,8 +307,20 @@ void Barnes_Hut<T>::get_node_body(size_t node, Body<T>* body){
         return;
     } 
     
-    // if it cannot use the approx and the node is not a leaf 
-    // it has to sum the forces from each child
+    if (cnode.is_leaf()){
+
+        if (nodes[node].center_of_mass == body -> position || !cnode.mass) return;
+
+        body -> acceleration += this -> get_force(
+            body -> mass, nodes[node].mass,
+            body -> velocity, nodes[node].velocity,
+            body -> position, nodes[node].center_of_mass,
+            this
+        ) / body -> mass;
+            
+        return;
+    }
+        
     for (int i = 0; i < num_childs; i++)
         get_node_body(nodes[node].child + i, body);
     
