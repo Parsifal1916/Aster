@@ -114,17 +114,17 @@ inline  T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     double half_a = get_A25<T>(eta, v, r_dot, m, r);
     double half_b = get_B25<T>(eta, v, r_dot, m, r);
 
-    T acc = x * m1*m2 / (r*r); 
+    T acc = n * m1*m2 / (r*r); 
     acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3); 
     acc += -( 8.0/5.0 * eta * (m*m) / (r*r*r) * (n * r_dot * half_a - v * half_b)) / (std::pow(_s -> get_c(), 5));
 
-    return acc * _s -> get_G() * m1;
+    return acc * _s -> get_G();
 }
 
 template <typename T> 
 inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T x = (p2 - p1 + T(_s -> get_e_sqr()));
-    double r = x.magnitude() + 1;
+    double r = x.magnitude();
     double m = m1 + m2;
     double eta = m1*m2 / (m*m);
     
@@ -136,9 +136,9 @@ inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     double b_components = get_B1<T>(eta                ) + get_B2<T>(eta, v, r_dot, m, r);
 
 
-    T acc = x * m1*m2 / (r*r); 
+    T acc = n * m1*m2 / (r*r); 
     acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
-    return acc* _s -> get_G() * m1;
+    return acc* _s -> get_G();
 }
 
 template <typename T> 
@@ -156,7 +156,7 @@ inline T pn1(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     double b_components = get_B1<T>(eta                );
 
 
-    T acc = x * m1*m2 / (r*r); 
+    T acc = n * m1*m2 / (r*r); 
     acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
     return acc* _s -> get_G();
 }
@@ -357,7 +357,7 @@ void adaptive_euler(Simulation<T>* _s){
 template <typename T>
 T newtonian(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T n = (p2 - p1);
-    double r = n.magnitude()+1;
+    double r = n.magnitude();
 
     return n.normalize() * _s -> get_G() *m1*m2/(r*r);
 }

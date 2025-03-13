@@ -8,63 +8,51 @@
 #include <Aster.hpp>
 using namespace Aster;
 
-double collector(Graphs::Graph<vec2>* g, Simulation<vec2>* _s, Body<vec2>* b) {
-    double retval = 0.0;
-    std::mutex retval_mutex;
-    const int num_threads = 16;
-    int num_bodies = _s->bodies.size();
-    
-    auto thread_func = [&retval, &retval_mutex, _s, num_bodies](int start_idx, int end_idx) {
-        double partial_retval = 0.0;
+double collect_x(Graphs::Graph<vec2>* g, Simulation<vec2>* _s, Body<vec2>* b){
+    vec2 bar = {0,0};
+    double mass = 0;
 
-        for (int i = start_idx; i < end_idx; ++i) {
-            const auto& b1 = _s->bodies[i];
-            partial_retval += 0.5 * b1.velocity.sqr_magn() * b1.mass;
-            for (int j = i + 1; j < num_bodies; ++j) {
-                const auto& b2 = _s->bodies[j];
-                double r = (b2.position - b1.position).magnitude();
-                partial_retval -= _s->get_G() * b1.mass * b2.mass / r;
-            }
-        }
 
-        std::lock_guard<std::mutex> lock(retval_mutex);
-        retval += partial_retval;
-    };
-
-    std::vector<std::thread> threads;
-    int chunk_size = num_bodies / num_threads;
-
-    for (int i = 0; i < num_threads; ++i) {
-        int start_idx = i * chunk_size;
-        int end_idx = (i == num_threads - 1) ? num_bodies : (i + 1) * chunk_size;
-        threads.push_back(std::thread(thread_func, start_idx, end_idx));
+    for (const auto& body : _s -> bodies){
+        mass += body.mass;
+        bar += body.position*body.mass;
     }
 
-    for (auto& t : threads) {
-        t.join();
+    bar = bar / mass;
+    return bar.x - b -> position.x;
+}
+
+double collect_y(Graphs::Graph<vec2>* g, Simulation<vec2>* _s, Body<vec2>* b){
+    vec2 bar = {0,0};
+    double mass = 0;
+
+
+    for (const auto& body : _s -> bodies){
+        mass += body.mass;
+        bar += body.position*body.mass;
     }
 
-    return retval;
+    bar = bar / mass;
+    return bar.y - b -> position.y;
 }
 
 int main(){
-    /*
     auto* sim = bake(LIGHT);
 
-    vec2 velocity = vec2({600, -400})*3;
 
     sim 
-    -> set_scale(10e11)
+    -> set_scale(10e10)
     -> get_force_with(NEWTON)
-    -> set_dt(1e8)
+    -> set_dt(2e8)
+    -> add_graph(collect_x, FOR_EACH)
+    -> add_graph(collect_y, FOR_EACH)
     -> load();
  
-    add_body(sim, 2e30, {10e10*1366 * 1/4, sim -> get_height() -  10e10*768 /2 }, vec2({0, 800}) + velocity);
-    add_body(sim, 2e30, {10e10*1366 *3/4,  sim -> get_height() - 10e10*768 /2 },  vec2({0,-800}) + velocity);
+    add_body(sim, 2e30, sim -> get_center(), {0,0});
+    add_body(sim, 2e14, {sim -> get_width() *6/7,  sim -> get_height() - 10e10*768 /2 },  vec2({0, 600}));
+    render(sim) -> show();
 
-    add_body(sim, 4e31, {sim -> get_width() * 3/4, sim -> get_height() * 1/4}, -velocity + vec2({0, 550}));
-
-    render(sim) -> show();*/
+    /*
 
     
     
@@ -91,7 +79,7 @@ int main(){
     render(sim)
     -> show_axis()
     -> show();
-}
+*/}
 
 
 
