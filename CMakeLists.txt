@@ -91,6 +91,12 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Aster
 )
 
+set(LIBRARY_PATH "${CMAKE_INSTALL_PREFIX}/include/Aster/thirdparty")
+target_compile_definitions(Aster PRIVATE LIBRARY_PATH="${LIBRARY_PATH}")
+
+file(COPY ${CMAKE_SOURCE_DIR}/include/Aster/thirdparty/roboto.ttf
+     DESTINATION ${CMAKE_BINARY_DIR}/include/Aster/thirdparty)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     find_package(Catch2 REQUIRED)
 

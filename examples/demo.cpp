@@ -6,51 +6,38 @@
 // * ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝        
 
 #include <Aster.hpp>
+#include <string>
 using namespace Aster;
 
-double collect_x(Graphs::Graph<vec2>* g, Simulation<vec2>* _s, Body<vec2>* b){
-    vec2 bar = {0,0};
-    double mass = 0;
-
-
-    for (const auto& body : _s -> bodies){
-        mass += body.mass;
-        bar += body.position*body.mass;
-    }
-
-    bar = bar / mass;
-    return bar.x - b -> position.x;
+std::string example(Simulation<vec2>* _s){
+    return "hbasbdajskdkdh 2.90384834893490583458";
 }
-
-double collect_y(Graphs::Graph<vec2>* g, Simulation<vec2>* _s, Body<vec2>* b){
-    vec2 bar = {0,0};
-    double mass = 0;
-
-
-    for (const auto& body : _s -> bodies){
-        mass += body.mass;
-        bar += body.position*body.mass;
-    }
-
-    bar = bar / mass;
-    return bar.y - b -> position.y;
-}
-
 int main(){
     auto* sim = bake(LIGHT);
 
 
     sim 
     -> set_scale(10e10)
-    -> get_force_with(NEWTON)
-    -> set_dt(2e8)
-    -> add_graph(collect_x, FOR_EACH)
-    -> add_graph(collect_y, FOR_EACH)
+    -> get_force_with(PN2)
+    -> set_dt(2e7)
     -> load();
  
-    add_body(sim, 2e30, sim -> get_center(), {0,0});
-    add_body(sim, 2e14, {sim -> get_width() *6/7,  sim -> get_height() - 10e10*768 /2 },  vec2({0, 600}));
-    render(sim) -> show();
+    add_body(sim, 2e32, sim -> get_center(), {0,0});
+    add_body(sim, 2e14, {sim -> get_width() *6/7,  sim -> get_height() - 10e10*768 /2 },  vec2({0, 1.18e4}));
+    //for (int i = 0; i < 16e3; i++)
+    //    sim -> step();
+
+    render(sim) 
+    -> add_label(example)
+    -> add_label(example)
+    -> add_label(example)
+    -> add_label(example)
+    -> add_label(example)
+    -> add_label(example)
+    -> add_label(example)
+    -> add_label(example)
+
+    -> show();
 
     /*
 

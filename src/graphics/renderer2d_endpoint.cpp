@@ -3,12 +3,14 @@
 #include <iomanip>
 #include <iostream>
 #include <cmath>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include "Aster/graphics/3d_graphics.h"
 #include "Aster/graphics/2d_graphics.h"
 #include "Aster/graphics/color_scale.h"
 #include "Aster/graphics/animations.h"
+#include "Aster/graphics/text_rendering.h"
 
 #include "Aster/simulations/BHT_sim.h"
 #include "Aster/simulations/barnes-hut.h"
@@ -34,6 +36,16 @@ Renderer::Renderer3d* render(Simulation<vec3>* s){
 }
 
 namespace Renderer{
+/**
+* @brief adds a label to the screen
+* @param gen: generator function for the label
+*/
+Renderer2d* Renderer2d::add_label(Text::label_gen<vec2> gen){
+    this -> labels.add_label(gen);
+    return this;
+}
+
+
 // used to generate random colors for draw detailed
 float rng_colors[15][3] = {
     {1.0, 0.0, 0.0},
@@ -100,6 +112,7 @@ Renderer2d::Renderer2d(Simulation<vec2>* _s)  : _s(_s) {
         glfwTerminate();
         exit(0);
     }
+
 }
 
 /**
@@ -139,6 +152,8 @@ void Renderer2d::framebuffer_size_callback(GLFWwindow* window, int width, int he
     renderer -> current_width = width;
     renderer -> current_height = height;
 
+    Text::nvg_resize(width, height);
+
     // sets the right viewport
     glViewport(0, 0, width, height);
 }
@@ -147,10 +162,8 @@ void Renderer2d::framebuffer_size_callback(GLFWwindow* window, int width, int he
 * @brief creates a window and renderes the simulation
 */
 void Renderer2d::show(){
-
     if (critical_if(!_s, "the given simulation pointer is a nullptr"))
         exit(-1);
-
 
     glfwMakeContextCurrent(window);
     bool paused = false;
@@ -160,6 +173,7 @@ void Renderer2d::show(){
     // stets up the callbacks
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+    
     // if the simulation has not been loaded it load it
 	if (!_s -> has_loaded_yet()){
 		std::thread t([this](){
@@ -182,12 +196,26 @@ void Renderer2d::show(){
         nullptr, nullptr
     );
 
+
     // resets the context
     glfwMakeContextCurrent(window);
     // sets up the associated pointer for the callbacks
 	glfwSetWindowUserPointer(window, this);
     // stets up the callbacks
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    // initializes glew
+    if (critical_if(glewInit(), "failed to initilize glew"))
+        exit(-1);
+
+    // initilizes window creation
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // loads vg and font
+    Text::load_font();
+    Text::nvg_resize(_s -> get_width(), _s -> get_height());
 
     // starts the main loop
     while (!glfwWindowShouldClose(window)) {
@@ -201,14 +229,19 @@ void Renderer2d::show(){
         // if escape is pressed it leaves the simulation
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             break;
-
+        
         // calls the user-defined rendering function
         (this ->* render)();
+        
+        // loads labels and ends vg frame
+        labels.load(_s);
+        Text::end_vg_frame(); 
 
         // swaps buffers and pulls the events 
         glfwSwapBuffers(window); 
         glfwPollEvents();
     }
+
     // after it has left it destroys everything
     glfwDestroyWindow(window);
     glfwTerminate();     

@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <iomanip>
 #include "Aster/simulations/sim_obj.h"
+#include "Aster/graphs/labeling.h"
 
 namespace Aster{
 
@@ -17,6 +18,7 @@ class Renderer2d{
 
     GLFWwindow* window;
     int current_height, current_width;
+    Text::LabelQueue<vec2> labels;
 
     Renderer2d(Simulation<vec2>* _s);
 
@@ -56,6 +58,12 @@ class Renderer2d{
     * @brief creates a window and renderes the simulation
     */
     void show();
+
+    /**
+    * @brief adds a label to the screen
+    * @param gen: generator function for the label
+    */
+    Renderer2d* add_label(Text::label_gen<vec2> gen);
 
     /**
     * @brief callback for when the window is resized

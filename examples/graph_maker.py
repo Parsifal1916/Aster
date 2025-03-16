@@ -13,7 +13,7 @@ for body in body_labels:
 
 plt.xlabel("X")
 plt.ylabel("Y")
-plt.title("3-body PN1 ")
+plt.title("binary PN2.5 ")
 plt.grid()
-plt.savefig("3body_PN1.png", dpi=300, bbox_inches="tight")
+plt.savefig("Binary_PN2.5.png", dpi=300, bbox_inches="tight")
 plt.show()
