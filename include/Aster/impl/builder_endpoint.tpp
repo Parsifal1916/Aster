@@ -4,8 +4,6 @@
 #include <stdexcept>
 #include <string>
 #include <cassert>
-#include <immintrin.h>
-
 #include "Aster/simulations/basic.h"
 #include "Aster/building-api/builder.h"
 #include "Aster/graphs/graph_collection.h"
