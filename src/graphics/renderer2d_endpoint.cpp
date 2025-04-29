@@ -19,6 +19,8 @@
 
 namespace Aster{
 
+
+
 /**
 * @brief bakes a renderer for a specific simulation
 * @param s: simulation to render
@@ -36,6 +38,36 @@ Renderer::Renderer3d* render(Simulation<vec3>* s){
 }
 
 namespace Renderer{
+
+/**
+* @brief updates the scale by ns
+* @param ns: value to update the scale with
+*/
+Renderer2d* Renderer2d::update_scale(double ns){
+    scale += ns;
+    return this;
+}
+
+/**
+* @brief return the scale
+*/
+double Renderer2d::get_scale() const{
+    return scale;
+}
+
+/**
+* @brief handles mouse scrolling
+*/
+void Renderer2d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double yoffset) {
+    // gets the window pointer
+    void* ptr = glfwGetWindowUserPointer(window);
+    auto* renderer = static_cast<Renderer2d*>(ptr); // converts it into a renderer
+
+    if (critical_if(!renderer, "undefined reference to window")) 
+        return; 
+
+    renderer -> update_scale(yoffset/50);
+}
 /**
 * @brief adds a label to the screen
 * @param gen: generator function for the label
@@ -172,6 +204,7 @@ void Renderer2d::show(){
 	glfwSetWindowUserPointer(window, this);
     // stets up the callbacks
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetScrollCallback(window, handle_mouse_scroll); // mouse scroll
 
     
     // if the simulation has not been loaded it load it
@@ -203,6 +236,7 @@ void Renderer2d::show(){
 	glfwSetWindowUserPointer(window, this);
     // stets up the callbacks
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetScrollCallback(window, handle_mouse_scroll); // mouse scroll
 
     // initializes glew
     if (critical_if(glewInit(), "failed to initilize glew"))
@@ -266,6 +300,13 @@ void Renderer2d::draw_termal(){
     glPointSize(10);
     
     for (const auto& p : _s -> bodies){
+        // trasforms the coordinates to -> [-1, 1]
+        double x = 2.f * (get_scale() * p.position.x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        double y = 2.f * (get_scale() * p.position.y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+          
+        //in-bounds check
+        if (std::abs(x) > 1 || std::abs(y) > 1) continue;
+
         // gets the right color for the specific temperature
         int index = int(
             get_coloring_index(p.temp)*255
@@ -274,11 +315,7 @@ void Renderer2d::draw_termal(){
         glColor3f(color_scale[index][0], color_scale[index][1], color_scale[index][2]);
 		
         // draws the point with the right color
-        glVertex2f(
-            // trasforms the coordinates to -> [-1, 1]
-		    2.f * p.position.x/ (_s -> get_width()) - 1, 
-		    2.f * p.position.y/ (_s -> get_height()) - 1
-		);
+        glVertex2f(x, y);
 
     }
 
@@ -300,12 +337,13 @@ void Renderer2d::draw_minimal(){
     glPointSize(10);
     
     for (const auto& p : _s -> bodies){
-        // draws the point with the right color
-        glVertex2f(
-            // trasforms the coordinates to -> [-1, 1]
-		    2.f * p.position.x/ (_s -> get_width()) - 1, 
-		    2.f * p.position.y/ (_s -> get_height()) - 1
-		);
+        double x = 2.f * (get_scale() * p.position.x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        double y = 2.f * (get_scale() * p.position.y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+        
+        //in-bounds check
+        if (std::abs(x) > 1 || std::abs(y) > 1) continue;
+
+        glVertex2f(x, y);
     }
 
     // ends the batch
@@ -331,18 +369,26 @@ void Renderer2d::draw_detailed(){
         glColor3f(rng_colors[i % 14][0], rng_colors[i % 14][1], rng_colors[i % 14][2]); 
         double radius = std::max(
             std::min(
-                std::log10(p.mass * _s -> get_render_width() / _s -> get_width() ) / 200,
+                std::log10(p.mass * _s -> get_render_width() / _s -> get_width() ) / (200 * get_scale()),
                 .2
             ),
             0.005
         ); // scales the radius based on the log_{10} of the mass
 
+        // trasforms the coordinates to -> [-1, 1]
+        double x = 2.f * (get_scale() * p.position.x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        double y = 2.f * (get_scale() * p.position.y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+        
+        //in-bounds check
+        if (std::abs(x) > 1.3 || std::abs(y) > 1.3) continue; 
+
+        /*
+        * the 1.3 in the if above is there to prevent objects form suddenly disappearing 
+        * where almost on the edge of the screen
+        */
+
         // calculates the center 
-        vec2 mapped_pos = {
-            // trasforms the coordinates to -> [-1, 1]
-            2.f * p.position.x / _s -> get_width() - 1, 
-            2.f * p.position.y / _s -> get_height() - 1
-        };
+        vec2 mapped_pos = {x, y};
 
         // begins drawing the circle
         glBegin(GL_TRIANGLE_FAN);
@@ -353,9 +399,9 @@ void Renderer2d::draw_detailed(){
             // calculates the next segment with polar coordinates
             float angle = 2.0f * M_PI * j / NUM_SEGMENTS;
             // evaluates the x componenet
-            float vx = mapped_pos.x + radius * cos(angle) / (aspect_ratio > 1 ? aspect_ratio : 1);
+            float vx = mapped_pos.x + get_scale() * radius * cos(angle) / (aspect_ratio > 1 ? aspect_ratio : 1);
             // evaliates the y compoment
-            float vy = mapped_pos.y + radius * sin(angle) * (aspect_ratio < 1 ? aspect_ratio : 1);
+            float vy = mapped_pos.y + get_scale() * radius * sin(angle) * (aspect_ratio < 1 ? aspect_ratio : 1);
             glVertex2f(vx, vy);
         }
         

@@ -30,14 +30,14 @@ void update_SABA2(Simulation<T>* _s){
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body){
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;        
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c1, dt](Body<T>& body){
         body.velocity += body.acceleration * d1 * dt;
@@ -58,21 +58,21 @@ void update_SABA3(Simulation<T>* _s){
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body){
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;        
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c2, dt](Body<T>& body){
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c1, dt](Body<T>& body){
         body.velocity += body.acceleration * d1 * dt;
@@ -95,28 +95,28 @@ void update_SABA4(Simulation<T>* _s){
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body){
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;        
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body){
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;        
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c2, dt](Body<T>& body){
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c2 * dt;        
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c1, dt](Body<T>& body){
         body.velocity += body.acceleration * d1 * dt;
@@ -140,35 +140,35 @@ void update_SABA5(Simulation<T>* _s) {
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c3, dt](Body<T>& body) { 
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c3 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c2, dt](Body<T>& body) { 
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c1, dt](Body<T>& body) { 
         body.velocity += body.acceleration * d1 * dt;
@@ -193,42 +193,42 @@ void update_SABA6(Simulation<T>* _s) {
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c4, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c4 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c3 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c1, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;
@@ -255,42 +255,42 @@ void update_SABA7(Simulation<T>* _s) {
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;
     });    
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c4, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c4 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d4, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d4 * dt;
         body.position += body.velocity * c3 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c2 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c1, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
@@ -316,49 +316,49 @@ void update_SABA8(Simulation<T>* _s) {
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;
     });    
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c4, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c4 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d4, c5, dt](Body<T>& body) {
         body.velocity += body.acceleration * d4 * dt;
         body.position += body.velocity * c5 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c4, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c4 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;
@@ -386,56 +386,56 @@ void update_SABA9(Simulation<T>* _s) {
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;
     });    
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c4, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c4 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d4, c5, dt](Body<T>& body) {
         body.velocity += body.acceleration * d4 * dt;
         body.position += body.velocity * c5 * dt;
     });   
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d5, c4, dt](Body<T>& body) {
         body.velocity += body.acceleration * d5 * dt;
         body.position += body.velocity * c4 * dt;
     });   
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d4, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d4 * dt;
         body.position += body.velocity * c3 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c2 * dt;
     });  
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c1, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
@@ -465,63 +465,63 @@ void update_SABA10(Simulation<T>* _s) {
         body.position += body.velocity * c1 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;
         body.position += body.velocity * c2 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c4, dt](Body<T>& body) {
         body.velocity += body.acceleration * d3 * dt;
         body.position += body.velocity * c4 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d4, c5, dt](Body<T>& body) {
         body.velocity += body.acceleration * d4 * dt;
         body.position += body.velocity * c5 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d5, c6, dt](Body<T>& body) {
         body.velocity += body.acceleration * d5 * dt;
         body.position += body.velocity * c6 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d4, c5, dt](Body<T>& body) {
         body.velocity += body.acceleration * d5 * dt;
         body.position += body.velocity * c4 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d3, c4, dt](Body<T>& body) {
         body.velocity += body.acceleration * d4 * dt;
         body.position += body.velocity * c3 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d2, c3, dt](Body<T>& body) {
         body.velocity += body.acceleration * d2 * dt;
         body.position += body.velocity * c3 * dt;
     });
 
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, dt](Body<T>& body) {
         body.velocity += body.acceleration * d1 * dt;

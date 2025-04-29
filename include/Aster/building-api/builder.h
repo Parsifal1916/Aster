@@ -14,6 +14,19 @@ extern std::uniform_real_distribution<double> angle_rnd;
 // returns a double from 0 to 1
 extern std::uniform_real_distribution<double> normalized_rnd;
 
+/**
+* @brief single core force update function
+*/
+template <typename T> 
+void single_core_fu(Simulation<T>* _s);
+
+/**
+* @brief multi core force update function
+*/
+template <typename T> 
+void parallel_fu(Simulation<T>* _s);
+
+
 /*
 * basic gravity solver using a single thread
 */
@@ -25,7 +38,6 @@ class SingleThread final : public Simulation<T> {
     SingleThread();
 
     void step() override;
-    void update_forces() override;
 };
 
 template <typename T>
@@ -38,7 +50,6 @@ class Parallelized final : public Simulation<T> {
     Parallelized();
     
     void step() override;
-    void update_forces() override;
     
     /*
     * sets the maximum number of threads for the given simulation

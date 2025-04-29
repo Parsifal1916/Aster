@@ -299,21 +299,21 @@ void update_symplectic4(Simulation<vec2>* _s){
         body.velocity = temp_v;
 
         // second
-        _s -> update_forces();
+        _s -> update_forces(_s);
         temp_v = body.velocity + d2*body.acceleration * _s -> get_dt();
 
         body.position += c2* temp_v * _s -> get_dt();
         body.velocity = temp_v;
 
         //third
-        _s -> update_forces();
+        _s -> update_forces(_s);
         temp_v = body.velocity + d1*body.acceleration * _s -> get_dt();
 
         body.position += c2* temp_v * _s -> get_dt();
         body.velocity = temp_v;
 
         //last
-        _s -> update_forces();
+        _s -> update_forces(_s);
         body.position += c1* body.velocity * _s -> get_dt();
     }
 }
@@ -421,7 +421,7 @@ void update_symplectic4(Simulation<vec3>* _s){
     });
 
     // second
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [c2, _s](Body<vec3>& body){
         vec3 temp_v = body.velocity + d2*body.acceleration * _s -> get_dt();
@@ -431,7 +431,7 @@ void update_symplectic4(Simulation<vec3>* _s){
     });
     
     //third
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [d1, c2, _s](Body<vec3>& body){
         vec3 temp_v = body.velocity + d1*body.acceleration * _s -> get_dt();
@@ -441,7 +441,7 @@ void update_symplectic4(Simulation<vec3>* _s){
     });
 
     //last
-    _s -> update_forces();
+    _s -> update_forces(_s);
 
     for_each_body(_s, [c1, _s](Body<vec3>& body){
         body.position += c1 * body.velocity * _s -> get_dt();

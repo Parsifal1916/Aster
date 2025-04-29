@@ -96,12 +96,6 @@ class Barnes_Hut: public Simulation<T>{
     */
     void step() override;
 
-
-    /**
-    * @brief calculates the forces for each body using update_bundle
-    */
-    void update_forces() override;
-
     /**
     * @brief calculates the force acting between a node and a body **recursive**+
     * @param node: node to calculate the force from

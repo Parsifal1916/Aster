@@ -131,6 +131,7 @@ Barnes_Hut<T>::Barnes_Hut(){
     this -> get_force = get_force_func<T>(this -> data.selected_force);
     this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
+    this -> update_forces = parallel_fu;
 
     this -> threads.reserve(this -> get_cores());
     this -> obj = this -> bodies.size(); 
@@ -146,7 +147,7 @@ void Barnes_Hut<T>::step(){
     calculate_com(); // calculates the center of mass
         
     // calculates the forces
-    this -> update_forces();
+    this -> update_forces(this);
     nodes.clear(); // cleans tree and updates bodies
     this -> update_bodies(this);
 
@@ -348,22 +349,6 @@ void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
         body -> acceleration.reset();
         _s -> get_node_body(0, body);
     }
-}
-
-/**
-* @brief calculates the forces for each body using update_bundle
-*/
-template <typename T>
-void Barnes_Hut<T>::update_forces(){
-    this -> obj = this ->bodies.size();
-
-    for (int i = 0; i < this -> get_cores(); ++i)
-        this -> threads.emplace_back(std::thread(update_bundle<T> , this, i));
-
-    for (auto& t : threads)
-        t.join();
-
-    this -> threads.clear();
 }
 
 template <typename T> 

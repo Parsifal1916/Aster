@@ -4,11 +4,10 @@
 #include <stdexcept>
 #include <string>
 #include <cassert>
+#include <immintrin.h>
 
 #include "Aster/simulations/basic.h"
-
 #include "Aster/building-api/builder.h"
-
 #include "Aster/graphs/graph_collection.h"
 
 namespace Aster{
@@ -38,6 +37,19 @@ Simulation<T>* Simulation<T>::set_dt(float dt_){
     data.dt = dt_;
     return this;
 }
+
+template <typename T>
+Simulation<T>* Simulation<T>::use_simd(){
+    simd_on = true;
+    return this;
+}
+
+
+template <typename T>
+bool Simulation<T>::is_using_simd() const{
+    return simd_on;
+}
+
 
 template <typename T>
 Simulation<T>* Simulation<T>::set_omega_m(float om_){
@@ -323,8 +335,6 @@ Simulation<T>* Simulation<T>::collect_distance(){
     return this;
 }
 
-
-
 template <typename T>
 Simulation<T>* Simulation<T>::get_force_with(force_type t){
     this -> data.selected_force = t;
@@ -339,6 +349,38 @@ Simulation<T>* Simulation<T>::update_with(update_type t){
     return this;
 }
 
+/**
+* @brief single core force update function
+*/
+template <typename T> 
+void single_core_fu(Simulation<T>* _s){
+    for (Body<T>& body : _s -> bodies){
+        body.acceleration.reset();
+        _s -> update_pair(&body);
+    }   
+}
+
+/**
+* @brief multi core force update function
+*/
+template <typename T> 
+void parallel_fu(Simulation<T>* _s){
+    std::vector<std::thread> threads;
+    threads.reserve(_s -> get_cores());
+
+    _s -> obj = _s -> bodies.size(); 
+    for (int i = 0; i < _s -> get_cores(); ++i)
+        threads.push_back(std::thread(update_bundle<T>, _s, i));
+
+    for (auto& t : threads)
+        t.join();
+
+    threads.clear();
+
+    for (auto& graph : _s -> between_graphs)
+        graph.end_batch();
+}
+
 /*                   //===---------------------------------------------------------===//
 .                    // SINGLE THREAD IMPLEMENTATION                                  //
 .                    //===---------------------------------------------------------===*/
@@ -349,6 +391,7 @@ SingleThread<T>::SingleThread(sim_meta m){
     this -> get_force = get_force_func<T>(this -> data.selected_force);
     this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.HEIGHT;
+    this -> update_forces = single_core_fu;
 }
 
 template <typename T>
@@ -357,12 +400,13 @@ SingleThread<T>::SingleThread(){
     this -> data.type = LIGHT;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
     this -> update_bodies = get_update_func<T>(this -> data.selected_update);
+    this -> update_forces = single_core_fu;
     this -> data.graph_height *= this -> data.size.y;
 }
 
 template <typename T>
 void SingleThread<T>::step(){
-    this -> update_forces();
+    this -> update_forces(this);
     this -> update_bodies(this);
 
     for (auto& graph : this -> between_graphs)
@@ -372,13 +416,6 @@ void SingleThread<T>::step(){
     this -> time_passed++;
 }
 
-template <typename T> 
-void SingleThread<T>::update_forces(){
-    for (Body<T>& body : this -> bodies){
-        body.acceleration.reset();
-        this -> update_pair(&body);
-    }    
-}
 
 /*                   //===---------------------------------------------------------===//
 .                    // MULTI THREAD IMPLEMENTATION                                   //
@@ -390,6 +427,7 @@ Parallelized<T>::Parallelized(sim_meta m){
     this -> get_force = get_force_func<T>(this -> data.selected_force);
     this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
+    this -> update_forces = parallel_fu;
 
     this -> threads.reserve(this -> get_cores()); 
     this -> obj = this -> bodies.size();
@@ -402,6 +440,7 @@ Parallelized<T>::Parallelized(){
     this -> get_force = get_force_func<T>(this -> data.selected_force);
     this -> update_bodies = get_update_func<T>(this -> data.selected_update);
     this -> data.graph_height *= this -> data.size.y;
+    this -> update_forces = parallel_fu;
 
     this -> threads.reserve(this -> get_cores()); 
     this -> obj = this -> bodies.size();
@@ -409,26 +448,11 @@ Parallelized<T>::Parallelized(){
 
 template <typename T>
 void Parallelized<T>::step(){
-    this -> update_forces();
+    this -> update_forces(this);
     this -> update_bodies(this);
 
     this -> trigger_all_graphs();
     this -> time_passed++;
-}
-
-template <typename T>
-void Parallelized<T>::update_forces(){
-    this -> obj = this -> bodies.size(); 
-    for (int i = 0; i < this -> get_cores(); ++i)
-        this -> threads.push_back(std::thread(update_bundle<T>, this, i));
-
-    for (auto& t : threads)
-        t.join();
-
-    this -> threads.clear();
-
-    for (auto& graph : this -> between_graphs)
-        graph.end_batch();
 }
 
 /*

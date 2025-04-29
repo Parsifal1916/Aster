@@ -76,11 +76,13 @@ class Simulation{
     double get_heat_capacity() const;
     double get_boltzmann() const;
 
+    Simulation<T>* use_simd();
+    bool is_using_simd() const ;
+
     simulation_types get_type() const;
     
     int get_cores() const;
 
-    virtual void update_forces() {}
     virtual void step() {}
 
     virtual void update_pair(Body<T>* b1){
@@ -102,8 +104,9 @@ class Simulation{
 
     func_ptr<T> update_bodies;
     force_func<T> get_force;
+    func_ptr<T> update_forces;
     int obj;
-
+    std::vector<Graphs::Graph<T>> between_graphs;
     ClusterQueue<T> loading_queue;
     std::pair<std::string, double> loading_meta = {"", 0};
 
@@ -112,7 +115,7 @@ class Simulation{
     double total_mass = 0;
     sim_meta data;
     std::vector<Graphs::Graph<T>> graphs;
-    std::vector<Graphs::Graph<T>> between_graphs;
+
 
     double
         c_squared,
@@ -122,6 +125,7 @@ class Simulation{
 
     void trigger_all_graphs();
     bool has_loaded = false;
+    bool simd_on = false;
 
 };
 
