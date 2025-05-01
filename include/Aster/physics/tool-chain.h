@@ -91,16 +91,16 @@ template <typename T, typename F>
 void for_each_body(Simulation<T>* _s, F func);
 
 template <typename T>
-double get_eccentricity(Simulation<T>* _s, Body<T>* body, double relv_sq, double w_squared,  double radius, double mass2);
+double get_eccentricity(Simulation<T>* _s, size_t body, double relv_sq, double w_squared,  double radius, double mass2);
 
 template <typename T>
-void get_new_temp(Simulation<T>* _s, Body<T>* body, Body<T>* body2);
+void get_new_temp(Simulation<T>* _s, size_t body, size_t body2);
 
 template <typename T>
-void get_new_temp(Simulation<T>* _s, Body<T>* body, T pos, T vel, double temp, double mass);
+void get_new_temp(Simulation<T>* _s, size_t body, T pos, T vel, double temp, double mass);
 
 template <typename T>
-void compute_rad_pressure(Simulation<T>* _s, Body<T>* body, T pos, double temp);
+void compute_rad_pressure(Simulation<T>* _s, size_t body, T pos, double temp);
  
 
 //===---------------------------------------------------------===//

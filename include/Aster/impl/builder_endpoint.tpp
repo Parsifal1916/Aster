@@ -283,8 +283,8 @@ template <typename T>
 Simulation<T>* Simulation<T>::calculate_total_mass(){
     total_mass = 0;
 
-    for (const auto& body : this -> bodies)
-        total_mass += body.mass;
+    for (const auto& num : this -> bodies.masses)
+        total_mass += num;
     
     return this;
 }
@@ -352,9 +352,9 @@ Simulation<T>* Simulation<T>::update_with(update_type t){
 */
 template <typename T> 
 void single_core_fu(Simulation<T>* _s){
-    for (Body<T>& body : _s -> bodies){
-        body.acceleration.reset();
-        _s -> update_pair(&body);
+    for (int i = 0; i < _s -> bodies.positions.size(); ++i){
+        _s -> bodies.get_acc_of(i).reset();
+        _s -> update_pair(i);
     }   
 }
 
@@ -366,7 +366,7 @@ void parallel_fu(Simulation<T>* _s){
     std::vector<std::thread> threads;
     threads.reserve(_s -> get_cores());
 
-    _s -> obj = _s -> bodies.size(); 
+    _s -> obj = _s -> bodies.positions.size(); 
     for (int i = 0; i < _s -> get_cores(); ++i)
         threads.push_back(std::thread(update_bundle<T>, _s, i));
 
@@ -441,7 +441,7 @@ Parallelized<T>::Parallelized(){
     this -> update_forces = parallel_fu;
 
     this -> threads.reserve(this -> get_cores()); 
-    this -> obj = this -> bodies.size();
+    this -> obj = this -> bodies.positions.size();
 }
 
 template <typename T>
@@ -480,9 +480,8 @@ void update_bundle(Simulation<T>* _s, unsigned short index){
     stop = (stop + mult > _s -> obj) ? _s -> obj : stop;
 
     for (int i = start; i < stop; ++i){  
-       Body<T>* body = &_s -> bodies[i];
-       body -> acceleration.reset();
-       _s -> update_pair(body);
+       _s -> bodies.get_acc_of(i).reset();
+       _s -> update_pair(i);
     }
 }
 

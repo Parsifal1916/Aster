@@ -5,7 +5,7 @@
 
 
 namespace Aster{
-template <typename T> class Body;
+template <typename T> class BodyArray;
 template <typename T> class Simulation;
 
 template <typename T>

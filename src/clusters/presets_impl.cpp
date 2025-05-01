@@ -24,6 +24,44 @@ const double digit_coefficient = std::pow(10, digit_precision);
 .                    //===---------------------------------------------------------===*/
 
 /**
+* @brief adds a body to the simulation
+* @param _s: simulation to add the body to 
+* @param mass: mass of the body
+* @param pos: position of the body
+* @param vel: velocity of the body
+*/
+void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, double temp = 0){
+    if (warn_if(!_s, "the given simulation to make add the body to is a nullptr"))
+        return;
+
+    if (warn_if(mass <= 0, "cannot have a body with negative mass"))
+        return;
+
+    _s -> bodies.positions.push_back(pos);
+    _s -> bodies.velocities.push_back(vel);
+    _s -> bodies.masses.push_back(mass);
+    _s -> bodies.temps.push_back(temp);
+    _s -> bodies.accs.push_back({0,0});
+    _s -> obj ++;
+}
+
+void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double temp = 0){
+    if (warn_if(!_s, "the given simulation to make add the body to is a nullptr"))
+        return;
+
+    if (warn_if(mass <= 0, "cannot have a body with negative mass"))
+        return;
+
+    _s -> bodies.positions.push_back(pos);
+    _s -> bodies.velocities.push_back(vel);
+    _s -> bodies.masses.push_back(mass);
+    _s -> bodies.temps.push_back(temp);
+    _s -> bodies.accs.push_back({0,0,0});
+}
+
+
+
+/**
 * @brief rotates a point by some angles
 * @param v: vector to rotate
 * @param phi: z-x angle in degrees
@@ -251,8 +289,6 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
     if (warn_if(nums <= 0, "cannot generate fewer than 0 bodies!"))
         return;
 
-    // preallocates the memory
-    _s -> bodies.reserve(_s -> bodies.size() + nums);
 
     // initializes the cluster
     Cluster<vec2> cluster;
@@ -262,7 +298,7 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
     double g_pull = nums *  _s -> get_G()  * avr_mass;
 
     // creates the builder lambda
-    cluster.builder = [g_pull, outer, inner, v, avr_mass, center ](Cluster<vec2> cl2d, size_t _) {
+    cluster.builder = [g_pull, outer, inner, v, avr_mass, center, _s ](Cluster<vec2> cl2d, size_t _) {
         vec2 pos = rng_point_in_circle(outer, inner); // gets a random point inside the disk
 
         // generates the radius from the position
@@ -273,11 +309,11 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
         vec2 vel = vec2(-pos.y/radius *magn_vel, pos.x/radius* magn_vel) + v;
 
         // assembles the body
-        return Body<vec2>({
+        add_body(_s,
             avr_mass, 
             pos + center,
             vel
-        });
+        );
     };
 
     // adds the cluster to the queue
@@ -306,9 +342,6 @@ void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass){
 
     int tot_nums = nums;
 
-    // preallocates the bodies
-    _s -> bodies.reserve(_s -> bodies.size() + nums);
-
     // sets up the cluster
     Cluster<vec2> cluster;
     cluster.number = nums;
@@ -326,14 +359,12 @@ void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass){
             pos = rng_vec(_s);
 
         // assembles the body
-        return Body<vec2>({
+        add_body(_s, 
             avr_mass,
             pos,
-            // ! the velocity is always zero
             vec2({0,0}),
-            // ! the temperature also follows the same perlin map
             (fnlGetNoise2D(&noise, pos.x, pos.y) + 1) * 5
-        });
+        );
     };
     // adds the cluster to the queue
     _s -> loading_queue.add_cluster(cluster);
@@ -369,9 +400,6 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
 
     if (warn_if(thickness <= 0, "disk cannot have negative thickness"))
         return;
-    
-    // reserves the amount of bodies beforehand
-    _s -> bodies.reserve(_s -> bodies.size() + nums);
 
     // sets up the cluster
     Cluster<vec3> cluster;
@@ -381,7 +409,7 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
     double g_pull = nums *  _s -> get_G()  * avr_mass;
 
     // sets up the builder lambda
-    cluster.builder = [g_pull, radius, v, avr_mass, center, thickness, rotation ](Cluster<vec3> cl3d, size_t _) {
+    cluster.builder = [g_pull, radius, v, avr_mass, center, thickness, rotation, _s ](Cluster<vec3> cl3d, size_t _) {
         vec3 pos = rng_point_in_cylinder(radius, 1, thickness); // gets a random point in the disk
 
         // generates the radius
@@ -396,66 +424,15 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
         vel = rotate_point(vel, rotation.x, rotation.z);
 
         // composes the body
-        return Body<vec3>({
+        add_body(_s, 
             avr_mass, 
             pos + center,
             vel
-            // ! temperature is not set
-        });
+        );
     };
 
     // adds the cluster to the queue
     _s -> loading_queue.add_cluster(cluster);
-}
-
-/**
-* @brief adds a body to the simulation
-* @param _s: simulation to add the body to 
-* @param mass: mass of the body
-* @param pos: position of the body
-* @param vel: velocity of the body
-*/
-void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel){
-    if (warn_if(!_s, "the given simulation to make add the body to is a nullptr"))
-        return;
-
-    if (warn_if(mass <= 0, "cannot have a body with negative mass"))
-        return;
-
-    _s -> bodies.push_back(Body(mass, pos, vel));
-    _s -> obj ++;
-}
-
-/**
-* @brief adds a body to the simulation
-* @param _s: simulation to add the body to 
-* @param b: body to add
-*/
-void add_body(Simulation<vec2>* _s, Body<vec2> b){
-    if (warn_if(!_s, "the given simulation to make add the body to is a nullptr"))
-    return;
-
-    _s -> bodies.push_back(b);
-    _s -> obj ++;
-}
-
-void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel){
-    if (warn_if(!_s, "the given simulation to make add the body to is a nullptr"))
-        return;
-
-    if (warn_if(mass <= 0, "cannot have a body with negative mass"))
-        return;
-
-    _s -> bodies.push_back(Body<vec3>(mass, pos, vel));
-    _s -> obj ++;
-}
-
-void add_body(Simulation<vec3>* _s, Body<vec3> b){
-    if (warn_if(!_s, "the given simulation to make add the body to is a nullptr"))
-        return;
-
-    _s -> bodies.push_back(b);
-    _s -> obj ++;
 }
 
 /**
@@ -470,10 +447,7 @@ void cosmic_web(Simulation<vec3>* _s, int nums, double avr_mass){
     noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
 
     int tot_nums = nums;
-
-    // reserves the space beforehand
-    _s -> bodies.reserve(_s -> bodies.size() + nums);
-
+    
     // sets up the cluster
     Cluster<vec3> cluster;
     cluster.number = nums;
@@ -490,12 +464,12 @@ void cosmic_web(Simulation<vec3>* _s, int nums, double avr_mass){
             pos = rng_vec(_s);
 
         // assembles a body
-        return Body<vec3>({
+        add_body(_s, 
             avr_mass,
             pos,
             vec3({0,0,0}),
             (fnlGetNoise3D(&noise, pos.x, pos.y, pos.z) + 1) * 5
-        });
+        );
     };
 
     // adds it to the queue

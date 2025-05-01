@@ -18,7 +18,7 @@ namespace Barnes{
 template <typename T> class Barnes_Hut;
 
 template <typename T> T pick_newpos(Simulation<T>* _s);
-template <typename T> void compute_tidal_heating(Barnes_Hut<T>* _s, Body<T>* body);
+template <typename T> void compute_tidal_heating(Barnes_Hut<T>* _s, size_t  body);
 
 template <typename T>
 struct Node{
@@ -37,20 +37,20 @@ struct Node{
     * @brief merges two bodies in one node in case of conflict
     * @param body: ptr to the body to merge
     */
-    void merge(Body<T>* _b);
+    void merge(Simulation<T>* _s, size_t  _b);
 
     /**
     * @brief puts a body and a node in one node
     * @param _b: ptr to the body
     * @param _n: ptr to the node
     */
-    void add_twob(Body<T>* _b1, Node<T>* _b2);
+    void add_twob(Simulation<T>* _s, size_t _b1, Node<T>* _b2);
 
     /**
     * @brief initializes the node with the given body
     * @param _b: ptr to the body to copy
     */
-    void init(Body<T>* _b);
+    void init(Simulation<T>* _s , size_t  _b);
 
     /**
     * @brief initializes the node with the given node
@@ -102,7 +102,7 @@ class Barnes_Hut: public Simulation<T>{
     * @param body: ptr to the body being acted upon
     * @returns nothing everything is done internally
     */
-    virtual void get_node_body(size_t node, Body<T>* body);
+    virtual void get_node_body(size_t node, size_t  body);
 
     protected:
     size_t num_childs;
@@ -114,13 +114,13 @@ class Barnes_Hut: public Simulation<T>{
     * @brief finds the best index to insert the body in
     * @param _b: ptr to the body to insert
     */
-    int get_to_best_leaf(Body<T>* _b);
+    int get_to_best_leaf(size_t  _b);
 
     /**
     * @brief inserts a body into the tree
     * @param body: ptr to the body to insert
     */
-    void insert(Body<T>* body);
+    void insert(size_t  body);
 
     /**
     * @brief calculates the center of mass for all nodes
@@ -128,14 +128,14 @@ class Barnes_Hut: public Simulation<T>{
     void calculate_com();
 
     void make_tree();
-    void init_node(Node<T>& _n, Body<T>* b) const;
+    void init_node(Node<T>& _n, size_t  b) const;
 
     /**
     * @brief generates an array for the bodies slicing
     */
     void make_sections();
     size_t subdivide(int n);
-    friend void compute_tidal_heating<T>(Barnes_Hut<T>* _s, Body<T>* body);
+    friend void compute_tidal_heating<T>(Barnes_Hut<T>* _s, size_t  body);
 };
 
 /**

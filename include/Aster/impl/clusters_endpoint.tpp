@@ -194,10 +194,7 @@ ClusterQueue<T>* ClusterQueue<T>::load(Simulation<T>* _s){
         // gives feedback on what it is loading
         _s -> loading_meta.first = cluster.name;
         for (size_t i = 0; i < cluster.number; ++i){
-            _s -> bodies.emplace_back(
-                // calls the cluster's builder to generate the bodies
-                cluster.builder(cluster, cluster.get_status())
-            );
+            cluster.builder(cluster, cluster.get_status());
 
             // updates the number of loaded bodies and the percentage
             cluster.update(1);

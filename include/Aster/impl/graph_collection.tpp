@@ -31,7 +31,7 @@ Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::collector_fptr listener, g
 */
 template <typename T>
 void Graph<T>::init(){
-    if (warn_if(!_s -> bodies.size(), "No bodies to listen to!"))
+    if (warn_if(!_s -> bodies.positions.size(), "No bodies to listen to!"))
         return;
     if (warn_if(done, "already loaded the graph!")) 
         return;
@@ -47,7 +47,7 @@ void Graph<T>::init(){
 
     // initilizes for a for_eac
     if (type == FOR_EACH) {
-        size_t num = _s -> bodies.size();
+        size_t num = _s -> bodies.positions.size();
 
         // too much time 
         warn_if(num >= (int)10e3, "specified type is FOR_EACH, the amount of bodies in the simulation results to be very high (>=10e3). large amounts of data are going to be written to disk");
@@ -150,7 +150,7 @@ void Graph<T>::trigger(){
 * @param b2: second body
 */
 template <typename T>
-void Graph<T>::trigger_on(Body<T>* b1, Body<T>* b2){
+void Graph<T>::trigger_on(size_t b1, size_t b2){
     if (err_if(this -> type != BETWEEN, "invalid call to trigger_on: the graph is not of type BETWEEN"))
         return;
 
@@ -191,18 +191,18 @@ void Graph<T>::update_data(){
         return;
 
     if (type == FOR_EACH){
-        if (err_if(_s -> bodies.size() != data.size(),"The number of bodies has changed over time, cannot generate the graph properly"))
+        if (err_if(_s -> bodies.positions.size() != data.size(),"The number of bodies has changed over time, cannot generate the graph properly"))
             return;
         
         // updates the data with a listener for each body
-        for (int i = 0; i < _s -> bodies.size(); ++i)
-            this -> data[i].push_back(listener(this, this -> _s, &(this -> _s -> bodies[i])));    
+        for (int i = 0; i < _s -> bodies.positions.size(); ++i)
+            this -> data[i].push_back(listener(this, this -> _s, i));    
 
         return;
     }
 
     // calls listener only once
-    data[0].push_back(listener(this, _s, nullptr));
+    data[0].push_back(listener(this, _s, 0));
 }
 
 /**

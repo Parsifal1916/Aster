@@ -16,10 +16,10 @@ namespace Graphs{
 template <typename T>
 struct Graph{
     // func pointer to a ONCE or FOR_EACH  
-    using listener_fptr = std::function<double(struct Graph<T>*, Simulation<T>*  ,Body<T>*)>;
+    using listener_fptr = std::function<double(struct Graph<T>*, Simulation<T>*  ,size_t)>;
     
     // func pointer to a BETWEEN
-    using collector_fptr = std::function<double(struct Graph<T>*, Simulation<T>*  ,Body<T>*, Body<T>*)>;
+    using collector_fptr = std::function<double(struct Graph<T>*, Simulation<T>*  ,size_t, size_t)>;
 
     Simulation<T>* _s = nullptr; 
     
@@ -41,7 +41,7 @@ struct Graph{
     * @param b1: first body
     * @param b2: second body
     */
-    void trigger_on(Body<T>* b1, Body<T>* b2);
+    void trigger_on(size_t b1, size_t b2);
 
     /**
     * @brief same as update_data but for BETWEEN graphs
@@ -79,16 +79,16 @@ struct Graph{
 };
 
 template <typename T>
-double hamiltonian_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b);
+double hamiltonian_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
 
 template <typename T>
 double get_total_energy(Simulation<T>* _s);
 
 template <typename T>
-double error_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b);
+double error_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
 
 template <typename T>
-double distance_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b);
+double distance_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
 }
 }
 

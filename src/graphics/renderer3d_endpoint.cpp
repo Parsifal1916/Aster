@@ -301,12 +301,12 @@ void Renderer3d::draw_termal3d(){
     
     vec3 temp = {0,0,0}; // only makes one instance of a vector
     int index;// keeps track of the color index
-    for (const auto& p : _s -> bodies){
+    for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         // maps the position to 2d space
-        temp = map_point(p.position);
+        temp = map_point(_s -> bodies.get_position_of(i));
 
         // calculates the associated color
-        index = int(get_coloring_index(p.temp)*255);
+        index = int(get_coloring_index(_s -> bodies.get_temp_of(i))*255);
         glColor3f(color_scale[index][0], color_scale[index][1], color_scale[index][2]);
     
         // draws the point on screen if it is in the simulation
@@ -330,9 +330,9 @@ void Renderer3d::draw_minimal3d(){
 
     vec3 temp = {0,0,0}; // makes only one instance of the position vector
 
-    for (const auto& p : _s -> bodies){
+    for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         // maps the point in 2d space 
-        temp = map_point(p.position);
+        temp = map_point(_s -> bodies.get_position_of(i));
 
         // calculates the color based on parallax
         double mult = _s -> get_render_depth()/std::max(temp.z, .001) + .2;
@@ -356,32 +356,16 @@ void Renderer3d::draw_minimal3d(){
 void Renderer3d::draw_detailed3d() { 
     vec3 mapped_pos = {0, 0, 0}; // only one instance
 
-    // makes a pair of int and bodies to link the body with its index in the array
-    std::vector<std::pair<int, Body<vec3>>> sorted_bodies;
-    for (int i = 0; i < _s->bodies.size(); i++) {
-        Body<vec3> b = _s->bodies[i];
-        b.position = map_point(b.position);
-        // also saves the index in a pair so that colors are consistent between frames 
-        sorted_bodies.emplace_back(i, b); 
-    }
-
-    // sorts the bodies based on thier z distance after being maped
-    // to keep the drawing order
-    std::sort(sorted_bodies.begin(), sorted_bodies.end(), 
-              [](const std::pair<int, Body<vec3>>& a, const std::pair<int, Body<vec3>>& b) {
-                  return a.second.position.z > b.second.position.z;
-              });
-
-    for (auto& [original_index, p] : sorted_bodies) {
-        mapped_pos = p.position; //saves the position
+    for (int i = 0; i < _s -> bodies.positions.size(); ++i) {
+        mapped_pos = map_point(_s -> bodies.get_position_of(i)); //saves the position
         
         // fetches the color from rng colors array
-        glColor3f(rng_colors[original_index % 15][0], 
-                  rng_colors[original_index % 15][1], 
-                  rng_colors[original_index % 15][2]); 
+        glColor3f(rng_colors[i % 15][0], 
+                  rng_colors[i % 15][1], 
+                  rng_colors[i % 15][2]); 
 
         // calculates the radius based on the log_{10} of the mass by some constant
-        double radius = std::log10(p.mass) / 3000;
+        double radius = std::log10(_s -> bodies.get_mass_of(i)) / 3000;
 
         // draws a circle around the body using a triangle fan
         glBegin(GL_TRIANGLE_FAN);

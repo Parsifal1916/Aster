@@ -23,7 +23,7 @@ template <typename T, typename F>
 FORCE_INLINE void for_each_body(Simulation<T>* _s, F func) {
     assert(_s->has_loaded_yet());
     
-    const size_t n_bodies = _s->bodies.size();
+    const size_t n_bodies = _s->bodies.positions.size();
     const size_t n_threads = std::min(n_bodies, static_cast<size_t>(_s->get_cores()));
     
     if (n_bodies == 0) return;
@@ -43,7 +43,7 @@ FORCE_INLINE void for_each_body(Simulation<T>* _s, F func) {
         
         threads.emplace_back([start, end, &func, _s]() {
             for (size_t b = start; b < end; ++b) {
-                func(_s->bodies[b]);
+                func(b);
             }
         });
     }
@@ -162,34 +162,34 @@ inline T pn1(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
 }
 
 template <typename T>
-double get_eccentricity(Simulation<T>* _s, Body<T>* body, double relv_sq, double w_squared,  double radius, double mass2){
-    double mu = _s -> get_G() * (body -> mass + mass2);
-    double reduced_mass  = body -> mass * mass2 / (body -> mass + mass2 ); 
+double get_eccentricity(Simulation<T>* _s, size_t body, double relv_sq, double w_squared,  double radius, double mass2){
+    double mu = _s -> get_G() * (_s -> bodies.get_mass_of(body) + mass2);
+    double reduced_mass  = _s -> bodies.get_mass_of(body) * mass2 / (_s -> bodies.get_mass_of(body) + mass2 ); 
     double orbital_energy = relv_sq / 2 - mu / radius;
 
     return 1 + 2 * orbital_energy * w_squared / (reduced_mass * mu * mu + _s -> get_e_sqr());
 }
 
 template <typename T>
-void compute_rad_pressure(Simulation<T>* _s, Body<T>* body, T pos, double temp){
-    T vec = (pos - body -> position);
+void compute_rad_pressure(Simulation<T>* _s, size_t body, T pos, double temp){
+    T vec = (pos - _s -> bodies.get_position_of(body));
     double r_sq = vec.sqr_magn();
-    double force = _s -> get_boltzmann() * std::pow(body -> temp, 4) / (4 * PI * r_sq * _s -> get_c());
+    double force = _s -> get_boltzmann() * std::pow(_s -> bodies.get_temp_of(body), 4) / (4 * PI * r_sq * _s -> get_c());
 
-    body -> acceleration += - vec.normalize() * force / body -> mass;
+    _s -> bodies.get_acc_of(body) += - vec.normalize() * force / _s -> bodies.get_mass_of(body);
 }
 
 template <>
-void compute_rad_pressure(Simulation<vec2>* _s, Body<vec2>* body, vec2 pos, double temp){
-    vec2 vec = (pos - body -> position);
+void compute_rad_pressure(Simulation<vec2>* _s, size_t body, vec2 pos, double temp){
+    vec2 vec = (pos - _s -> bodies.get_position_of(body));
     double r_sq = vec.sqr_magn();
-    double force = _s -> get_boltzmann() * std::pow(body -> temp, 4) / (4 * PI * r_sq * _s -> get_c());
+    double force = _s -> get_boltzmann() * std::pow(_s -> bodies.get_temp_of(body), 4) / (4 * PI * r_sq * _s -> get_c());
 
-    body -> acceleration += - vec.normalize() * force / body -> mass;
+    _s -> bodies.get_acc_of(body) += - vec.normalize() * force / _s -> bodies.get_mass_of(body);
 }
 
 template <>
-void get_new_temp<vec3>(Simulation<vec3>* _s, Body<vec3>* body, vec3 pos, vec3 vel, double temp, double mass){ 
+void get_new_temp<vec3>(Simulation<vec3>* _s, size_t body, vec3 pos, vec3 vel, double temp, double mass){ 
     /*
     * we are trying to compute the delta T so we use the formula 
     *  21 * G * M * m * n * e²
@@ -200,11 +200,11 @@ void get_new_temp<vec3>(Simulation<vec3>* _s, Body<vec3>* body, vec3 pos, vec3 v
     * byt dt to get the delta T 
     */
     // sketchy edge case...
-    if (body -> acceleration.sqr_magn()) return;
+    if (_s -> bodies.get_acc_of(body).sqr_magn()) return;
 
-    vec3 rel_v = body -> velocity - vel;
+    vec3 rel_v = _s -> bodies.get_velocity_of(body) - vel;
     double relv_sq = rel_v.sqr_magn();
-    double r = (body -> position - pos).magnitude();
+    double r = (_s -> bodies.get_position_of(body) - pos).magnitude();
     
     /*
     * omega is the angular velocity of the body
@@ -215,22 +215,22 @@ void get_new_temp<vec3>(Simulation<vec3>* _s, Body<vec3>* body, vec3 pos, vec3 v
     * ergo 
     * W  = V x a / a x a * vec(a)
     */
-    double w_squared = (body -> acceleration * (rel_v * body -> acceleration) / (body -> acceleration.sqr_magn())).sqr_magn();
+    double w_squared = (_s -> bodies.get_acc_of(body) * (rel_v * _s -> bodies.get_acc_of(body)) / (_s -> bodies.get_acc_of(body).sqr_magn())).sqr_magn();
 
     double eccentricity = get_eccentricity<vec3>(_s, body, relv_sq, w_squared, r, mass);
 
     double delta_temperature = 1;//21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
     delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
-    delta_temperature /= body -> mass * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
+    delta_temperature /= _s -> bodies.get_mass_of(body) * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
 
     // boltzmann
-    delta_temperature -= _s -> get_boltzmann() * std::pow(body -> temp, 4) / ( _s -> get_heat_capacity() * body -> mass);
+    delta_temperature -= _s -> get_boltzmann() * std::pow(_s -> bodies.get_temp_of(body), 4) / ( _s -> get_heat_capacity() * _s -> bodies.get_mass_of(body));
 
-    body -> temp += delta_temperature; // done! 
+    _s -> bodies.get_temp_of(body) += delta_temperature; // done! 
 }
 
 template <>
-void get_new_temp<vec2>(Simulation<vec2>* _s, Body<vec2>* body, vec2 pos, vec2 vel, double temp, double mass){
+void get_new_temp<vec2>(Simulation<vec2>* _s, size_t body, vec2 pos, vec2 vel, double temp, double mass){
     /*
     * we are trying to compute the delta T so we use the formula 
     *  21 * G * M * m * n * e²
@@ -241,45 +241,37 @@ void get_new_temp<vec2>(Simulation<vec2>* _s, Body<vec2>* body, vec2 pos, vec2 v
     * byt dt to get the delta T 
     */
 
-    vec2 rel_v = body -> velocity - vel;
+    vec2 rel_v = _s -> bodies.get_velocity_of(body) - vel;
     double relv_sq = rel_v.sqr_magn();
-    double r = (body -> position - pos).magnitude();
+    double r = (_s -> bodies.get_position_of(body) - pos).magnitude();
     /*
     * omega^2 = |V|^2 - (V x A / |A|) ^2 
     * omega being the hypoteetase of a right triangle
     * of sidelenghts equal to the velocity and the
     * projection of the velocity onto the acceleration
     */
-    double w_squared = (body -> acceleration * (rel_v * body -> acceleration) / body -> acceleration.sqr_magn()).sqr_magn();
+    double w_squared = (_s -> bodies.get_acc_of(body) * (rel_v * _s -> bodies.get_acc_of(body)) / _s -> bodies.get_acc_of(body).sqr_magn()).sqr_magn();
 
     double eccentricity = get_eccentricity<vec2>(_s, body, relv_sq, w_squared, r, mass);
 
-    double delta_temperature = 21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    double delta_temperature = 21.0 / 2.0 * _s -> get_G() * mass * _s -> bodies.get_mass_of(body) * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
     delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
-    delta_temperature /= body -> mass * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
+    delta_temperature /= _s -> bodies.get_mass_of(body) * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
 
     // boltzmann
-    delta_temperature -= _s -> get_boltzmann() * std::pow(body -> temp, 4) / ( _s -> get_heat_capacity() * body -> mass);
+    delta_temperature -= _s -> get_boltzmann() * std::pow(_s -> bodies.get_temp_of(body), 4) / ( _s -> get_heat_capacity() * _s -> bodies.get_mass_of(body));
 
-    body -> temp +=  delta_temperature; // done! 
+    _s -> bodies.get_temp_of(body) +=  delta_temperature; // done! 
 }
 
 
 
 template <>
 void update_euler(Simulation<vec2>* _s){
-    for (auto& body : _s -> bodies){
-        body.velocity += body.acceleration* _s -> get_dt() ;
-        body.position += body.velocity * _s -> get_dt() ;
-    }
-}
-
-template <>
-void update_leapfrog(Simulation<vec2>* _s){
-    for (auto& body : _s -> bodies){
-        body.position += body.velocity * _s -> get_dt()  + body.acceleration * _s -> get_dt()  * _s -> get_dt()  * .5;
-        body.velocity += (body.acceleration + body.prev_acc)* _s -> get_dt()  * .5;
-    }
+    for_each_body(_s, [_s](size_t body){
+        _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body)* _s -> get_dt() ;
+        _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * _s -> get_dt() ;
+    }); 
 }
 
 template <>
@@ -291,45 +283,46 @@ void update_symplectic4(Simulation<vec2>* _s){
 
     static vec2 temp_v;
 
-    for (auto& body : _s -> bodies){
+    for_each_body(_s, [_s](size_t body){
         // first step 
-        temp_v = body.velocity + d1*body.acceleration * _s -> get_dt();
+        temp_v = _s -> bodies.get_velocity_of(body) + d1* _s -> bodies.get_acc_of(body) * _s -> get_dt();
 
-        body.position += c1* temp_v * _s -> get_dt();
-        body.velocity = temp_v;
+        _s -> bodies.get_position_of(body) += c1* temp_v * _s -> get_dt();
+        _s -> bodies.get_velocity_of(body) = temp_v;
 
         // second
         _s -> update_forces(_s);
-        temp_v = body.velocity + d2*body.acceleration * _s -> get_dt();
+        temp_v = _s -> bodies.get_velocity_of(body) + d2* _s -> bodies.get_acc_of(body) * _s -> get_dt();
 
-        body.position += c2* temp_v * _s -> get_dt();
-        body.velocity = temp_v;
+        _s -> bodies.get_position_of(body) += c2* temp_v * _s -> get_dt();
+        _s -> bodies.get_velocity_of(body) = temp_v;
 
         //third
         _s -> update_forces(_s);
-        temp_v = body.velocity + d1*body.acceleration * _s -> get_dt();
+        temp_v = _s -> bodies.get_velocity_of(body) + d1* _s -> bodies.get_acc_of(body) * _s -> get_dt();
 
-        body.position += c2* temp_v * _s -> get_dt();
-        body.velocity = temp_v;
+        _s -> bodies.get_position_of(body) += c2* temp_v * _s -> get_dt();
+        _s -> bodies.get_velocity_of(body) = temp_v;
 
         //last
         _s -> update_forces(_s);
-        body.position += c1* body.velocity * _s -> get_dt();
-    }
+        _s -> bodies.get_position_of(body) += c1* _s -> bodies.get_velocity_of(body) * _s -> get_dt();
+    });
 }
 
+/*
 template <typename T> 
 void adaptive_euler(Simulation<T>* _s){
     for (auto& body : _s -> bodies){
         double magn = body.acceleration.magnitude();
         T r = body.acceleration / magn;
 
-        double E_i = body.velocity.sqr_magn() * .5 *body.mass - std::sqrt(_s -> get_G() * (_s -> get_total_mass() - body.mass) / magn);
+        double E_i = _s -> bodies.get_velocity_of(body).sqr_magn() * .5 *body.mass - std::sqrt(_s -> get_G() * (_s -> get_total_mass() - body.mass) / magn);
 
         Body<T> rollback = body;
         update_euler<T>(_s);
 
-        double E_f = body.velocity.sqr_magn() * .5 *body.mass - std::sqrt(_s -> get_G() * (_s -> get_total_mass() - body.mass) / body.acceleration.magnitude());
+        double E_f = _s -> bodies.get_velocity_of(body).sqr_magn() * .5 *body.mass - std::sqrt(_s -> get_G() * (_s -> get_total_mass() - body.mass) / body.acceleration.magnitude());
         double iters = std::log10(std::abs((E_i - E_f) / E_i));
 
         if (iters < _s -> get_adaptive_coeff())
@@ -337,10 +330,10 @@ void adaptive_euler(Simulation<T>* _s){
 
         iters = _s -> get_adaptive_coeff() - iters;
 
-        body.position = rollback.position;
+        _s -> bodies.get_position_of(body) = rollback.position;
         body.acceleration = rollback.acceleration;
         body.temp = rollback.temp;
-        body.velocity = rollback.velocity;
+        _s -> bodies.get_velocity_of(body) = rollback.velocity;
 
         _s -> set_dt(_s -> get_dt() / iters);
         for (double i = 0; i < iters; ++i){
@@ -349,7 +342,7 @@ void adaptive_euler(Simulation<T>* _s){
 
         _s -> set_dt(_s -> get_dt() * iters);
     }
-}
+}*/
 //===---------------------------------------------------------===//
 // Force calculation methods                                     //
 //===---------------------------------------------------------===//
@@ -391,17 +384,9 @@ vec2 rk4(double m1, double m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2, Simulation<ve
 
 template <>
 void update_euler(Simulation<vec3>* _s){
-    for_each_body(_s, [_s](Body<vec3>& body){
-        body.velocity += body.acceleration* _s -> get_dt() ;
-        body.position += body.velocity * _s -> get_dt() ;
-    });
-}
-
-template <>
-void update_leapfrog(Simulation<vec3>* _s){
-    for_each_body(_s, [_s](Body<vec3>& body){
-        body.position += body.velocity * _s -> get_dt()  + body.acceleration * _s -> get_dt()  * _s -> get_dt()  * .5;
-        body.velocity += (body.acceleration + body.prev_acc)* _s -> get_dt()  * .5;
+    for_each_body(_s, [_s](size_t body){
+        _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body)* _s -> get_dt() ;
+        _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * _s -> get_dt() ;
     });
 }
 
@@ -413,38 +398,38 @@ void update_symplectic4(Simulation<vec3>* _s){
     constexpr double d2 = -1.70241438391931532159162543393904343;
     
     // first step 
-    for_each_body(_s, [d1, c1, _s](Body<vec3>& body){
-        vec3 temp_v = body.velocity + d1*body.acceleration * _s -> get_dt();
+    for_each_body(_s, [d1, c1, _s](size_t body){
+        vec3 temp_v = _s -> bodies.get_velocity_of(body) + d1*_s -> bodies.get_acc_of(body) * _s -> get_dt();
 
-        body.position += c1* temp_v * _s -> get_dt();
-        body.velocity = temp_v;
+        _s -> bodies.get_position_of(body) += c1* temp_v * _s -> get_dt();
+        _s -> bodies.get_velocity_of(body) = temp_v;
     });
 
     // second
     _s -> update_forces(_s);
 
-    for_each_body(_s, [c2, _s](Body<vec3>& body){
-        vec3 temp_v = body.velocity + d2*body.acceleration * _s -> get_dt();
+    for_each_body(_s, [c2, _s](size_t body){
+        vec3 temp_v = _s -> bodies.get_velocity_of(body) + d2*_s -> bodies.get_acc_of(body) * _s -> get_dt();
 
-        body.position += c2* temp_v * _s -> get_dt();
-        body.velocity = temp_v;
+        _s -> bodies.get_position_of(body) += c2* temp_v * _s -> get_dt();
+        _s -> bodies.get_velocity_of(body) = temp_v;
     });
     
     //third
     _s -> update_forces(_s);
 
-    for_each_body(_s, [d1, c2, _s](Body<vec3>& body){
-        vec3 temp_v = body.velocity + d1*body.acceleration * _s -> get_dt();
+    for_each_body(_s, [d1, c2, _s](size_t body){
+        vec3 temp_v = _s -> bodies.get_velocity_of(body) + d1*_s -> bodies.get_acc_of(body) * _s -> get_dt();
 
-        body.position += c2* temp_v * _s -> get_dt();
-        body.velocity = temp_v;
+        _s -> bodies.get_position_of(body) += c2* temp_v * _s -> get_dt();
+        _s -> bodies.get_velocity_of(body) = temp_v;
     });
 
     //last
     _s -> update_forces(_s);
 
-    for_each_body(_s, [c1, _s](Body<vec3>& body){
-        body.position += c1 * body.velocity * _s -> get_dt();
+    for_each_body(_s, [c1, _s](size_t body){
+        _s -> bodies.get_position_of(body) += c1 * _s -> bodies.get_velocity_of(body) * _s -> get_dt();
     });
 }
 
@@ -487,11 +472,11 @@ func_ptr<vec2> get_update_func(update_type type){
     case EULER:
         return update_euler<vec2>;
     case LEAPFROG:
-        return update_leapfrog<vec2>;
+        return update_SABA2<vec2>;
     case SYMPLECTIC4:
         return update_symplectic4<vec2>;
     case ADE:
-        return adaptive_euler<vec2>;
+        return update_euler<vec2>;
     case SABA1:
         return update_SABA1<vec2>;
     case SABA2:
@@ -541,11 +526,11 @@ func_ptr<vec3> get_update_func(update_type type){
     case EULER:
         return update_euler<vec3>;
     case LEAPFROG:
-        return update_leapfrog<vec3>;
+        return update_SABA2<vec3>;
     case SYMPLECTIC4:
         return update_symplectic4<vec3>;
     case ADE:
-        return adaptive_euler<vec3>;
+        return update_euler<vec3>;
     case SABA1:
         return update_SABA1<vec3>;
     case SABA2:

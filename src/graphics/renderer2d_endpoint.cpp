@@ -299,17 +299,17 @@ void Renderer2d::draw_termal(){
     // sets the point size to 10
     glPointSize(10);
     
-    for (const auto& p : _s -> bodies){
+    for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         // trasforms the coordinates to -> [-1, 1]
-        double x = 2.f * (get_scale() * p.position.x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        double y = 2.f * (get_scale() * p.position.y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+        double x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        double y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
           
         //in-bounds check
         if (std::abs(x) > 1 || std::abs(y) > 1) continue;
 
         // gets the right color for the specific temperature
         int index = int(
-            get_coloring_index(p.temp)*255
+            get_coloring_index(_s -> bodies.get_temp_of(i))*255
         );
         // changes the color based on the index
         glColor3f(color_scale[index][0], color_scale[index][1], color_scale[index][2]);
@@ -336,10 +336,11 @@ void Renderer2d::draw_minimal(){
     // sets the point size to 10
     glPointSize(10);
     
-    for (const auto& p : _s -> bodies){
-        double x = 2.f * (get_scale() * p.position.x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        double y = 2.f * (get_scale() * p.position.y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
-        
+    for (int i = 0; i < _s -> bodies.positions.size(); ++i){
+        // trasforms the coordinates to -> [-1, 1]
+        double x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        double y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+          
         //in-bounds check
         if (std::abs(x) > 1 || std::abs(y) > 1) continue;
 
@@ -361,24 +362,23 @@ void Renderer2d::draw_detailed(){
     // calculates the current ascpect ratio
     float aspect_ratio = static_cast<float>(current_width) / current_height;
     
-    for (int i = 0; i < _s -> bodies.size(); i++){
+    for (int i = 0; i < _s -> bodies.positions.size(); i++){
         // saves a reference to the current body
-        auto& p = _s -> bodies[i];
 
         // chooses a random color from the array
         glColor3f(rng_colors[i % 14][0], rng_colors[i % 14][1], rng_colors[i % 14][2]); 
         double radius = std::max(
             std::min(
-                std::log10(p.mass * _s -> get_render_width() / _s -> get_width() ) / (200 * get_scale()),
+                std::log10(_s -> bodies.get_mass_of(i) * _s -> get_render_width() / _s -> get_width() ) / (200 * get_scale()),
                 .2
             ),
             0.005
         ); // scales the radius based on the log_{10} of the mass
 
         // trasforms the coordinates to -> [-1, 1]
-        double x = 2.f * (get_scale() * p.position.x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        double y = 2.f * (get_scale() * p.position.y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
-        
+        double x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        double y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+              
         //in-bounds check
         if (std::abs(x) > 1.3 || std::abs(y) > 1.3) continue; 
 

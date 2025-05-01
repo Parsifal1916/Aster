@@ -128,14 +128,7 @@ void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass);
 * @param pos: position of the body
 * @param vel: velocity of the body
 */
-void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel);
-
-/**
-* @brief adds a body to the simulation
-* @param _s: simulation to add the body to 
-* @param b: body to add
-*/
-void add_body(Simulation<vec2>* _s, Body<vec2> b);
+void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, double temp = 0);
 
 
 /**
@@ -145,14 +138,7 @@ void add_body(Simulation<vec2>* _s, Body<vec2> b);
 * @param pos: position of the body
 * @param vel: velocity of the body
 */
-void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel);
-
-/**
-* @brief adds a body to the simulation
-* @param _s: simulation to add the body to 
-* @param b: body to add
-*/
-void add_body(Simulation<vec3>* _s, Body<vec3> b);
+void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double temp = 0);
 
 /**
 * @brief covers the simulation with bodies using a perlin noise

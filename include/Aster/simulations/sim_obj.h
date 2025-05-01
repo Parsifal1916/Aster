@@ -20,7 +20,7 @@ class Simulation{
     public:
     float current_a = 0;
     
-    std::vector<Body<T>> bodies;
+    BodyArray<T> bodies;
 
     Simulation<T>* set_numof_objs(unsigned int n_);
     Simulation<T>* set_screen_size(double  w_, double h_, double d_ = 1000);
@@ -85,19 +85,19 @@ class Simulation{
 
     virtual void step() {}
 
-    virtual void update_pair(Body<T>* b1){
-        for (auto& b2 : bodies){
-            if (&b2 == b1) continue;
+    virtual void update_pair(size_t  b1){
+        for (int b2 = 0; b2 < bodies.positions.size(); ++b2){
+            if (b2 == b1) continue;
     
-            b1 -> acceleration += get_force(
-                b1 -> mass, b2.mass,
-                b1 -> velocity, b2.velocity,
-                b1 -> position, b2.position,
+            this -> bodies.get_acc_of(b1) += get_force(
+                bodies.get_mass_of(b1), bodies.get_mass_of(b2),
+                bodies.get_velocity_of(b1), bodies.get_velocity_of(b2),
+                bodies.get_position_of(b1), bodies.get_position_of(b2),
                 this
-            ) / b1 -> mass;
+            ) / bodies.get_mass_of(b1);
 
             for (auto& graph : between_graphs)
-                graph.trigger_on(b1, &b2);
+                graph.trigger_on(b1, b2);
     
         }
     }

@@ -15,18 +15,16 @@ double get_total_energy(Simulation<T>* _s){
     double retval = 0.0;
     std::mutex retval_mutex;
     const int num_threads = 16;
-    int num_bodies = _s->bodies.size();
+    int num_bodies = _s->bodies.positions.size();
     
     auto thread_func = [&retval, &retval_mutex, _s, num_bodies](int start_idx, int end_idx) {
         double partial_retval = 0.0;
 
         for (int i = start_idx; i < end_idx; ++i) {
-            const auto& b1 = _s->bodies[i];
-            partial_retval += 0.5 * b1.velocity.sqr_magn() * b1.mass;
+            partial_retval += 0.5 * _s -> bodies.get_velocity_of(i).sqr_magn() * _s -> bodies.get_mass_of(i);
             for (int j = i + 1; j < num_bodies; ++j) {
-                const auto& b2 = _s->bodies[j];
-                double r = (b2.position - b1.position).magnitude();
-                partial_retval -= _s->get_G() * b1.mass * b2.mass / r;
+                double r = (_s -> bodies.get_position_of(j) - _s -> bodies.get_position_of(i)).magnitude();
+                partial_retval -= _s->get_G() * _s -> bodies.get_mass_of(j) * _s -> bodies.get_mass_of(i) / r;
             }
         }
 
@@ -51,12 +49,12 @@ double get_total_energy(Simulation<T>* _s){
 }
 
 template <typename T>
-double hamiltonian_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b){
+double hamiltonian_collector(Graph<T>* g, Simulation<T>* _s, size_t b){
     return get_total_energy(_s);
 }
 
 template <typename T>
-double error_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b){
+double error_collector(Graph<T>* g, Simulation<T>* _s, size_t b){
     static double initial_energy = std::nan("");
 
     double current_energy = get_total_energy(_s);
@@ -70,7 +68,7 @@ double error_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b){
 }
 
 template <typename T>
-double distance_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b){
+double distance_collector(Graph<T>* g, Simulation<T>* _s, size_t b){
     static std::mutex mtx;
     static std::pair<double, T> baricenter = {-1, T(0)};
 
@@ -80,15 +78,15 @@ double distance_collector(Graph<T>* g, Simulation<T>* _s, Body<T>* b){
             baricenter.first = _s -> get_time_passed();
             baricenter.second = T(0);
 
-            for (const auto& body : _s -> bodies)
-                baricenter.second += body.position * body.mass;
+            for (int i = 0; i < _s -> bodies.positions.size(); ++i)
+                baricenter.second += _s -> bodies.get_position_of(i) * _s -> bodies.get_mass_of(i);
 
             baricenter.second = baricenter.second / _s -> get_total_mass();
         }
         mtx.unlock();
     }
 
-    return (baricenter.second - b -> position + .1).magnitude();
+    return (baricenter.second - _s -> bodies.get_position_of(b) + .1).magnitude();
 }
 
 }

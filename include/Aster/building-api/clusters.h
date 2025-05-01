@@ -14,7 +14,7 @@ template <typename T> struct Cluster;
 template <typename T> struct Simulation;
 
 template <typename T> 
-using cluster_builder_fptr = std::function<Body<T>(Cluster<T>&, size_t)>;
+using cluster_builder_fptr = std::function<void(Cluster<T>&, size_t)>;
 
 template <typename T> 
 struct Cluster{

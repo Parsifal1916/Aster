@@ -20,7 +20,7 @@ class BHT final : public Barnes_Hut<T> {
     BHT(sim_meta m);
     BHT();
 
-    void get_node_body(size_t node, Body<T>* body) override;
+    void get_node_body(size_t node, size_t  body) override;
     
 };
 
