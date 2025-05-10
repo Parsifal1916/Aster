@@ -9,7 +9,11 @@
 
 #define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
 #include <CL/opencl.h>
+#endif
 
 #include "Aster/simulations/basic.h"
 #include "Aster/building-api/builder.h"

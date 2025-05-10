@@ -6,7 +6,12 @@
 #include <string>
 #include <cstring>
 
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
 #include <CL/opencl.h>
+#endif
+
 #include "Aster/building-api/logging.h"
 #include "Aster/simulations/basic.h"
 #include "Aster/impl/config.h"
