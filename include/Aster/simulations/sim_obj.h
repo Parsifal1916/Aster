@@ -2,6 +2,8 @@
 #include <random>
 #include <string>
 
+#define CL_TARGET_OPENCL_VERSION 300
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #include <CL/opencl.h>
 
 #include "Aster/physics/vectors.h"
