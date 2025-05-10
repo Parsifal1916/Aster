@@ -101,31 +101,36 @@ target_compile_definitions(Aster PRIVATE LIBRARY_PATH="${LIBRARY_PATH}")
 file(COPY ${CMAKE_SOURCE_DIR}/include/Aster/thirdparty/roboto.ttf
      DESTINATION ${CMAKE_BINARY_DIR}/include/Aster/thirdparty)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_package(Catch2 REQUIRED)
-
-    file(GLOB_RECURSE TEST_HEADERS tests/*.h)
-    add_executable(AsterTests tests/main_tests.cpp)
-
-    target_link_libraries(AsterTests PRIVATE
-        Catch2::Catch2
-        Catch2::Catch2WithMain
-        Aster
-    )
-
-    if(NOT MSVC)
-        target_compile_options(AsterTests PRIVATE 
-            -O3 
-            -mtune=native 
-            -march=native 
-            -funroll-loops 
-            -ffast-math 
-            -Wno-narrowing 
-            -Wno-aggressive-loop-optimizations
-        )
-    endif()
-
-    include(CTest)
-    include(Catch)
-    catch_discover_tests(AsterTests)
-endif()
+     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+     find_package(Catch2 REQUIRED)
+ 
+     file(GLOB_RECURSE TEST_HEADERS tests/*.h)
+     add_executable(AsterTests tests/main_tests.cpp)
+ 
+     target_link_libraries(AsterTests PRIVATE
+         Catch2::Catch2
+         Catch2::Catch2WithMain
+         Aster
+     )
+ 
+     set_target_properties(AsterTests PROPERTIES
+         BUILD_WITH_INSTALL_RPATH TRUE
+         INSTALL_RPATH "@loader_path"
+     )
+ 
+     if(NOT MSVC)
+         target_compile_options(AsterTests PRIVATE 
+             -O3 
+             -mtune=native 
+             -march=native 
+             -funroll-loops 
+             -ffast-math 
+             -Wno-narrowing 
+             -Wno-aggressive-loop-optimizations
+         )
+     endif()
+ 
+     include(CTest)
+     include(Catch)
+     catch_discover_tests(AsterTests)
+ endif()
