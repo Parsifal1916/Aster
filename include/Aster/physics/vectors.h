@@ -26,6 +26,7 @@ struct vec2 {
     float magnitude();
     vec2 direction(vec2 v2);
     vec2 normalize();
+    bool is_fine() const;
     double sqr_magn() const;
     void reset();
     vec2 update_by(vec2* v, double delta);
@@ -55,6 +56,7 @@ struct vec3 {
     vec3 operator*(const int& other) const;
     vec3& operator/=(const double& other);
     float magnitude();
+    bool is_fine() const;
     vec3 update_by(vec3* v, double delta);
     vec3 direction(vec3 v3);
     vec3 normalize();

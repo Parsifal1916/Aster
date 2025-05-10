@@ -121,6 +121,10 @@ double vec2::sqr_magn() const {
     return x*x + y*y;
 }
 
+bool vec2::is_fine() const {
+    return !std::isnan(x) && !std::isnan(x);
+}
+
 vec2 vec2::update_by(vec2* v, double delta){
     return {
         x + v -> x *delta,
@@ -228,6 +232,12 @@ vec2 operator*(double scalar, vec2 v){
 vec3 operator*(double scalar, vec3 v){
     return v * scalar;
 }
+
+
+bool vec3::is_fine() const {
+    return !std::isnan(x) && !std::isnan(x) && !std::isnan(z);
+}
+
 
 
 }

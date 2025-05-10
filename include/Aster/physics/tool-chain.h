@@ -2,6 +2,10 @@
 #include <vector>
 #include <map>
 #include <string>
+#define CL_TARGET_OPENCL_VERSION 300
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#include <CL/opencl.h>
+
 
 #include "Aster/physics/body.h"
 #include "Aster/simulations/basic.h"
@@ -23,9 +27,6 @@ template <typename T> class Simulation;
 
 template <typename T>
 void update_euler(Simulation<T>* _s);
-
-template <typename T>
-void update_leapfrog(Simulation<T>* _s);
 
 template <typename T>
 void update_symplectic4(Simulation<T>* _s);
@@ -65,9 +66,6 @@ void update_SABA10(Simulation<T>* _s);
 
 template <typename T>
 T newtonian(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s);
-
-template <typename T> 
-T adaptive_euler(Simulation<vec2>* _s);
 
 /*
 * evaluates the post-newtonian approx.
@@ -124,8 +122,60 @@ void update_scale(Simulation<T>* _s);
 /*
 */
 
+namespace GPU{
+//===---------------------------------------------------------===//
+// GPU optimized stuff                                           //
+//===---------------------------------------------------------===//
+
+cl_platform_id platform;
+cl_device_id device;
+
+cl_context context;
+cl_command_queue queue;
+
+bool has_initialized = false;
+
+/**
+* @brief sets the best device in terms of compute power
+*/
+void select_best_device();
+
+/**
+* @brief compiles a kernel
+* @param name: pointer to the name of the function
+* @param source: source code of the kernel
+* @param k: kernel object onto which to write the kernel 
+*/
+void compile_kernel(std::string* name, std::string* source, cl_kernel& k);
+
+/**
+* @brief initializes opencl and finds the right device
+*/
+void init_opencl();
+
+/**
+* @brief compiles the force program
+*/
+template <typename T>
+func_ptr<T> compile_uf(force_type t);
+
+/**
+* @brief compiles the body update program
+*/
+template <typename T>
+func_ptr<T> compile_ub(update_type t);
+
+template <typename T> 
+void upload_force_kernel(cl_kernel& k, Simulation<T>* _s);
+
+template <typename T> 
+void upload_update_kernel(cl_kernel& k, Simulation<T>* _s);
 
 }
 
+
+}
+
+#include "Aster/impl/tc_impl_cl.tpp"
 #include "Aster/impl/tool_chain_impl.tpp"
 #include "Aster/impl/SABA.tpp"

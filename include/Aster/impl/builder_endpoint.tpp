@@ -3,7 +3,14 @@
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <chrono>
 #include <cassert>
+#include <iomanip>
+
+#define CL_TARGET_OPENCL_VERSION 300
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#include <CL/opencl.h>
+
 #include "Aster/simulations/basic.h"
 #include "Aster/building-api/builder.h"
 #include "Aster/graphs/graph_collection.h"
@@ -13,6 +20,24 @@ namespace Aster{
 template class Simulation<vec2>;
 template class Simulation<vec3>;
 
+template <typename T>
+bool Simulation<T>::is_fine(){
+    bool retval = false;
+
+    for (int i = 0; i < this -> bodies.positions.size(); ++i){
+        if (this -> bodies.positions[i].is_fine() && 
+            this -> bodies.velocities[i].is_fine() &&
+            this -> bodies.accs[i].is_fine())
+        continue;
+
+        retval = true;
+        break;
+    }
+
+    warn_if(retval, "is_fine() call: simulation is not fine, NaN found in particle's data");
+
+    return retval;
+}
 
 /*
 * set screen's height, width and bg color (optional)
@@ -35,19 +60,6 @@ Simulation<T>* Simulation<T>::set_dt(float dt_){
     data.dt = dt_;
     return this;
 }
-
-template <typename T>
-Simulation<T>* Simulation<T>::use_simd(){
-    simd_on = true;
-    return this;
-}
-
-
-template <typename T>
-bool Simulation<T>::is_using_simd() const{
-    return simd_on;
-}
-
 
 template <typename T>
 Simulation<T>* Simulation<T>::set_omega_m(float om_){
@@ -79,6 +91,32 @@ Simulation<T>* Simulation<T>::set_vacuum_density(float d_){
 }
 
 template <typename T>
+Simulation<T>* Simulation<T>::integrate(size_t times){
+    if (times == 0) return this;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (size_t i = 0; i < times; ++i)
+        this -> step();
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> lasted_for = end - start;
+    std::ostringstream per_step;
+    std::ostringstream total;
+
+    per_step <<  std::fixed << std::setprecision(3) << lasted_for.count() / times;
+    total    <<  std::fixed << std::setprecision(3) << lasted_for.count();
+
+    log_info(std::string("Integration report:\n") 
+        + std::string("[ + ] Total time:        ") + total.str() + std::string("ms\n")
+        + std::string("[ + ] Time for one step: ") + per_step.str()  + std::string("ms\n"));
+
+    return this;
+}
+
+
+template <typename T>
 Simulation<T>* Simulation<T>::set_max_frames(unsigned int f_){
     data.max_frames = f_;
     return this;
@@ -103,12 +141,21 @@ Simulation<T>* Simulation<T>::load(){
 template <typename T>
 Simulation<T>* Simulation<T>::get_force_with(force_func<T> p){
     this -> get_force = p;
+    this -> force_used = CUSTOM_F;
+    return this;
+}
+
+template <typename T>
+Simulation<T>* Simulation<T>::use_GPU(){
+    this -> GPU_on = true;
+    this -> update_forces = get_uf<T>(GPU_UF, this -> force_used);
     return this;
 }
 
 template <typename T> 
 Simulation<T>* Simulation<T>::update_with(func_ptr<T> p){
     this -> update_bodies = p;
+    this -> update_used = CUSTOM_U;
     return this;
 }
 
@@ -149,6 +196,11 @@ double Simulation<T>::get_height() const{
 }
 
 template <typename T>
+bool Simulation<T>::uses_GPU() const{
+    return this -> GPU_on;
+}
+
+template <typename T>
 double Simulation<T>::get_width() const{
     return this -> data.size.x * get_scale();
 }
@@ -173,7 +225,6 @@ template <typename T>
 double Simulation<T>::get_render_depth() const{
     return this -> data.size.z;
 }
-
 
 template <typename T>
 int Simulation<T>::get_cores() const{
@@ -337,13 +388,15 @@ template <typename T>
 Simulation<T>* Simulation<T>::get_force_with(force_type t){
     this -> data.selected_force = t;
     this -> get_force = get_force_func<T>(t);
+    this -> force_used = t;
     return this;
 }
 
 template <typename T>
 Simulation<T>* Simulation<T>::update_with(update_type t){
     this -> data.selected_update = t;
-    this -> update_bodies = get_update_func<T>(t);
+    this -> update_bodies = get_update_func<T>(t, uses_GPU());
+    this -> update_used = t;
     return this;
 }
 
@@ -386,8 +439,8 @@ void parallel_fu(Simulation<T>* _s){
 template <typename T>
 SingleThread<T>::SingleThread(sim_meta m){
     this -> data = m;
-    this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
+    this -> get_force_with(this -> data.selected_force);
+    this -> update_with(this -> data.selected_update);
     this -> data.graph_height *= this -> data.HEIGHT;
     this -> update_forces = single_core_fu;
 }
@@ -396,9 +449,10 @@ template <typename T>
 SingleThread<T>::SingleThread(){
     this -> data = sim_meta();
     this -> data.type = LIGHT;
-    this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
-    this -> update_forces = single_core_fu;
+    this -> get_force_with(this -> data.selected_force);
+    this -> update_with(this -> data.selected_update);
+    this->update_forces = static_cast<void(*)(Simulation<T>*)>(single_core_fu);
+
     this -> data.graph_height *= this -> data.size.y;
 }
 
@@ -423,7 +477,7 @@ template <typename T>
 Parallelized<T>::Parallelized(sim_meta m){
     this -> data = m;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
+    this -> update_bodies = get_update_func<T>(this -> data.selected_update, this -> uses_GPU());
     this -> data.graph_height *= this -> data.size.y;
     this -> update_forces = parallel_fu;
 
@@ -436,9 +490,10 @@ Parallelized<T>::Parallelized(){
     this -> data = sim_meta();
     this -> data.type = HEAVY;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
+    this -> update_bodies = get_update_func<T>(this -> data.selected_update, this -> uses_GPU());
     this -> data.graph_height *= this -> data.size.y;
-    this -> update_forces = parallel_fu;
+    this->update_forces = static_cast<void(*)(Simulation<T>*)>(parallel_fu);
+
 
     this -> threads.reserve(this -> get_cores()); 
     this -> obj = this -> bodies.positions.size();
@@ -469,6 +524,19 @@ Parallelized<T>* Parallelized<T>::set_max_threads(unsigned int t_){
         return this;
 }
 
+template <typename T> 
+Simulation<T>* Simulation<T>::update_forces_with(func_ptr<T> p){
+    this -> update_forces = p;
+    this -> force_update_used = CUSTOM_FU;
+    return this;
+}
+
+template <typename T> 
+Simulation<T>* Simulation<T>::update_forces_with(forces_update_type p){
+    this -> update_forces = get_uf<T>(p, force_used);
+    this -> force_update_used = p;
+    return this;
+}
 
 template <typename T> 
 void update_bundle(Simulation<T>* _s, unsigned short index){
@@ -484,8 +552,6 @@ void update_bundle(Simulation<T>* _s, unsigned short index){
        _s -> update_pair(i);
     }
 }
-
-
 
 
 }

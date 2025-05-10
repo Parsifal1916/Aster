@@ -2,6 +2,8 @@
 #include <random>
 #include <string>
 
+#include <CL/opencl.h>
+
 #include "Aster/physics/vectors.h"
 
 #include "Aster/simulations/basic.h"
@@ -43,14 +45,20 @@ class Simulation{
     Simulation<T>* update_with(update_type t);
     Simulation<T>* get_force_with(force_func<T> p);
     Simulation<T>* update_with(func_ptr<T> p);
+    Simulation<T>* update_forces_with(func_ptr<T> p);
+    Simulation<T>* update_forces_with(forces_update_type p);
 
     Simulation<T>* collect_hamiltonian();
     Simulation<T>* collect_error();
     Simulation<T>* collect_distance();
 
+    Simulation<T>* integrate(size_t time);
     Simulation<T>* calculate_total_mass();
+    Simulation<T>* use_GPU();
+    
     double get_total_mass() const;
     double get_adaptive_coeff() const;
+    bool is_fine();
 
     bool has_loaded_yet() const;
     
@@ -76,8 +84,7 @@ class Simulation{
     double get_heat_capacity() const;
     double get_boltzmann() const;
 
-    Simulation<T>* use_simd();
-    bool is_using_simd() const ;
+    bool uses_GPU() const;
 
     simulation_types get_type() const;
     
@@ -114,9 +121,13 @@ class Simulation{
     protected:
     double total_mass = 0;
     sim_meta data;
+
+    force_type force_used = NEWTON;
+    forces_update_type force_update_used = PARALLEL;
+    update_type update_used = EULER;
+    
     std::vector<Graphs::Graph<T>> graphs;
-
-
+ 
     double
         c_squared,
         time_passed = 0,
@@ -125,8 +136,7 @@ class Simulation{
 
     void trigger_all_graphs();
     bool has_loaded = false;
-    bool simd_on = false;
-
+    bool GPU_on = false;
 };
 
 template <typename T> 

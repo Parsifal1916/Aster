@@ -3,6 +3,7 @@ project(Aster VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
@@ -12,6 +13,7 @@ include(CMakeFindDependencyMacro)
 find_dependency(OpenGL REQUIRED)
 find_dependency(GLEW REQUIRED)
 find_dependency(glfw3 REQUIRED)
+find_dependency(OpenCL REQUIRED)
 
 file(GLOB_RECURSE ASTER_SOURCES src/*.cpp)
 file(GLOB_RECURSE ASTER_HEADERS include/Aster/.h include/Aster/*.hpp)
@@ -27,6 +29,7 @@ target_link_libraries(Aster PRIVATE
     OpenGL::GL
     GLEW::GLEW
     glfw
+    OpenCL::OpenCL
     ${CMAKE_DL_LIBS}
 )
 
@@ -45,6 +48,7 @@ if(NOT MSVC)
 target_compile_options(Aster PRIVATE 
     -Wno-aggressive-loop-optimizations
     -O3
+    -lOpenCL
 )
 endif()
 

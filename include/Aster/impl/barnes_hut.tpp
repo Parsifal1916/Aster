@@ -5,6 +5,8 @@
 #include <thread>
 #include <type_traits>
 
+#define CL_TARGET_OPENCL_VERSION 300
+
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/building-api/builder.h"
 
@@ -129,9 +131,9 @@ Barnes_Hut<T>::Barnes_Hut(){
     this -> data = sim_meta(); 
     this -> data.type = BARNES_HUT;
     this -> get_force = get_force_func<T>(this -> data.selected_force);
-    this -> update_bodies = get_update_func<T>(this -> data.selected_update);
+    this -> update_bodies = get_update_func<T>(this -> data.selected_update, this -> uses_GPU());
     this -> data.graph_height *= this -> data.size.y;
-    this -> update_forces = parallel_fu;
+    this -> update_forces = static_cast<void(*)(Simulation<T>*)>(parallel_fu);
 
     this -> threads.reserve(this -> get_cores());
     this -> obj = this -> bodies.positions.size(); 
@@ -147,7 +149,8 @@ void Barnes_Hut<T>::step(){
     calculate_com(); // calculates the center of mass
         
     // calculates the forces
-    this -> update_forces(this);
+    for (int i = 0; i < this -> get_cores(); ++i)
+        update_bundle(this, i);
     nodes.clear(); // cleans tree and updates bodies
     this -> update_bodies(this);
 
@@ -195,7 +198,7 @@ void Barnes_Hut<T>::insert(size_t index){
         return;
     }
 
-    int tries = 5, new_node = node_index;
+    int tries = 3, new_node = node_index;
     size_t child = 0;
     short opt_1, opt_2;
 

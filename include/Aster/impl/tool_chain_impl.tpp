@@ -467,7 +467,14 @@ vec3 rk4(double m1, double m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<ve
 }
 
 template <>
-func_ptr<vec2> get_update_func(update_type type){
+func_ptr<vec2> get_update_func(update_type type, bool gpu){
+    if (gpu){
+        if (!GPU::has_initialized)
+        GPU::init_opencl();
+
+        return GPU::compile_ub<vec2>(type);
+    }
+
     switch (type){
     case EULER:
         return update_euler<vec2>;
@@ -518,10 +525,19 @@ force_func<vec2> get_force_func(force_type type){
         warn_if(true, "force method not found");
         return newtonian<vec2>;
     }   
+    
+    
 }
 
 template <>
-func_ptr<vec3> get_update_func(update_type type){
+func_ptr<vec3> get_update_func(update_type type, bool gpu){
+    if (gpu){
+        if (!GPU::has_initialized)
+        GPU::init_opencl();
+
+        return GPU::compile_ub<vec3>(type);
+    }
+
     switch (type){
     case EULER:
         return update_euler<vec3>;
@@ -573,4 +589,45 @@ force_func<vec3> get_force_func(force_type type){
         return newtonian<vec3>;
     }   
 }
+
+template <>
+func_ptr<vec2> get_uf(forces_update_type t, force_type f){
+    switch (t){
+        case SINGLE_CORE:
+            return single_core_fu<vec2>;
+        case PARALLEL:
+            return parallel_fu<vec2>;
+        case GPU_UF:
+            if (!GPU::has_initialized)
+            GPU::init_opencl();
+
+            return GPU::compile_uf<vec2>(f);
+    }
+
+    if (critical_if(true, "could not find a suitable update function"))
+        exit(-1);
+
+    return parallel_fu<vec2>;
+}
+
+template <>
+func_ptr<vec3> get_uf(forces_update_type t, force_type f){
+    switch (t){
+        case SINGLE_CORE:
+            return single_core_fu<vec3>;
+        case PARALLEL:
+            return parallel_fu<vec3>;
+        case GPU_UF:
+            if (!GPU::has_initialized)
+            GPU::init_opencl();
+
+            return GPU::compile_uf<vec3>(f);
+    }
+
+    if (critical_if(true, "could not find a suitable update function"))
+        exit(-1);
+
+    return parallel_fu<vec3>;
+}
+
 }
