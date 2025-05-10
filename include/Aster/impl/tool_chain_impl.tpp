@@ -602,6 +602,8 @@ func_ptr<vec2> get_uf(forces_update_type t, force_type f){
             GPU::init_opencl();
 
             return GPU::compile_uf<vec2>(f);
+        case CUSTOM_FU:
+            break;
     }
 
     if (critical_if(true, "could not find a suitable update function"))
@@ -622,6 +624,8 @@ func_ptr<vec3> get_uf(forces_update_type t, force_type f){
             GPU::init_opencl();
 
             return GPU::compile_uf<vec3>(f);
+        case CUSTOM_FU:
+            break;
     }
 
     if (critical_if(true, "could not find a suitable update function"))

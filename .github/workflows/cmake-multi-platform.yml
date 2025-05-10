@@ -45,11 +45,14 @@ jobs:
     - name: Configure CMake (macOS)
       if: matrix.os == 'macos-latest'
       run: |
+        export DYLD_LIBRARY_PATH=$(pwd)
+    
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
               -DCMAKE_PREFIX_PATH="${{ env.CMAKE_PREFIX_PATH }}" \
               -DCPATH="${{ env.CPATH }}" \
               -DLIBRARY_PATH="${{ env.LIBRARY_PATH }}" \
               -DCMAKE_EXE_LINKER_FLAGS="${{ env.CMAKE_EXE_LINKER_FLAGS }}"
+        ctest -C ${{ matrix.build_type }} --output-on-failure
 
     - name: Configure CMake (Windows)
       if: matrix.os == 'windows-latest'

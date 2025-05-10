@@ -11,7 +11,7 @@ namespace Text{
 template <typename T>
 void Label<T>::update(Simulation<T>* _s){
     content = generator(_s); // executes the function onto the simualtion
-    if (warn_if(content == "", "no text generated for label"));
+    warn_if(content == "", "no text generated for label");
 }
 
 /**
