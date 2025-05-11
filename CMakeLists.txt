@@ -5,6 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH ON)
+endif()
+
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 include(GNUInstallDirs)
@@ -33,22 +37,24 @@ target_link_libraries(Aster PUBLIC
     ${CMAKE_DL_LIBS}
 )
 
+set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
+set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
+
 set_target_properties(Aster PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
     PUBLIC_HEADER "${ASTER_HEADERS}"
     POSITION_INDEPENDENT_CODE ON
-
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}"
+    LIBRARY_OUTPUT_DIRECTORY "${LIBRARY_OUTPUT_PATH}"
+    ARCHIVE_OUTPUT_DIRECTORY "${LIBRARY_OUTPUT_PATH}"
+    RUNTIME_OUTPUT_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}"
 )
 
 if(NOT MSVC)
-target_compile_options(Aster PRIVATE 
-    -Wno-aggressive-loop-optimizations
-    -O3
-)
+    target_compile_options(Aster PRIVATE 
+        -Wno-aggressive-loop-optimizations
+        -O3
+    )
 endif()
 
 include(CMakePackageConfigHelpers)
@@ -100,20 +106,32 @@ target_compile_definitions(Aster PRIVATE LIBRARY_PATH="${LIBRARY_PATH}")
 file(COPY ${CMAKE_SOURCE_DIR}/include/Aster/thirdparty/roboto.ttf
      DESTINATION ${CMAKE_BINARY_DIR}/include/Aster/thirdparty)
 
-
+if(APPLE)
+    target_compile_options(Aster PRIVATE -Wno-nullability-completeness)
+endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     find_package(Catch2 REQUIRED)
 
     file(GLOB_RECURSE TEST_HEADERS tests/*.h)
     add_executable(AsterTests tests/main_tests.cpp)
-
+    
     set_target_properties(AsterTests PROPERTIES
-        BUILD_WITH_INSTALL_RPATH TRUE
-        INSTALL_RPATH "@executable_path/../${CMAKE_BUILD_TYPE}"
-        BUILD_RPATH "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}"
+        RUNTIME_OUTPUT_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}"
     )
 
+    if(APPLE)
+        set_target_properties(AsterTests PROPERTIES
+            BUILD_WITH_INSTALL_RPATH TRUE
+            INSTALL_RPATH "@loader_path/../lib"
+        )
+    else() # Linux
+        set_target_properties(AsterTests PROPERTIES
+            BUILD_WITH_INSTALL_RPATH TRUE
+            INSTALL_RPATH "$ORIGIN/../lib"
+        )
+    endif()
+    
     target_link_libraries(AsterTests PRIVATE
         Catch2::Catch2
         Catch2::Catch2WithMain
@@ -121,10 +139,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         OpenCL::OpenCL
     )
 
-    add_custom_command(TARGET AsterTests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/lib
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Aster> ${CMAKE_BINARY_DIR}/lib/
-    )
+    if(APPLE)
+        target_compile_options(AsterTests PRIVATE -Wno-nullability-completeness)
+    endif()
 
     if(NOT MSVC)
         target_compile_options(AsterTests PRIVATE 
@@ -140,5 +157,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     include(CTest)
     include(Catch)
+    
+    if(APPLE)
+        add_custom_command(TARGET AsterTests POST_BUILD
+            COMMAND install_name_tool -add_rpath "@loader_path/../lib" $<TARGET_FILE:AsterTests>
+        )
+    endif()
+    
     catch_discover_tests(AsterTests)
 endif()
