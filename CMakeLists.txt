@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(Aster VERSION 1.0 LANGUAGES CXX)
+project(Aster VERSION 1.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,14 +18,14 @@ find_dependency(OpenCL REQUIRED)
 file(GLOB_RECURSE ASTER_SOURCES src/*.cpp)
 file(GLOB_RECURSE ASTER_HEADERS include/Aster/.h include/Aster/*.hpp)
 
-add_library(Aster ${ASTER_SOURCES} ${ASTER_HEADERS})
+add_library(Aster SHARED ${ASTER_SOURCES} ${ASTER_HEADERS})
 
 target_include_directories(Aster PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_link_libraries(Aster PRIVATE
+target_link_libraries(Aster PUBLIC
     OpenGL::GL
     GLEW::GLEW
     glfw
@@ -48,7 +48,6 @@ if(NOT MSVC)
 target_compile_options(Aster PRIVATE 
     -Wno-aggressive-loop-optimizations
     -O3
-    -lOpenCL
 )
 endif()
 
@@ -101,36 +100,32 @@ target_compile_definitions(Aster PRIVATE LIBRARY_PATH="${LIBRARY_PATH}")
 file(COPY ${CMAKE_SOURCE_DIR}/include/Aster/thirdparty/roboto.ttf
      DESTINATION ${CMAKE_BINARY_DIR}/include/Aster/thirdparty)
 
-     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-     find_package(Catch2 REQUIRED)
- 
-     file(GLOB_RECURSE TEST_HEADERS tests/*.h)
-     add_executable(AsterTests tests/main_tests.cpp)
- 
-     target_link_libraries(AsterTests PRIVATE
-         Catch2::Catch2
-         Catch2::Catch2WithMain
-         Aster
-     )
- 
-     set_target_properties(AsterTests PROPERTIES
-         BUILD_WITH_INSTALL_RPATH TRUE
-         INSTALL_RPATH "@loader_path"
-     )
- 
-     if(NOT MSVC)
-         target_compile_options(AsterTests PRIVATE 
-             -O3 
-             -mtune=native 
-             -march=native 
-             -funroll-loops 
-             -ffast-math 
-             -Wno-narrowing 
-             -Wno-aggressive-loop-optimizations
-         )
-     endif()
- 
-     include(CTest)
-     include(Catch)
-     catch_discover_tests(AsterTests)
- endif()
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    find_package(Catch2 REQUIRED)
+
+    file(GLOB_RECURSE TEST_HEADERS tests/*.h)
+    add_executable(AsterTests tests/main_tests.cpp)
+
+    target_link_libraries(AsterTests PRIVATE
+        Catch2::Catch2
+        Catch2::Catch2WithMain
+        Aster
+        OpenCL::OpenCL
+    )
+
+    if(NOT MSVC)
+        target_compile_options(AsterTests PRIVATE 
+            -O3 
+            -mtune=native 
+            -march=native 
+            -funroll-loops 
+            -ffast-math 
+            -Wno-narrowing 
+            -Wno-aggressive-loop-optimizations
+        )
+    endif()
+
+    include(CTest)
+    include(Catch)
+    catch_discover_tests(AsterTests)
+endif()
