@@ -100,6 +100,11 @@ target_compile_definitions(Aster PRIVATE LIBRARY_PATH="${LIBRARY_PATH}")
 file(COPY ${CMAKE_SOURCE_DIR}/include/Aster/thirdparty/roboto.ttf
      DESTINATION ${CMAKE_BINARY_DIR}/include/Aster/thirdparty)
 
+add_custom_command(TARGET AsterTests POST_BUILD
+     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/lib
+     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Aster> ${CMAKE_BINARY_DIR}/lib/
+ )
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     find_package(Catch2 REQUIRED)
 
