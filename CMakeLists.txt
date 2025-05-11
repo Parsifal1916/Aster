@@ -106,6 +106,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     file(GLOB_RECURSE TEST_HEADERS tests/*.h)
     add_executable(AsterTests tests/main_tests.cpp)
 
+    set_target_properties(AsterTests PROPERTIES
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@executable_path/../lib"
+        BUILD_RPATH "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}"
+    )
+
     target_link_libraries(AsterTests PRIVATE
         Catch2::Catch2
         Catch2::Catch2WithMain
