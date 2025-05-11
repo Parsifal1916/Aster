@@ -125,7 +125,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             BUILD_WITH_INSTALL_RPATH TRUE
             INSTALL_RPATH "@loader_path/../lib"
         )
-    else() # Linux
+    else()
         set_target_properties(AsterTests PROPERTIES
             BUILD_WITH_INSTALL_RPATH TRUE
             INSTALL_RPATH "$ORIGIN/../lib"
@@ -141,6 +141,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     if(APPLE)
         target_compile_options(AsterTests PRIVATE -Wno-nullability-completeness)
+        
+        add_custom_command(TARGET AsterTests POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/lib
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Aster> ${CMAKE_BINARY_DIR}/lib/
+            COMMENT "Copying Aster library to lib directory"
+        )
     endif()
 
     if(NOT MSVC)
@@ -158,9 +164,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     include(CTest)
     include(Catch)
     
-    if(APPLE)
+    if(NOT APPLE) 
         add_custom_command(TARGET AsterTests POST_BUILD
-            COMMAND install_name_tool -add_rpath "@loader_path/../lib" $<TARGET_FILE:AsterTests>
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/lib
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Aster> ${CMAKE_BINARY_DIR}/lib/
+            COMMENT "Copying Aster library to lib directory"
         )
     endif()
     
