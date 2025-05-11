@@ -108,7 +108,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     set_target_properties(AsterTests PROPERTIES
         BUILD_WITH_INSTALL_RPATH TRUE
-        INSTALL_RPATH "@executable_path/../lib"
+        INSTALL_RPATH "@executable_path/../${CMAKE_BUILD_TYPE}"
         BUILD_RPATH "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}"
     )
 
