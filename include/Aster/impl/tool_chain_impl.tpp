@@ -478,14 +478,6 @@ func_ptr<vec2> get_update_func(update_type type, bool gpu){
     switch (type){
     case EULER:
         return update_euler<vec2>;
-    case LEAPFROG:
-        return update_SABA2<vec2>;
-    case SYMPLECTIC4:
-        return update_symplectic4<vec2>;
-    case ADE:
-        return update_euler<vec2>;
-    case SABA1:
-        return update_SABA1<vec2>;
     case SABA2:
         return update_SABA2<vec2>;
     case SABA3:
@@ -541,14 +533,6 @@ func_ptr<vec3> get_update_func(update_type type, bool gpu){
     switch (type){
     case EULER:
         return update_euler<vec3>;
-    case LEAPFROG:
-        return update_SABA2<vec3>;
-    case SYMPLECTIC4:
-        return update_symplectic4<vec3>;
-    case ADE:
-        return update_euler<vec3>;
-    case SABA1:
-        return update_SABA1<vec3>;
     case SABA2:
         return update_SABA2<vec3>;
     case SABA3:

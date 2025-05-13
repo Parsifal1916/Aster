@@ -16,9 +16,11 @@ using func_ptr = std::function<void(Simulation<T>*)>;
 template <typename T>
 using force_func = T(*)(double, double, T, T, T, T, Simulation<T>*);
 
-
 enum force_type:  int {NEWTON = 0, PN1 = 1, PN2 = 2, PN25 = 3, CUSTOM_F = 5};
-enum update_type: int {EULER = 0, LEAPFROG = 1, SYMPLECTIC4 = 2, ADE = 3, SABA1 = 4, SABA2 = 5, SABA3 = 6, SABA4, SABA5, SABA6, SABA7, SABA8, SABA9, SABA10, CUSTOM_U};
+enum update_type: int {EULER = 0, SABA2 = 1, SABA3 = 2, SABA4 = 3, SABA5 = 4, SABA6 = 5, SABA7 = 6, SABA8 = 7, SABA9 = 8, SABA10 = 9, CUSTOM_U};
+
+#define SABA1 EULER
+#define LEAPFROG SABA2 
 
 enum forces_update_type: int {SINGLE_CORE, PARALLEL, GPU_UF, CUSTOM_FU};
 

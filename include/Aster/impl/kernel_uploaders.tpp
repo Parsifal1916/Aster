@@ -13,12 +13,13 @@
 #endif
 
 #include "Aster/building-api/logging.h"
-#include "Aster/simulations/basic.h"
+#include "Aster/simulations/basic.h" 
 #include "Aster/impl/config.h"
 #include "Aster/simulations/sim_obj.h"
 
 namespace Aster{
 namespace GPU{
+
 
 FORCE_INLINE void check(cl_int a){
     static int b = 0;
@@ -31,7 +32,7 @@ FORCE_INLINE void check(cl_int a){
     
 
 template <typename T> 
-void upload_update_kernel(cl_kernel& k, Simulation<T>* _s){
+void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, double c, double d){
     if (!has_initialized) {
         init_opencl();
         has_initialized = true;
@@ -57,16 +58,22 @@ void upload_update_kernel(cl_kernel& k, Simulation<T>* _s){
 
     size_t LW_size = 64;
     size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
+    double c_arg = c;
+    double d_arg = d;
 
     operation_result = clSetKernelArg(k, 0, sizeof(unsigned int), &N);
     check(operation_result);
     operation_result = clSetKernelArg(k, 1, sizeof(double), &dt);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 2, sizeof(cl_mem), &pos_b);
+    operation_result = clSetKernelArg(k, 2, sizeof(double), &d_arg);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 3, sizeof(cl_mem), &vel_b);
+    operation_result = clSetKernelArg(k, 3, sizeof(double), &c_arg);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 4, sizeof(cl_mem), &acc_b);
+    operation_result = clSetKernelArg(k, 4, sizeof(cl_mem), &pos_b);
+    check(operation_result);
+    operation_result = clSetKernelArg(k, 5, sizeof(cl_mem), &vel_b);
+    check(operation_result);
+    operation_result = clSetKernelArg(k, 6, sizeof(cl_mem), &acc_b);
     check(operation_result);
 
 

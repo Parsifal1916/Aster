@@ -149,13 +149,6 @@ void compile_kernel(std::string* name, std::string* source, cl_kernel& k){
 // Bodies Update (UB) compiling                                  //
 //===---------------------------------------------------------===//
 
-template <typename T>
-struct ub_functor {
-    cl_kernel k;
-    void operator()(Simulation<T>* _s){
-        upload_update_kernel(k, _s);
-    }
-};
 
 template <typename T>
 struct uf_functor {
@@ -166,24 +159,38 @@ struct uf_functor {
 };
 
 template <typename T>
+struct ub_functor {
+    cl_kernel k;
+    int order;
+    void operator()(Simulation<T>* _s){
+        static const double* sequence = saba_coeffs[order];
+
+        // fstep
+        for (int i = 0; i < saba_coeff_lng[order]; i+=2){
+            upload_update_kernel(k, _s, sequence[i], sequence[i+1]);
+            _s -> update_forces(_s);
+        }
+    }
+};
+
+template <typename T>
 func_ptr<T> compile_ub(update_type t) {
     log_info("compiling GPU scripts from source...");
-    size_t index = static_cast<size_t>(t);
     
-    static std::string* update_kernels[] = {&euler_cl};
-    static std::string kernel_names[] = {"euler"};
+    static std::string* update_kernel = &general_saba;
+    static std::string kernel_name = "saba";
+    int index =  static_cast<int>(t);
 
     cl_kernel k;
 
-    if (critical_if(index > 1 || index < 0, 
-    "could not find a suitable GPU-accelerated function for kernel " + kernel_names[index]))
+    if (critical_if(index < 0 || index > static_cast<int>(CUSTOM_U), 
+    "could not find a suitable GPU-accelerated function for kernel " + kernel_name))
         exit(1);
     
-    compile_kernel(&kernel_names[index], update_kernels[index], k);
+    compile_kernel(&kernel_name, update_kernel, k);
 
     log_info("done compiling updating scripts");
-
-    return ub_functor<T>{k};
+    return ub_functor<T>{k, index};
 }
 
 
