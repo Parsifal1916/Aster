@@ -146,6 +146,7 @@ template <typename T>
 Simulation<T>* Simulation<T>::get_force_with(force_func<T> p){
     this -> get_force = p;
     this -> force_used = CUSTOM_F;
+
     return this;
 }
 
@@ -393,6 +394,7 @@ Simulation<T>* Simulation<T>::get_force_with(force_type t){
     this -> data.selected_force = t;
     this -> get_force = get_force_func<T>(t);
     this -> force_used = t;
+    //this -> update_forces = get_uf<T>;
     return this;
 }
 

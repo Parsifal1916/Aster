@@ -17,8 +17,10 @@
 #include "Aster/impl/config.h"
 #include "Aster/simulations/sim_obj.h"
 
+
 #include "Aster/impl/kernels/newton_update.cl.h"
 #include "Aster/impl/kernels/eulerian_update.cl.h"
+#include "Aster/impl/kernels/PNs.cl.h"
 #include "Aster/impl/kernels/generalized_intgrt.cl.h"
 #include "Aster/impl/kernel_uploaders.tpp"
 
@@ -116,12 +118,12 @@ void compile_kernel(std::string* name, std::string* source, cl_kernel& k){
     size_t log_size = 0;
     clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
 
-    //if (log_size > 1) {
-    //    std::vector<char> log(log_size);
-    //    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
-    //    std::string build_log(log.begin(), log.end());
-    //    log_info("Build log for kernel \"" + *name + "\":\n" + build_log);
-    //}
+    if (log_size > 1) {
+        std::vector<char> log(log_size);
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+        std::string build_log(log.begin(), log.end());
+        log_info("Build log for kernel \"" + *name + "\":\n" + build_log);
+    }
 
     if (critical_if(build_result != CL_SUCCESS, 
                    "could not build kernel"))
@@ -201,14 +203,14 @@ func_ptr<T> compile_ub(update_type t) {
 template <typename T>
 func_ptr<T> compile_uf(force_type t) {
     log_info("compiling GPU scripts from source...");
-    size_t index = static_cast<size_t>(t);
+    size_t index = 1;///static_cast<size_t>(t);
     
-    static std::string* force_kernels[] = {&newton_cl};
-    static std::string kernel_names[] = {"newton"};
+    static std::string* force_kernels[] = {&newton_cl, &cl_pns, &cl_pns, &cl_pns};
+    static std::string kernel_names[] = {"newton", "pn1", "pn2", "pn25"};
     
     cl_kernel k;
 
-    if (critical_if(index > 1 || index < 0, 
+    if (critical_if(index >= static_cast<int>(CUSTOM_FU) || index < 0, 
     "could not find a suitable GPU-accelerated function for kernel " + kernel_names[index]))
         exit(1);
     

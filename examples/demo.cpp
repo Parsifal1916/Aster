@@ -22,7 +22,15 @@ void load_solar_system(Simulation<vec2>* sim){
     add_body(sim, 8.6810e25, sim -> get_center() - vec2(18.3 * AU, 0), {0,  6800}); //uranus
     add_body(sim, 1.0240e26, sim -> get_center() - vec2(29.8 * AU, 0), {0,  5430}); //neptune
 }
-  
+
+void update_sim(Simulation<vec2>* _s){
+    for (int i = 0; i < _s -> bodies.positions.size(); i++){
+        std::cout << _s -> bodies.get_acc_of(i).sqr_magn() << ", " << _s -> bodies.get_position_of(i).sqr_magn() << "\n";
+        _s -> bodies.get_velocity_of(i) += _s -> bodies.get_acc_of(i) * _s -> get_dt();
+        _s -> bodies.get_position_of(i) += _s -> bodies.get_velocity_of(i) * _s -> get_dt();
+    }
+}
+
 int main(){
 
 
@@ -32,17 +40,21 @@ int main(){
     sim 
     -> use_GPU()
     -> set_scale(150e6)
-    -> get_force_with(NEWTON)
+    -> get_force_with(PN1)
     -> set_dt(10e3)
-    -> update_with(SABA2)
-    -> collect_error()
+    -> update_with(update_sim)
+
+    //-> collect_error()
     ;
 
     load_solar_system(sim);
+
     sim -> load();
-    
+
+    //sim -> integrate(100);
+      
     render(sim) -> show();
-        
+
     /*
     auto* sim = bake3d(BARNES_HUT);
     

@@ -107,6 +107,7 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     const size_t num_bytes = _s -> bodies.positions.size() * sizeof(double);
     const cl_uint N = _s -> bodies.positions.size();
     const double G = _s -> get_G();
+    const double C = _s -> get_c();
     const size_t vec_size = sizeof(T)/sizeof(double)*num_bytes;
 
     // creates buffer for mass
@@ -152,15 +153,17 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     check(operation_result);
     operation_result = clSetKernelArg(k, 1, sizeof(double), &G);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 2, sizeof(cl_mem), &temp_b);
+    operation_result = clSetKernelArg(k, 2, sizeof(double), &C);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 3, sizeof(cl_mem), &masses_b);
+    operation_result = clSetKernelArg(k, 3, sizeof(cl_mem), &temp_b);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 4, sizeof(cl_mem), &pos_b);
+    operation_result = clSetKernelArg(k, 4, sizeof(cl_mem), &masses_b);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 5, sizeof(cl_mem), &vel_b);
+    operation_result = clSetKernelArg(k, 5, sizeof(cl_mem), &pos_b);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 6, sizeof(cl_mem), &acc_br);
+    operation_result = clSetKernelArg(k, 6, sizeof(cl_mem), &vel_b);
+    check(operation_result);
+    operation_result = clSetKernelArg(k, 7, sizeof(cl_mem), &acc_br);
     check(operation_result);
 
     operation_result = clEnqueueNDRangeKernel(queue, k, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr );

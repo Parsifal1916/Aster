@@ -9,6 +9,7 @@ inline std::string newton_cl =
 "__kernel void newton(\n"
 "    const uint    N,\n"
 "    const double  G,\n"
+"    const double  C,\n"
 "    __global const double*   t,\n"
 "    __global const double*   m,\n"
 "    __global const double2*  pos,\n"
