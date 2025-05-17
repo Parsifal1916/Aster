@@ -203,7 +203,7 @@ func_ptr<T> compile_ub(update_type t) {
 template <typename T>
 func_ptr<T> compile_uf(force_type t) {
     log_info("compiling GPU scripts from source...");
-    size_t index = 1;///static_cast<size_t>(t);
+    size_t index = static_cast<size_t>(t);
     
     static std::string* force_kernels[] = {&newton_cl, &cl_pns, &cl_pns, &cl_pns};
     static std::string kernel_names[] = {"newton", "pn1", "pn2", "pn25"};

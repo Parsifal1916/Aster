@@ -25,7 +25,7 @@ void load_solar_system(Simulation<vec2>* sim){
 
 void update_sim(Simulation<vec2>* _s){
     for (int i = 0; i < _s -> bodies.positions.size(); i++){
-        std::cout << _s -> bodies.get_acc_of(i).sqr_magn() << ", " << _s -> bodies.get_position_of(i).sqr_magn() << "\n";
+        //std::cout << _s -> bodies.get_acc_of(i).sqr_magn() << ", " << _s -> bodies.get_position_of(i).sqr_magn() << "\n";
         _s -> bodies.get_velocity_of(i) += _s -> bodies.get_acc_of(i) * _s -> get_dt();
         _s -> bodies.get_position_of(i) += _s -> bodies.get_velocity_of(i) * _s -> get_dt();
     }
@@ -41,6 +41,7 @@ int main(){
     -> use_GPU()
     -> set_scale(150e6)
     -> get_force_with(PN2)
+    //-> use_GPU()
     -> set_dt(10e3)
     -> update_with(update_sim)
 
