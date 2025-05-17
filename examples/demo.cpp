@@ -43,7 +43,7 @@ int main(){
     -> get_force_with(PN2)
     //-> use_GPU()
     -> set_dt(10e3)
-    -> update_with(update_sim)
+    -> update_with(SABA3)
 
     //-> collect_error()
     ;
