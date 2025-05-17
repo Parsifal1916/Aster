@@ -394,6 +394,7 @@ Simulation<T>* Simulation<T>::get_force_with(force_type t){
     this -> data.selected_force = t;
     this -> get_force = get_force_func<T>(t);
     this -> force_used = t;
+    if (uses_GPU()) use_GPU(); // this is cursed af, i know....
     return this;
 }
 

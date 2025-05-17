@@ -41,7 +41,6 @@ int main(){
     -> use_GPU()
     -> set_scale(150e6)
     -> get_force_with(PN2)
-    //-> use_GPU()
     -> set_dt(10e3)
     -> update_with(SABA3)
 
