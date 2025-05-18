@@ -39,14 +39,11 @@ void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, double c, double d){
     }
     
     cl_int operation_result;
-    uint8_t vec_size = sizeof(T)/8;
-
-
     if (_s -> bodies.positions.size() == 0) return;
     
     const size_t num_bytes = _s -> bodies.positions.size() * sizeof(double);
     const cl_uint N = _s -> bodies.positions.size();
-    const size_t arr_size = num_bytes*vec_size;
+    const size_t arr_size = (std::is_same<T, vec2>::value ? 2 : 3) * num_bytes;
     const double dt = _s -> get_dt();
 
     auto pos_b = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, arr_size, _s -> bodies.positions.data(),&operation_result);
@@ -108,7 +105,7 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     const cl_uint N = _s -> bodies.positions.size();
     const double G = _s -> get_G();
     const double C = _s -> get_c();
-    const size_t vec_size = sizeof(T)/sizeof(double)*num_bytes;
+    const size_t vec_size = (std::is_same<T, vec2>::value ? 2 : 3) * num_bytes;
 
     // creates buffer for mass
     cl_mem masses_b = clCreateBuffer(context, CL_MEM_READ_ONLY, num_bytes, nullptr, &operation_result);

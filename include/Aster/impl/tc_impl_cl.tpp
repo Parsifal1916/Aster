@@ -17,11 +17,14 @@
 #include "Aster/impl/config.h"
 #include "Aster/simulations/sim_obj.h"
 
-
-#include "Aster/impl/kernels/newton_update.cl.h"
 #include "Aster/impl/kernels/eulerian_update.cl.h"
-#include "Aster/impl/kernels/PNs.cl.h"
 #include "Aster/impl/kernels/generalized_intgrt.cl.h"
+#include "Aster/impl/kernels/generalized_intgrt3d.cl.h"
+#include "Aster/impl/kernels/newton_update.cl.h"
+#include "Aster/impl/kernels/newton_update3d.cl.h"
+#include "Aster/impl/kernels/PNs.cl.h"
+#include "Aster/impl/kernels/PNs3d.cl.h"
+
 #include "Aster/impl/kernel_uploaders.tpp"
 
 namespace Aster{
@@ -179,7 +182,7 @@ template <typename T>
 func_ptr<T> compile_ub(update_type t) {
     log_info("compiling GPU scripts from source...");
     
-    static std::string* update_kernel = &general_saba;
+    static std::string* update_kernel = std::is_same<T, vec2>() ? &general_saba : &general_saba3d;
     static std::string kernel_name = "saba";
     int index =  static_cast<int>(t);
 
@@ -205,16 +208,19 @@ func_ptr<T> compile_uf(force_type t) {
     log_info("compiling GPU scripts from source...");
     size_t index = static_cast<size_t>(t);
     
-    static std::string* force_kernels[] = {&newton_cl, &cl_pns, &cl_pns, &cl_pns};
-    static std::string kernel_names[] = {"newton", "pn1", "pn2", "pn25"};
-    
+    std::string* force_kernel = std::is_same<T, vec2>::value 
+        ? (t == NEWTON ? &newton_cl : &cl_pns)
+        : (t == NEWTON ? &newton_cl3d : &cl_pns3d)
+    ;
+
+    std::string kernel_names[] = {"newton", "pn1", "pn2", "pn25"};
     cl_kernel k;
 
     if (critical_if(index >= static_cast<int>(CUSTOM_FU) || index < 0, 
     "could not find a suitable GPU-accelerated function for kernel " + kernel_names[index]))
         exit(1);
     
-    compile_kernel(&kernel_names[index], force_kernels[index], k);
+    compile_kernel(&kernel_names[index], force_kernel, k);
 
     log_info("done compiling force calculation scripts");
     return uf_functor<T>{k};

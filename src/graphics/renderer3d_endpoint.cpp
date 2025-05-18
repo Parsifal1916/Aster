@@ -354,7 +354,7 @@ void Renderer3d::draw_minimal3d(){
 * @brief costly method to draw every body in the simulation, useful for few body problems
 */
 void Renderer3d::draw_detailed3d() { 
-    vec3 mapped_pos = {0, 0, 0}; // only one instance
+    vec3 mapped_pos = {0, 0,0}; // only one instance
 
     for (int i = 0; i < _s -> bodies.positions.size(); ++i) {
         mapped_pos = map_point(_s -> bodies.get_position_of(i)); //saves the position
