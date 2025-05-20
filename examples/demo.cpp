@@ -23,7 +23,7 @@ void load_solar_system(Simulation<vec3>* sim){
     add_body(sim, 1.0240e26, sim -> get_center() - vec3(29.8 * AU, 0, 0), {0,  5430, 0}); //neptune
 }
 
-void update_sim(Simulation<vec2>* _s){
+void update_sim(Simulation<vec3>* _s){
     for (int i = 0; i < _s -> bodies.positions.size(); i++){
         //std::cout << _s -> bodies.get_acc_of(i).sqr_magn() << ", " << _s -> bodies.get_position_of(i).sqr_magn() << "\n";
         _s -> bodies.get_velocity_of(i) += _s -> bodies.get_acc_of(i) * _s -> get_dt();
@@ -42,7 +42,7 @@ int main(){
     -> set_scale(150e6)
     -> get_force_with(PN1)
     -> set_dt(10e3)
-    -> update_with(SABA3)
+    -> update_with(SABA2)
 
     //-> collect_error()
     ;

@@ -21,6 +21,48 @@ template <typename T> void get_new_temp(Simulation<T>* _s, size_t body, T pos, T
 
 namespace Barnes{
 
+/*                   //===---------------------------------------------------------===//
+.                    // MORTON IMPLEMENTATION                                         //
+.                    //===---------------------------------------------------------===*/
+
+/**
+* @brief interleaps the bits of a given number
+*/
+uint32_t interleap_coord(uint16_t num, size_t shift = 1){
+    auto x = (uint32_t)num;
+    if (shift == 1){
+        x = (x | (x << 8)) & 0x00FF00FF;
+        x = (x | (x << 4)) & 0x0F0F0F0F;
+        x = (x | (x << 2)) & 0x33333333;
+        x = (x | (x << 1)) & 0x55555555;
+    } else {
+        x &= 0x3FF;  
+        x = (x | (x << 16)) & 0x030000FF;
+        x = (x | (x << 8))  & 0x0300F00F;
+        x = (x | (x << 4))  & 0x030C30C3;
+        x = (x | (x << 2))  & 0x09249249;
+    }
+    return x;
+}
+
+
+
+/**
+* @brief generates the morton codes for a given point
+*/
+template <> 
+uint32_t get_morton(vec3 point){
+    return interleap_coord(point.x) << 2 | interleap_coord(point.y) << 1 | interleap_coord(point.z); 
+}
+/**
+* @brief generates the morton codes for a given point
+*/
+template <> 
+uint32_t get_morton(vec2 point){
+    return interleap_coord(point.x) << 1 | interleap_coord(point.y); 
+}
+
+
 
 /*                   //===---------------------------------------------------------===//
 .                    // NODE IMPLEMENTATION                                           //

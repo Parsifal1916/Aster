@@ -15,6 +15,9 @@ namespace Barnes{
 .                    // Nodes definition                                              //
 .                    //===---------------------------------------------------------===*/
 
+#define PRECISION_BITS 10
+#define IGNORED_BITS 2
+
 template <typename T> class Barnes_Hut;
 
 template <typename T> T pick_newpos(Simulation<T>* _s);
@@ -136,6 +139,10 @@ class Barnes_Hut: public Simulation<T>{
     void make_sections();
     size_t subdivide(int n);
     friend void compute_tidal_heating<T>(Barnes_Hut<T>* _s, size_t  body);
+
+
+
+
 };
 
 /**
@@ -145,7 +152,21 @@ class Barnes_Hut: public Simulation<T>{
 */
 template <typename T>
 void update_bundle(Barnes_Hut<T>* _s, unsigned short index);
+
+/**
+* @brief generates the morton codes for a given point
+*/
+template <typename T> 
+uint32_t get_morton(T point);
+
+/**
+* @brief interleaps the bits of a given number
+*/
+uint32_t interleap_coord(double num, size_t shift = 1);
+
 }
+
+
 }
 
 #include "Aster/impl/barnes_hut.tpp"
