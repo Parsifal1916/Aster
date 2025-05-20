@@ -12,9 +12,6 @@
 #include "Aster/graphics/animations.h"
 #include "Aster/graphics/text_rendering.h"
 
-#include "Aster/simulations/BHT_sim.h"
-#include "Aster/simulations/barnes-hut.h"
-
 #define NUM_SEGMENTS 15
 
 namespace Aster{

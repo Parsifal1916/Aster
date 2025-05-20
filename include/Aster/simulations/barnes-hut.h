@@ -153,11 +153,14 @@ class Barnes_Hut: public Simulation<T>{
 template <typename T>
 void update_bundle(Barnes_Hut<T>* _s, unsigned short index);
 
+
+
 /**
 * @brief generates the morton codes for a given point
 */
 template <typename T> 
 uint32_t get_morton(T point);
+
 
 /**
 * @brief interleaps the bits of a given number
