@@ -5,7 +5,11 @@
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 #define CL_TARGET_OPENCL_VERSION 300
-#include <CL/cl.h>
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/opencl.h>
+#endif
 #include <time.h>
 
 #include "Aster/impl/kernels/sorting.cl.h"
