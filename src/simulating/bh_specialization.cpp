@@ -23,19 +23,43 @@ vec2 pick_newpos(Simulation<vec2>* _s){
 .                    //===---------------------------------------------------------===*/
 
 template <> 
-inline uint32_t get_morton<vec3>(vec3 point) {
-    return interleap_coord(point.x) << 2 | interleap_coord(point.y) << 1 | interleap_coord(point.z); 
+void compare_bounding_vectors(const vec2& to_compare, vec2& res){
+    if (std::abs(to_compare.x) > std::abs(res.x)) res.x = std::abs(to_compare.x);
+    if (std::abs(to_compare.y) > std::abs(res.y)) res.y = std::abs(to_compare.y);
 }
 
 template <> 
-inline uint32_t get_morton<vec2>(vec2 point) {
-    return interleap_coord(point.x) << 1 | interleap_coord(point.y); 
+void compare_bounding_vectors(const vec3& to_compare, vec3& res){
+    if (std::abs(to_compare.x) > res.x) res.x = std::abs(to_compare.x);
+    if (std::abs(to_compare.y) > res.y) res.y = std::abs(to_compare.y);
+    if (std::abs(to_compare.z) > res.z) res.z = std::abs(to_compare.z);
+}
+
+
+template <> 
+uint32_t get_morton<vec3>(Barnes_Hut<vec3>* _s, vec3 point) {
+    point.x = (point.x) / (_s -> bounding_box.x);
+    point.y = (point.y) / (_s -> bounding_box.y);
+    point.z = (point.z) / (_s -> bounding_box.z);
+    uint32_t ix = std::min((uint32_t)(point.x * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
+    uint32_t iy = std::min((uint32_t)(point.y * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
+    uint32_t iz = std::min((uint32_t)(point.z * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
+    return (interleap_coord(iy, 2) << 2) | (interleap_coord(ix, 2) << 1) | interleap_coord(iz, 2); 
+}
+
+template <> 
+uint32_t get_morton<vec2>(Barnes_Hut<vec2>* _s, vec2 point) {
+    point.x = (point.x) / (_s -> bounding_box.x);
+    point.y = (point.y) / (_s -> bounding_box.y);
+    uint32_t ix = std::min((uint32_t)(point.x * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
+    uint32_t iy = std::min((uint32_t)(point.y * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
+    return (interleap_coord(iy) << 1) | interleap_coord(ix); 
 }
 
 /**
 * @brief interleaps the bits of a given number
 */
-uint32_t interleap_coord(uint16_t num, size_t shift = 1){
+uint32_t interleap_coord(uint16_t num, size_t shift){
     auto x = (uint32_t)num;
     if (shift == 1){
         x = (x | (x << 8)) & 0x00FF00FF;
@@ -50,87 +74,6 @@ uint32_t interleap_coord(uint16_t num, size_t shift = 1){
         x = (x | (x << 2))  & 0x09249249;
     }
     return x;
-}
-
-
-template <>
-size_t Barnes_Hut<vec2>::subdivide(int n){
-    size_t child_index = nodes.size();
-    Node<vec2>& cnode = nodes[n]; 
-
-    cnode.child = child_index;
-
-     for (int i = 0; i < num_childs; i++){
-        nodes.push_back(Node<vec2>(
-            {
-            /*x = */ (0.5 - (i % 2 == 0)) * cnode.size + cnode.center.x,
-            /*y = */ (0.5 - (i < 2)) * cnode.size + cnode.center.y
-            },
-            cnode.size/2
-        ));
-    }
-
-    return child_index;
-}
-
-template <>
-size_t Barnes_Hut<vec3>::subdivide(int n){
-    size_t child_index = nodes.size();
-    Node<vec3>& cnode = nodes[n]; 
-
-    cnode.child = child_index;
-
-    for (int i = 0; i < num_childs; i++){
-       nodes.emplace_back(Node<vec3>(
-           {
-           /*x = */ (0.5 - (i % 2 == 0)) * cnode.size + cnode.center.x,
-           /*y = */ (0.5 - (i < 2 || (i > 3 && i < 5))) * cnode.size + cnode.center.y,
-           /*z = */ (0.5 - (i < 3)) * cnode.size + cnode.center.z 
-           },
-           cnode.size/2
-       ));
-    }
-
-    return child_index;
-}
-
-/*
-* returns the index of the child node
-* given the position of the object to 
-* insert and the center of the root node
-*
-* @param p: position of the object
-* @param center: center of the node
-* @retval: displacement in the node vector to find the optimal node
-*/
-template <>
-int Barnes_Hut<vec2>::opt_position(vec2 p, vec2 center){ 
-    bool 
-        x = p.x > center.x,
-        y = p.y > center.y
-    ;
-
-    return x + y*2;
-}
-
-/*
-* returns the index of the child node
-* given the position of the object to 
-* insert and the center of the root node
-*
-* @param p: position of the object
-* @param center: center of the node
-* @retval: displacement in the node vector to find the optimal node
-*/
-template <>
-int Barnes_Hut<vec3>::opt_position(vec3 p, vec3 center){ 
-    bool 
-        x = p.x > center.x,
-        y = p.y > center.y,
-        z = p.z > center.z
-    ;
-
-    return x + y*2 + z*4;
 }
 
 }

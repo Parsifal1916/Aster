@@ -31,10 +31,8 @@ FORCE_INLINE void for_each_body(Simulation<T>* _s, F func) {
     std::vector<std::thread> threads;
     threads.reserve(n_threads);
     
-    // Calcola la dimensione dei chunk
     const size_t chunk_size = (n_bodies + n_threads - 1) / n_threads;
     
-    // Crea i thread
     for (size_t i = 0; i < n_threads; ++i) {
         const size_t start = i * chunk_size;
         const size_t end = std::min(start + chunk_size, n_bodies);
@@ -48,7 +46,6 @@ FORCE_INLINE void for_each_body(Simulation<T>* _s, F func) {
         });
     }
     
-    // Attendi il completamento
     for (auto& t : threads) {
         t.join();
     }

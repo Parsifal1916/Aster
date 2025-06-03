@@ -18,6 +18,7 @@ struct vec2 {
     vec2 operator+(const vec2& other) const;
     vec2 operator-(const vec2& other) const;
     vec2 operator-() const;
+    double& operator[](size_t index);
     vec2& operator+=(const vec2& other);
     bool operator==(const vec2& other) const;
     double operator*(const vec2& other) const;

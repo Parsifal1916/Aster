@@ -15,6 +15,7 @@
 #include <CL/opencl.h>
 #endif
 
+#include "Aster/impl/config.h"
 #include "Aster/simulations/basic.h"
 #include "Aster/building-api/builder.h"
 #include "Aster/graphs/graph_collection.h"
@@ -23,6 +24,38 @@ namespace Aster{
 
 template class Simulation<vec2>;
 template class Simulation<vec3>;
+
+template <typename T, typename F>
+FORCE_INLINE void for_every_body(Simulation<T>* _s, F func) {
+    assert(_s->has_loaded_yet());
+    
+    const size_t n_bodies = _s->bodies.positions.size();
+    const size_t n_threads = std::min(n_bodies, static_cast<size_t>(_s->get_cores()));
+    
+    if (n_bodies == 0) return;
+    
+    std::vector<std::thread> threads;
+    threads.reserve(n_threads);
+    
+    const size_t chunk_size = (n_bodies + n_threads - 1) / n_threads;
+    
+    for (size_t i = 0; i < n_threads; ++i) {
+        const size_t start = i * chunk_size;
+        const size_t end = std::min(start + chunk_size, n_bodies);
+        
+        if (start >= end) break;
+        
+        threads.emplace_back([start, end, &func, _s]() {
+            for (size_t b = start; b < end; ++b) {
+                func(b);
+            }
+        });
+    }
+    
+    for (auto& t : threads) {
+        t.join();
+    }
+}
 
 template <typename T>
 bool Simulation<T>::is_fine(){
@@ -422,17 +455,11 @@ void single_core_fu(Simulation<T>* _s){
 */
 template <typename T> 
 void parallel_fu(Simulation<T>* _s){
-    std::vector<std::thread> threads;
-    threads.reserve(_s -> get_cores());
 
     _s -> obj = _s -> bodies.positions.size(); 
-    for (int i = 0; i < _s -> get_cores(); ++i)
-        threads.push_back(std::thread(update_bundle<T>, _s, i));
 
-    for (auto& t : threads)
-        t.join();
+    for_every_body(_s, [_s](size_t i){_s -> update_pair(i);});
 
-    threads.clear();
 
     for (auto& graph : _s -> between_graphs)
         graph.end_batch();
@@ -498,7 +525,7 @@ Parallelized<T>::Parallelized(){
     this -> get_force = get_force_func<T>(this -> data.selected_force);
     this -> update_bodies = get_update_func<T>(this -> data.selected_update, this -> uses_GPU());
     this -> data.graph_height *= this -> data.size.y;
-    this->update_forces = static_cast<void(*)(Simulation<T>*)>(parallel_fu);
+    this->update_forces = static_cast<void(*)(Simulation<T>*)>(single_core_fu);
 
 
     this -> threads.reserve(this -> get_cores()); 
@@ -545,7 +572,7 @@ Simulation<T>* Simulation<T>::update_forces_with(forces_update_type p){
 }
 
 template <typename T> 
-void update_bundle(Simulation<T>* _s, unsigned short index){
+void update_bundle(Simulation<T>* _s, size_t index){
     unsigned int mult, start, stop;
     mult = _s -> obj/_s -> get_cores();
     start = index * mult;
@@ -553,10 +580,8 @@ void update_bundle(Simulation<T>* _s, unsigned short index){
           
     stop = (stop + mult > _s -> obj) ? _s -> obj : stop;
 
-    for (int i = start; i < stop; ++i){  
-       _s -> bodies.get_acc_of(i).reset();
+    for (int i = start; i < stop; ++i)
        _s -> update_pair(i);
-    }
 }
 
 

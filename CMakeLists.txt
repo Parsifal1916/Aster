@@ -151,7 +151,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     if(NOT MSVC)
         target_compile_options(AsterTests PRIVATE 
-            -O3 
+            -O3
             -mtune=native 
             -march=native 
             -funroll-loops 

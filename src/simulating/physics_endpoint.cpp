@@ -132,6 +132,11 @@ vec2 vec2::update_by(vec2* v, double delta){
     };
 }
 
+double& vec2::operator[](size_t index){
+    assert(index < 2);
+    return index == 0 ? x : y;
+}
+
 
 // vec3
 

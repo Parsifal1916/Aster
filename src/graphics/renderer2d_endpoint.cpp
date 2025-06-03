@@ -10,6 +10,7 @@
 #include "Aster/graphics/2d_graphics.h"
 #include "Aster/graphics/color_scale.h"
 #include "Aster/graphics/animations.h"
+#include "Aster/simulations/barnes-hut.h"
 #include "Aster/graphics/text_rendering.h"
 
 #define NUM_SEGMENTS 15
@@ -346,6 +347,70 @@ void Renderer2d::draw_minimal(){
 
     // ends the batch
     glEnd();
+}
+
+
+void write_boundary(Aster::Barnes::Barnes_Hut<vec2>* sim, size_t index, size_t level = 0) {
+    if (index >= sim->nodes.size()) return;
+
+    if (sim -> nodes.is_empty(index)) return;
+
+    vec2 com;
+    com.x = 2.f * (sim -> nodes.centers_of_mass[index].x)/ (sim -> get_width())  - 1; 
+    com.y = 2.f * (sim -> nodes.centers_of_mass[index].y)/ (sim -> get_height()) - 1; 
+
+    float half_size = 0.5f / std::pow(2.0f, level); // metà lato del quadrato
+
+    // Disegna il quadrato centrato su center_of_mass
+    glColor3f(1.0f, 0.0f, 1.0f); // viola
+    glLineWidth(3.0f);
+    glBegin(GL_LINE_LOOP);
+        glVertex2f(com.x - half_size, com.y - half_size);
+        glVertex2f(com.x + half_size, com.y - half_size);
+        glVertex2f(com.x + half_size, com.y + half_size);
+        glVertex2f(com.x - half_size, com.y + half_size);
+    glEnd();
+
+    // Ricorsione su figli
+    if (sim -> nodes.left_nodes[index] != -1)
+        write_boundary(sim, sim -> nodes.left_nodes[index], level + 1);
+
+    if (sim -> nodes.right_nodes[index] != -1)
+        write_boundary(sim, sim -> nodes.right_nodes[index], level + 1);
+    
+};
+
+/**
+* @brief rendering function made for barnes-hut simulations
+*/
+inline void Renderer2d::draw_barnes(){
+    // clears the screen and starts drawing points
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColor3f(1.0, 1.0, 1.0);
+    glBegin(GL_POINTS);
+
+    auto* sim = reinterpret_cast<Barnes::Barnes_Hut<vec2>*>(_s);
+
+    // sets the point size to 10
+    glPointSize(10);
+
+    for (int i = 0; i < _s -> bodies.positions.size(); ++i){
+        // trasforms the coordinates to -> [-1, 1]
+        double x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        double y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+        
+        //in-bounds check
+        if (std::abs(x) > 1 || std::abs(y) > 1) continue;
+
+        glVertex2f(x, y);
+    }
+
+    glEnd();
+
+    write_boundary(sim, sim -> compressed_mortons_size); 
+
+    // ends the batch
+
 }
 
 /**

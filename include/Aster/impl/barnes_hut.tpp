@@ -4,11 +4,15 @@
 #include <cassert>
 #include <thread>
 #include <type_traits>
+#include <algorithm>
+#include <unordered_map>
 
 #define CL_TARGET_OPENCL_VERSION 300
 
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/building-api/builder.h"
+
+#include "Aster/graphics/2d_graphics.h"
 
 #include "Aster/physics/vectors.h"
 #include "Aster/physics/body.h"
@@ -22,6 +26,34 @@ template <typename T> void get_new_temp(Simulation<T>* _s, size_t body, T pos, T
 namespace Barnes{
 
 
+template <typename F>
+FORCE_INLINE void parallel(int cores, size_t num, F func) {
+    const size_t n_threads = std::min(num, static_cast<size_t>(cores));
+    
+    if (num == 0) return;
+    
+    std::vector<std::thread> threads;
+    threads.reserve(n_threads);
+    
+    const size_t chunk_size = (num + n_threads - 1) / n_threads;
+    
+    for (size_t i = 0; i < n_threads; ++i) {
+        const size_t start = i * chunk_size;
+        const size_t end = std::min(start + chunk_size, num);
+        
+        if (start >= end) break;
+        
+        threads.emplace_back([start, end, &func]() {
+            for (size_t b = start; b < end; ++b) {
+                func(b);
+            }
+        });
+    }
+    
+    for (auto& t : threads) {
+        t.join();
+    }
+}
 
 
 
@@ -29,20 +61,14 @@ namespace Barnes{
 .                    // NODE IMPLEMENTATION                                           //
 .                    //===---------------------------------------------------------===*/
 
-
 template <typename T>
-Node<T>::Node(T c, double s){
-    this -> center = c;
-    this -> size = s;
-}
-
-/**
-* @brief returns if the node is a leaf
-* @returns child == 0
-*/
-template <typename T>
-bool Node<T>::is_leaf() const {
-    return child == 0;
+void NodesArray<T>::clear(){
+    centers_of_mass.clear();
+    temps.clear();
+    velocities.clear();
+    right_nodes.clear();
+    left_nodes.clear();
+    masses.clear();
 }
 
 /**
@@ -50,8 +76,53 @@ bool Node<T>::is_leaf() const {
 * @returns mass == 0 && is_leaf()
 */
 template <typename T>
-bool Node<T>::is_empty() const {
-    return !mass && is_leaf();
+bool NodesArray<T>::is_empty(size_t i) const {
+    return !masses[i] && is_leaf(i);
+}
+
+/**
+* @brief returns if the node is empty
+* @returns mass == 0 && is_leaf()
+*/
+template <typename T>
+bool NodesArray<T>::is_leaf(size_t i) const {
+    return right_nodes[i] == -1 && left_nodes[i] == -1;
+}
+
+ /**
+ * @brief allocates the right amount of memory to the nodes
+ */
+template <typename T>
+void NodesArray<T>::allocate(size_t n){
+    centers_of_mass.reserve(n);
+    temps.reserve(n);
+    velocities.reserve(n);
+    right_nodes.reserve(n);
+    left_nodes.reserve(n);
+    masses.reserve(n);
+}
+
+/**
+@brief resizes all arrays
+*/
+template <typename T>
+void NodesArray<T>::resize(size_t n){
+    size_t prev_size =  left_nodes.size();
+    centers_of_mass.resize(n);
+    temps.resize(n);
+    velocities.resize(n);
+    right_nodes.resize(n);
+    left_nodes.resize(n);
+    masses.resize(n);
+    for (int i = prev_size; i < n; ++i){
+        left_nodes[i] = -1;
+        right_nodes[i] = -1;
+    }
+}
+
+template <typename T>
+size_t NodesArray<T>::size() const{
+    return masses.size();
 }
 
 /**
@@ -59,63 +130,82 @@ bool Node<T>::is_empty() const {
 * @param _b: ptr to the body to copy
 */
 template <typename T>
-void Node<T>::init(Simulation<T>* _s,size_t  _b){
-    assert(this -> is_empty());
-    mass           = _s -> bodies.get_mass_of(_b);
-    center_of_mass = _s -> bodies.get_position_of(_b);
-    velocity       = _s -> bodies.get_velocity_of(_b);
-    temp           = _s -> bodies.get_temp_of(_b);
+void NodesArray<T>::init(Simulation<T>* _s,size_t  _b, size_t index){
+    masses[index]         = _s -> bodies.get_mass_of(_b);
+    centers_of_mass[index] = _s -> bodies.get_position_of(_b);
+    velocities[index]      = _s -> bodies.get_velocity_of(_b);
+    temps[index]           = _s -> bodies.get_temp_of(_b);
+    left_nodes[index] = -1;
+    right_nodes[index] = -1;
 }
 
 /**
-* @brief initializes the node with the given node
-* @param _n: ptr to the node to copy
+* @brief pushes back a node with the given body
+* @param _b: ptr to the body to copy
 */
 template <typename T>
-void Node<T>::init(Node<T>* _n){
-    assert(this -> is_empty());
-    mass = _n -> mass;
-    center_of_mass = _n-> center_of_mass;
-    velocity = _n -> velocity;
-    temp = _n -> temp;
+void NodesArray<T>::push_back(Simulation<T>* _s,size_t  _b){
+    masses.push_back(_s -> bodies.get_mass_of(_b));
+    centers_of_mass.push_back(_s -> bodies.get_position_of(_b));
+    velocities.push_back(_s -> bodies.get_velocity_of(_b));
+    temps.push_back(_s -> bodies.get_temp_of(_b));
+    right_nodes.push_back(-1);
+    left_nodes.push_back(-1);
 }
+
+
+/**
+* @brief merges two nodes in one node
+*/
+template <typename T>
+void NodesArray<T>::unite(size_t start){
+    if (left_nodes[start] == -1 || right_nodes[start] == -1) return;
+    
+    if (left_nodes[start] < 0 || left_nodes[start] >= size() || right_nodes[start] < 0 || right_nodes[start] >= size()) return;
+
+    unite(left_nodes[start]);
+    unite(right_nodes[start]);
+    
+    double total_mass = masses[right_nodes[start]] + masses[left_nodes[start]];
+    if (total_mass <= 0) return;
+
+    masses[start] = total_mass;
+    centers_of_mass[start] = (centers_of_mass[right_nodes[start]] * masses[right_nodes[start]] + centers_of_mass[left_nodes[start]] * masses[left_nodes[start]]) / masses[start]; 
+    velocities[start] = (velocities[right_nodes[start]] * masses[right_nodes[start]] + velocities[left_nodes[start]] * masses[left_nodes[start]]) / masses[start];
+    temps[start] = std::max(temps[right_nodes[start]], temps[left_nodes[start]]);
+}
+
 
 /**
 * @brief merges two bodies in one node in case of conflict
 * @param body: index to the body to merge
 */
 template <typename T>
-void Node<T>::merge(Simulation<T>* _s, size_t _b){
-    if (warn_if(child != 0, "assertion child != 0 failed in Node<T>::merge"))
-        return;
-    
+void NodesArray<T>::merge(Simulation<T>* _s, size_t _b, size_t index){
     // combines the key values
-    center_of_mass = (_s -> bodies.get_position_of(_b) * _s -> bodies.get_mass_of(_b) + center_of_mass * mass) / (mass + _s -> bodies.get_mass_of(_b)); 
-    mass +=  _s -> bodies.get_mass_of(_b);
-    velocity += _s -> bodies.get_velocity_of(_b);
+    double body_mass = _s -> bodies.get_mass_of(_b);
+    double total_mass = masses[index] + body_mass;
+    
+    if (total_mass <= 0) return;
 
+    centers_of_mass[index] = (_s -> bodies.get_position_of(_b) * body_mass + centers_of_mass[index] * masses[index]) / total_mass; 
+    velocities[index] = (velocities[index] * masses[index] +  _s -> bodies.get_velocity_of(_b) * body_mass) / total_mass;
+    masses[index] = total_mass;
+    
     // for the temperature it uses the maximum
-    temp = std::max(double(temp), _s -> bodies.get_temp_of(_b));
+    temps[index] = std::max(double(temps[index]), _s -> bodies.get_temp_of(_b));
 }
 
-/**
-* @brief puts a body and a node in one node
-* @param _b: index to the body
-* @param _n: ptr to the node
-*/
 template <typename T>
-void Node<T>::add_twob(Simulation<T>* _s, size_t _b, Node<T>* _n){
-    if (warn_if(!this -> is_empty(), "assertion child != 0 failed in Node<T>::merge"))
-        return;
-
-    // combines the values
-    mass = _s -> bodies.get_mass_of(_b) + _n -> mass;
-    velocity = _s -> bodies.get_velocity_of(_b) + _n -> velocity;
-    temp = std::max(double(temp), _s -> bodies.get_temp_of(_b));
-
-    // gets the combined center of mass
-    center_of_mass = (_s -> bodies.get_position_of(_b)* _s -> bodies.get_mass_of(_b)  + _n -> center_of_mass * _n -> mass) / mass;
-}
+void barnes_update_forces(Simulation<T>* _sim){
+    auto _s = reinterpret_cast<Barnes_Hut<T>*>(_sim);
+    _s ->make_sections(); // for threading
+    _s -> make_tree(); // generates the quad-tree / oct-tree
+        
+    // calculates the forces
+    for (int i = 0; i < _s -> get_cores(); ++i)
+        update_bundle(_s, i);
+    }
 
 /*                   //===---------------------------------------------------------===//
 .                    // BARNES HUT IMPLEMENTATION                                     //
@@ -133,10 +223,10 @@ Barnes_Hut<T>::Barnes_Hut(){
     // sets up the simulation
     this -> data = sim_meta(); 
     this -> data.type = BARNES_HUT;
-    this -> get_force = get_force_func<T>(this -> data.selected_force);
+    this -> get_force = get_force_func<T>(NEWTON);
     this -> update_bodies = get_update_func<T>(this -> data.selected_update, this -> uses_GPU());
     this -> data.graph_height *= this -> data.size.y;
-    this -> update_forces = static_cast<void(*)(Simulation<T>*)>(parallel_fu);
+    this -> update_forces =  static_cast<void(*)(Simulation<T>*)>(barnes_update_forces<T>);
 
     this -> threads.reserve(this -> get_cores());
     this -> obj = this -> bodies.positions.size(); 
@@ -147,14 +237,8 @@ Barnes_Hut<T>::Barnes_Hut(){
 */
 template <typename T>
 void Barnes_Hut<T>::step(){
-    make_sections(); // for threading
-    make_tree(); // generates the quad-tree / oct-tree
-    calculate_com(); // calculates the center of mass
-        
-    // calculates the forces
-    for (int i = 0; i < this -> get_cores(); ++i)
-        update_bundle(this, i);
-    nodes.clear(); // cleans tree and updates bodies
+
+    this -> update_forces(this);
     this -> update_bodies(this);
 
     // triggers graph and steps the time
@@ -176,161 +260,39 @@ void Barnes_Hut<T>::make_sections(){
     sections.emplace_back(this -> bodies.positions.size());
 }
 
+
+
 //===---------------------------------------------------------===//
 // Inserting body into tree                                      //
 //===---------------------------------------------------------===//
 
-/**
-* @brief inserts a body into the tree
-* @param body: ptr to the body to insert
-*/
-template <typename T>
-void Barnes_Hut<T>::insert(size_t index){
-    int node_index = get_to_best_leaf(index); // gets the right successor
-    size_t cnode = node_index; // saves the node
-
-    // checks if the node is empty
-    if (nodes[cnode].is_empty()){
-        nodes[cnode].init(this, index); // it gets initialized
-        return;
-    }
-    // from now on we know it is not empty therefore it has a body ptr != nullptr
-
-    if ((this -> bodies.get_position_of(index) - nodes[cnode].center_of_mass).sqr_magn() < 100){ // are they in the same place?
-        nodes[cnode].merge(this, index);
-        return;
-    }
-
-    int tries = 3, new_node = node_index;
-    size_t child = 0;
-    short opt_1, opt_2;
-
-    while (tries--){
-        // subdivides the current node
-        child = subdivide(new_node);
-
-        // gets where each body (the already existing one and the one we want to insert) wants to be
-        opt_1 = opt_position(nodes[node_index].center_of_mass, nodes[node_index].center);
-        opt_2 = opt_position(this -> bodies.get_position_of(index), nodes[node_index].center);
-
-        if (opt_1 == opt_2) { // in case of conflict
-            new_node = child + opt_1; // steps ahead
-            continue;
-        }
-        
-        // if the above check is false we can merge
-
-        size_t
-            p1 = child + opt_1,
-            p2 = child + opt_2
-        ;
-
-        // initializes the found nodes with the respective bodies
-        nodes[p1].init(&nodes[cnode]);
-        nodes[p2].init(this, index);
-        return;
-    }
-
-    // if the loop fails (tries <= 0) it merges them into the same node
-    nodes[new_node].add_twob(this, index, &nodes[cnode]);
-
-}
 
 /**
-* @brief finds the best index to insert the body in
-* @param _b: index to the body to insert
-*/
-template <typename T>
-int Barnes_Hut<T>::get_to_best_leaf(size_t _b){
-    /*
-    * NOTE: there HAS to be a leaf node at the end of the vector
-    * because every time a node is created it is initialized 
-    * with "is_leaf = true" and if it's a leaf it does not have childrens
-    * halting the loop.
-    */
-    size_t node_index = 0;
-
-    // make sure the current node is a leaf
-    while (!nodes[node_index].is_leaf()) {
-        short displacement = opt_position(this -> bodies.get_position_of(_b), nodes[node_index].center);
-        node_index = nodes[node_index].child + displacement; // skips to the next optimal node
-    }    
-
-    return node_index;
-}
-
-/**
-* @brief calculates the center of mass for all nodes
-*/
-template <typename T>
-void Barnes_Hut<T>::calculate_com(){
-    // iterates nodes backwards
-    for (int i = this -> nodes.size()-1; i >= 0; i--){
-        if (nodes[i].is_leaf()) continue; // skips leaf leaf
-
-        // begins generating the COM
-        nodes[i].mass = 0;
-        nodes[i].center_of_mass.reset();
-
-        for (int dis = 0; dis < num_childs; ++dis){ // adds the mass and COM of its childs 
-            size_t index = nodes[i].child +dis; // updates the index
-            auto& child = nodes[index];
-
-            // calculates center of mass and adds up the masses
-            nodes[i].mass += child.mass; 
-            nodes[i].center_of_mass += child.center_of_mass*child.mass;
-        }
-
-        // final calculation step
-        nodes[i].center_of_mass /= nodes[i].mass;
-    }
-}
-
-/**
-* @brief calculates the force acting between a node and a body **recursive**+
+* @brief calculates the force acting between a node and a body **recursive**
 * @param node: node to calculate the force from
 * @param body: ptr to the body being acted upon
 * @returns nothing everything is done internally
 */
 template <typename T>
-void Barnes_Hut<T>::get_node_body(size_t node, size_t index){
-    if (critical_if(node >= nodes.size(), "got unexpected node index in get_node_body(size_t, Body<T>*)"))
-        exit(-1);
+void Barnes_Hut<T>::get_node_body(signed long int node, size_t index, double size){
+    if (node < 0 || node >= static_cast<signed long int>(nodes.size())) return;
 
-    auto& cnode = nodes[node];
-    
-    if (cnode.is_empty()) return;
+    double d_squared = (this -> bodies.get_position_of(index) - nodes.centers_of_mass[node]).sqr_magn();
+    if (d_squared == 0) return;
 
-    double d_squared = (this -> bodies.get_position_of(index) - nodes[node].center_of_mass).sqr_magn();
-
-    if (d_squared * theta * theta > nodes[node].size * nodes[node].size){ // use the optmisation
+    if (size * size < d_squared * theta * theta || nodes.is_leaf(node)){ // use the optmisation
         this -> bodies.get_acc_of(index) += this -> get_force(
-            this -> bodies.get_mass_of(index),     nodes[node].mass,
-            this -> bodies.get_velocity_of(index), nodes[node].velocity,
-            this -> bodies.get_position_of(index), nodes[node].center_of_mass,
+            this -> bodies.get_mass_of(index),     nodes.masses[node],
+            this -> bodies.get_velocity_of(index), nodes.velocities[node],
+            this -> bodies.get_position_of(index), nodes.centers_of_mass[node],
             this
         ) / this -> bodies.get_mass_of(index);
-
+        
         return;
     } 
-    
-    if (cnode.is_leaf()){
 
-        if (nodes[node].center_of_mass == this -> bodies.get_position_of(index) || !cnode.mass) return;
-
-        this -> bodies.get_acc_of(index) += this -> get_force(
-            this -> bodies.get_mass_of(index), nodes[node].mass,
-            this -> bodies.get_velocity_of(index), nodes[node].velocity,
-            this -> bodies.get_position_of(index), nodes[node].center_of_mass,
-            this
-        ) / this -> bodies.get_mass_of(index);
-            
-        return;
-    }
-        
-    for (int i = 0; i < num_childs; i++)
-        get_node_body(nodes[node].child + i, index);
-    
+    get_node_body(nodes.left_nodes[node],  index, size / 2);
+    get_node_body(nodes.right_nodes[node], index, size / 2);
 }
 
 /**
@@ -340,19 +302,19 @@ void Barnes_Hut<T>::get_node_body(size_t node, size_t index){
 */
 template <typename T>
 void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
-    // finds the start and stop values based on the index
-    unsigned int mult, start, stop;
-    mult = _s -> obj/_s -> get_cores();
-    start = index * mult;
-    stop = (index + 1) * mult;
-
-    // checks for an off-by-one error
-    stop = (stop + mult > _s -> obj) ? _s -> obj : stop;
+    if (_s -> nodes.size() <= 0) return;
+    size_t N = _s->obj;
+    size_t P = _s->get_cores();
+    size_t chunk = (N + P - 1) / P;
+    size_t start = index * chunk;
+    size_t stop  = std::min(start + chunk, N);
+    size_t root_index = _s->bodies.positions.size();
     
     // calculates the forces of those bodies
-    for (int i = start; i < stop; ++i){  
+    for (size_t i = start; i < stop; ++i){
         _s -> bodies.get_acc_of(i).reset();
-        _s -> get_node_body(0, i);
+        
+        _s -> get_node_body(root_index, i, _s -> bounding_box.magnitude());
     }
 }
 
@@ -360,26 +322,158 @@ template <typename T>
 void compute_tidal_heating(Barnes_Hut<T>* _s, size_t index){
     for (int i = _s -> nodes[0].child; i < _s -> num_childs + _s -> nodes[0].child; ++i){
         if (i > _s -> bodies.positions.size()) return;
-        Node<T>& cnode = _s -> nodes[i];
         
         get_new_temp<T>(_s,
-            index, cnode.center_of_mass, 
-            cnode.velocity, cnode.temp, 
-            cnode.mass
+            index,_s ->  nodes.centers_of_mass[index], 
+            _s -> nodes.velocities[index], _s -> nodes.temps[index], 
+            _s -> nodes.masses[index]
         );
     }
+}
+
+inline signed int count_leading_zeros(uint32_t num){
+    return num ? __builtin_clz(num) : 32;
+};
+
+template <typename T>
+uint64_t get_tbreaked_morton(Barnes_Hut<T>* _s, const T& pos, size_t body_index) {
+    uint64_t morton = static_cast<uint64_t>(get_morton<T>(_s, pos));
+    morton = (morton << 16) | (body_index & 0xFFFF);
+    return morton;
+}
+
+template <typename T>
+inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const std::vector<std::pair<uint64_t, size_t>>& mortons){
+    base_layer.clear();
+    base_layer.resize(mortons.size());
+
+    // Create one leaf node per body (no merging)
+    for (size_t i = 0; i < mortons.size(); ++i) {
+        base_layer.init(_s, i, i);
+    }
+}
+
+template <typename T>
+Barnes_Hut<T>* Barnes_Hut<T>::set_theta(double _t){
+    assert(_t > 0);
+    theta = _t;
+    return this;
 }
 
 template <typename T>
 void Barnes_Hut<T>::make_tree(){
     this -> threads.clear();
+    this -> nodes.clear();
+    this -> mortons.clear();
 
-    nodes.push_back(Node<T>(pick_newpos<T>(this), this -> get_center().x * 2));
+    size_t N = this -> bodies.positions.size();
+    if (N == 0) return;
     
-    for (int i = 0; i < this -> bodies.positions.size(); ++i)
-        insert(i);
-}
+    std::vector<std::pair<uint64_t, size_t>> enhanced_mortons;
+    enhanced_mortons.reserve(N);
 
+    this -> bounding_box = this -> get_center()*2;
 
-}
+    parallel(this -> get_cores(), N, [&, this](size_t i){
+        uint64_t enhanced_code = get_tbreaked_morton<T>(this, this -> bodies.positions[i], i);
+        enhanced_mortons.emplace_back(enhanced_code, i);
+    });
+
+    std::sort(enhanced_mortons.begin(), enhanced_mortons.end());
+
+    translate2nodes<T>(this, nodes, enhanced_mortons);
+    size_t num_leaves = nodes.size();
+    
+    if (num_leaves <= 1) {
+        this->compressed_mortons_size = 0;
+        return;
+    }
+
+    size_t num_internal = num_leaves - 1;
+    nodes.resize(num_leaves + num_internal);
+    
+    std::vector<bool> internal_created(num_internal, false);
+    
+    auto delta = [&enhanced_mortons](size_t i, size_t j) -> int {
+        if (i >= enhanced_mortons.size() || j >= enhanced_mortons.size()) return -1;
+        uint64_t code_i = enhanced_mortons[i].first;
+        uint64_t code_j = enhanced_mortons[j].first;
+        return (code_i == code_j) ? 64 : __builtin_clzll(code_i ^ code_j);
+    };
+
+    parallel(this -> get_cores(), num_internal, [&, delta, num_leaves](size_t i){
+        int d_right = delta(i, i + 1);
+        int d_left = (i == 0) ? -1 : delta(i, i - 1);
+        int d = (d_right > d_left) ? 1 : -1;
+        
+        int d_min = (d == 1) ? d_left : d_right;
+        size_t l_max = 2;
+        while (i + l_max * d < num_leaves && i + l_max * d >= 0 && delta(i, i + l_max * d) > d_min) {
+            l_max *= 2;
+        }
+        
+        size_t l = 0;
+        for (size_t t = l_max / 2; t >= 1; t /= 2) {
+            size_t test_idx = i + (l + t) * d;
+            if (test_idx < num_leaves && test_idx >= 0 && delta(i, test_idx) > d_min) {
+                l += t;
+            }
+        }
+        
+        size_t j = i + l * d;
+        if (j >= num_leaves) return;
+        
+        int d_node = delta(i, j);
+        size_t s = 0;
+        size_t range = j > i ? j - i : i - j;
+        
+        for (size_t t = (range + 1) / 2; t >= 1; t = (t + 1) / 2) {
+            size_t test_idx = i + (s + t) * d;
+            if (test_idx < num_leaves && test_idx >= 0 && delta(i, test_idx) > d_node) {
+                s += t;
+            }
+            if (t == 1) break;
+        }
+        
+        size_t split = i + s * d + std::min(d, 0);
+        
+        size_t left_child, right_child;
+        
+        size_t range_min = std::min(i, j);
+        size_t range_max = std::max(i, j);
+        
+        if (range_min == split) {
+            left_child = split; 
+        } else {
+            left_child = num_leaves + split; 
+        }
+        
+        if (range_max == split + 1) {
+            right_child = split + 1; 
+        } else {
+            right_child = num_leaves + split + 1; 
+        }
+        
+        if (left_child < nodes.size() && right_child < nodes.size()) {
+            size_t internal_idx = num_leaves + i;
+            nodes.left_nodes[internal_idx] = static_cast<int>(left_child);
+            nodes.right_nodes[internal_idx] = static_cast<int>(right_child);
+            internal_created[i] = true;
+        }
+    });
+    
+    nodes.unite(num_leaves);
+//
+    //for (int i = 0; i < nodes.size(); ++i){
+    //    std::cout << "Node with mass  : " << nodes.masses[i] << "\n"
+    //              << "Node with center: (" << nodes.centers_of_mass[i].x << ", " << nodes.centers_of_mass[i].y << ")\n"
+    //              << "Left            : " << nodes.left_nodes[i] << "\n"
+    //              << "Right           : " << nodes.right_nodes [i] << "\n"
+    //              << "==============================\n";
+    //}
+
+    this->compressed_mortons_size = N;
+
+}}
+
 }

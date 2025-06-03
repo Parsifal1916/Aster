@@ -299,14 +299,14 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
 
     // creates the builder lambda
     cluster.builder = [g_pull, outer, inner, v, avr_mass, center, _s ](Cluster<vec2> cl2d, size_t _) {
-        vec2 pos = rng_point_in_circle(outer, inner); // gets a random point inside the disk
+        vec2 pos = rng_point_in_circle(outer, inner)* _s -> get_scale(); // gets a random point inside the disk
 
         // generates the radius from the position
         double radius = pos.sqr_magn();
 
         // velocty on that point
-        double magn_vel = g_pull*radius/100000 + std::exp(-(radius*radius)/80);
-        vec2 vel = vec2(-pos.y/radius *magn_vel, pos.x/radius* magn_vel) + v;
+        double magn_vel =std::sqrt(_s -> get_G() * avr_mass / radius) *100;
+        vec2 vel = vec2(-pos.x/radius * magn_vel, pos.y/radius * magn_vel) + v;
 
         // assembles the body
         add_body(_s,

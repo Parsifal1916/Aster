@@ -54,6 +54,8 @@ class Renderer2d{
     */
     void draw_detailed();
 
+    void draw_barnes();
+
     /**
     * @brief creates a window and renderes the simulation
     */
@@ -72,10 +74,15 @@ class Renderer2d{
     
     std::vector<render_func> render_modes = {
         &Renderer2d::draw_detailed,      
+        //&Renderer2d::draw_barnes,
+        //&Renderer2d::draw_barnes,
+        //&Renderer2d::draw_barnes,
+        //&Renderer2d::draw_barnes,
         &Renderer2d::draw_minimal,
         &Renderer2d::draw_minimal,
-        &Renderer2d::draw_minimal,
+        //&Renderer2d::draw_barnes,
         &Renderer2d::draw_termal,
+        
     };
     /**
     * @brief updates the scale by ns
