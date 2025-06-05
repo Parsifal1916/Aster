@@ -113,34 +113,15 @@ class Barnes_Hut: public Simulation<T>{
     */
     virtual void get_node_body(signed long node, size_t  body, double size = 0);
 
-
-    int opt_position(T p, T center);
-
-    /**
-    * @brief finds the best index to insert the body in
-    * @param _b: ptr to the body to insert
-    */
-    int get_to_best_leaf(size_t  _b);
-
-    /**
-    * @brief inserts a body into the tree
-    * @param body: ptr to the body to insert
-    */
-    void insert(size_t  body);
-
-    /**
-    * @brief calculates the center of mass for all nodes
-    */ 
-    void calculate_com();
-
     void make_tree();
-    void init_node(Simulation<T>* _n, size_t  b) const;
 
     /**
     * @brief generates an array for the bodies slicing
     */
     void make_sections();
-    size_t subdivide(int n);
+    
+    Simulation<T>* use_GPU() override;
+
     friend void compute_tidal_heating<T>(Barnes_Hut<T>* _s, size_t  body);
 
     protected:

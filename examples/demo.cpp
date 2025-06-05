@@ -36,7 +36,7 @@ void add_bodies(Simulation<vec2>* _s){
     double avr_mass = 10e16;
     int N = 1e4;
     for (int i = 0; i < N; ++i){
-        vec2 pos = rng_point_in_circle(outer, inner)* _s -> get_scale(); // gets a random point inside the disk
+        vec2 pos = rng_point_in_circle(outer, inner)* _s -> get_scale(); // get*s a random point inside the disk
 
         // generates the radius from the position
         double radius = pos.sqr_magn();
@@ -60,15 +60,16 @@ int main(){
     //for (const auto& _c : {SABA1, SABA2, SABA3, SABA4, SABA5, SABA6, SABA7, SABA8, SABA9, SABA10}){
     Barnes::Barnes_Hut<vec2>* sim = new Barnes::Barnes_Hut<vec2>;
 
-    //auto* sim = bake(LIGHT);
+    //auto* sim = bake(HEAVY);
 
     sim 
     //-> use_GPU()
     -> set_theta(.8)
     -> set_scale(150e2)
     -> get_force_with(NEWTON)
-    -> set_dt(25e1)
+    -> set_dt(2.5e2)
     -> update_with(get_update_func<vec2>(SABA1, true))
+   // -> collect_error()
     ;
 
     //load_solar_system(sim);
@@ -79,9 +80,9 @@ int main(){
 
     sim -> load();
 
-    ///sim -> integrate(1);
-      
-    render(sim) -> show();
+    sim -> integrate(1000);
+
+    //render(sim) -> show();
 
     /*
     auto* sim = bake3d(BARNES_HUT);

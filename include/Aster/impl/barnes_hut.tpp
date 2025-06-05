@@ -21,6 +21,10 @@
 
 namespace Aster{   
 
+namespace GPU{
+    void sort(uint64_t* input, uint64_t* output, size_t N);
+}
+
 template <typename T> void get_new_temp(Simulation<T>* _s, size_t body, T pos, T vel, double temp, double mass);
 
 namespace Barnes{
@@ -308,13 +312,12 @@ void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
     size_t chunk = (N + P - 1) / P;
     size_t start = index * chunk;
     size_t stop  = std::min(start + chunk, N);
-    size_t root_index = _s->bodies.positions.size();
     
     // calculates the forces of those bodies
     for (size_t i = start; i < stop; ++i){
         _s -> bodies.get_acc_of(i).reset();
         
-        _s -> get_node_body(root_index, i, _s -> bounding_box.magnitude());
+        _s -> get_node_body(_s -> compressed_mortons_size, i, _s -> bounding_box.magnitude());
     }
 }
 
@@ -336,20 +339,27 @@ inline signed int count_leading_zeros(uint32_t num){
 };
 
 template <typename T>
-uint64_t get_tbreaked_morton(Barnes_Hut<T>* _s, const T& pos, size_t body_index) {
+uint32_t get_tbreaked_morton(Barnes_Hut<T>* _s, const T& pos, size_t body_index) {
     uint64_t morton = static_cast<uint64_t>(get_morton<T>(_s, pos));
-    morton = (morton << 16) | (body_index & 0xFFFF);
+    //morton = (morton << 16) | (body_index & 0xFFFF);
     return morton;
 }
 
 template <typename T>
-inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const std::vector<std::pair<uint64_t, size_t>>& mortons){
+inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const std::vector<std::pair<uint32_t, size_t>>& mortons){
     base_layer.clear();
     base_layer.resize(mortons.size());
 
-    // Create one leaf node per body (no merging)
-    for (size_t i = 0; i < mortons.size(); ++i) {
-        base_layer.init(_s, i, i);
+    base_layer.init(_s,mortons[0].second, 0);
+    size_t last = 0;
+
+    for (size_t i = 1; i < mortons.size(); ++i) {
+        if (mortons[i-1].first == mortons[i].first)
+            base_layer.merge(_s, mortons[i].second, last);
+        else{
+            last++;
+            base_layer.init(_s, mortons[i].second, last);
+        }
     }
 }
 
@@ -361,106 +371,101 @@ Barnes_Hut<T>* Barnes_Hut<T>::set_theta(double _t){
 }
 
 template <typename T>
-void Barnes_Hut<T>::make_tree(){
-    this -> threads.clear();
-    this -> nodes.clear();
-    this -> mortons.clear();
+Simulation<T>* Barnes_Hut<T>::use_GPU(){
+    this -> GPU_on = true;
+    return this;
+}
 
-    size_t N = this -> bodies.positions.size();
+
+template <typename T>
+void Barnes_Hut<T>::make_tree(){
+    this->threads.clear();
+    this->nodes.clear();
+    this->mortons.clear();
+
+    size_t N = this->bodies.positions.size();
     if (N == 0) return;
     
-    std::vector<std::pair<uint64_t, size_t>> enhanced_mortons;
+    std::vector<std::pair<uint32_t, size_t>> enhanced_mortons;
     enhanced_mortons.reserve(N);
+    this->bounding_box = this->get_center() * 2;
 
-    this -> bounding_box = this -> get_center()*2;
-
-    parallel(this -> get_cores(), N, [&, this](size_t i){
-        uint64_t enhanced_code = get_tbreaked_morton<T>(this, this -> bodies.positions[i], i);
-        enhanced_mortons.emplace_back(enhanced_code, i);
-    });
+    for (size_t i = 0; i < N; ++i) {
+        uint32_t morton_code = get_tbreaked_morton<T>(this, this->bodies.positions[i], i);
+        enhanced_mortons.emplace_back(morton_code, i);
+    }
 
     std::sort(enhanced_mortons.begin(), enhanced_mortons.end());
 
     translate2nodes<T>(this, nodes, enhanced_mortons);
     size_t num_leaves = nodes.size();
     
-    if (num_leaves <= 1) {
-        this->compressed_mortons_size = 0;
-        return;
-    }
-
+    if (num_leaves <= 1) return;
+  
     size_t num_internal = num_leaves - 1;
     nodes.resize(num_leaves + num_internal);
-    
-    std::vector<bool> internal_created(num_internal, false);
-    
-    auto delta = [&enhanced_mortons](size_t i, size_t j) -> int {
-        if (i >= enhanced_mortons.size() || j >= enhanced_mortons.size()) return -1;
-        uint64_t code_i = enhanced_mortons[i].first;
-        uint64_t code_j = enhanced_mortons[j].first;
-        return (code_i == code_j) ? 64 : __builtin_clzll(code_i ^ code_j);
+
+    auto delta = [&](size_t i, size_t j) -> int {
+        if (j >= enhanced_mortons.size()) return -1;
+        if (enhanced_mortons[i].first == enhanced_mortons[j].first) {
+            return 32 + __builtin_clz(i ^ j); 
+        }
+        return __builtin_clz(enhanced_mortons[i].first ^ enhanced_mortons[j].first);
     };
 
-    parallel(this -> get_cores(), num_internal, [&, delta, num_leaves](size_t i){
-        int d_right = delta(i, i + 1);
+    for (size_t i = 0; i < num_internal; ++i) {
         int d_left = (i == 0) ? -1 : delta(i, i - 1);
+        int d_right = delta(i, i + 1);
         int d = (d_right > d_left) ? 1 : -1;
         
         int d_min = (d == 1) ? d_left : d_right;
         size_t l_max = 2;
-        while (i + l_max * d < num_leaves && i + l_max * d >= 0 && delta(i, i + l_max * d) > d_min) {
+        while ((int)(i + l_max * d) >= 0 && i + l_max * d < num_leaves && delta(i, i + l_max * d) > d_min) {
             l_max *= 2;
         }
         
         size_t l = 0;
         for (size_t t = l_max / 2; t >= 1; t /= 2) {
-            size_t test_idx = i + (l + t) * d;
-            if (test_idx < num_leaves && test_idx >= 0 && delta(i, test_idx) > d_min) {
+            size_t test_pos = i + (l + t) * d;
+            if ((int)test_pos >= 0 && test_pos < num_leaves && delta(i, test_pos) > d_min) {
                 l += t;
             }
         }
         
         size_t j = i + l * d;
-        if (j >= num_leaves) return;
-        
         int d_node = delta(i, j);
-        size_t s = 0;
-        size_t range = j > i ? j - i : i - j;
         
-        for (size_t t = (range + 1) / 2; t >= 1; t = (t + 1) / 2) {
-            size_t test_idx = i + (s + t) * d;
-            if (test_idx < num_leaves && test_idx >= 0 && delta(i, test_idx) > d_node) {
+        size_t s = 0;
+        size_t range_size = (j > i) ? j - i : i - j;
+        for (size_t t = (range_size + 1) / 2; t >= 1; t = (t + 1) / 2) {
+            size_t test_pos = i + (s + t) * d;
+            if ((int)test_pos >= 0 && test_pos < num_leaves && delta(i, test_pos) > d_node) {
                 s += t;
             }
             if (t == 1) break;
         }
         
-        size_t split = i + s * d + std::min(d, 0);
+        size_t gamma = i + s * d + std::min(d, 0);
         
-        size_t left_child, right_child;
+        size_t internal_node = num_leaves + i;
         
-        size_t range_min = std::min(i, j);
-        size_t range_max = std::max(i, j);
+        size_t left_range = std::min(i, j);
+        size_t right_range = std::max(i, j);
         
-        if (range_min == split) {
-            left_child = split; 
+        // Figlio sinistro
+        if (left_range == gamma) {
+            nodes.left_nodes[internal_node] = gamma; 
         } else {
-            left_child = num_leaves + split; 
+            nodes.left_nodes[internal_node] = num_leaves + gamma; 
         }
         
-        if (range_max == split + 1) {
-            right_child = split + 1; 
+        // Figlio destro
+        if (right_range == gamma + 1) {
+            nodes.right_nodes[internal_node] = gamma + 1;  
         } else {
-            right_child = num_leaves + split + 1; 
+            nodes.right_nodes[internal_node] = num_leaves + gamma + 1; 
         }
-        
-        if (left_child < nodes.size() && right_child < nodes.size()) {
-            size_t internal_idx = num_leaves + i;
-            nodes.left_nodes[internal_idx] = static_cast<int>(left_child);
-            nodes.right_nodes[internal_idx] = static_cast<int>(right_child);
-            internal_created[i] = true;
-        }
-    });
+    }
     
     nodes.unite(num_leaves);
 //
@@ -472,7 +477,7 @@ void Barnes_Hut<T>::make_tree(){
     //              << "==============================\n";
     //}
 
-    this->compressed_mortons_size = N;
+    this->compressed_mortons_size = num_leaves;
 
 }}
 

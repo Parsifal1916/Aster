@@ -53,7 +53,7 @@ set_target_properties(Aster PROPERTIES
 if(NOT MSVC)
     target_compile_options(Aster PRIVATE 
         -Wno-aggressive-loop-optimizations
-        -O3
+        -O0 -g
     )
 endif()
 

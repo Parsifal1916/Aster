@@ -60,7 +60,7 @@ class Simulation{
 
     Simulation<T>* integrate(size_t time);
     Simulation<T>* calculate_total_mass();
-    Simulation<T>* use_GPU();
+    virtual Simulation<T>* use_GPU();
     
     double get_total_mass() const;
     double get_adaptive_coeff() const;

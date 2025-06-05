@@ -334,6 +334,32 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s);
 template <typename T> 
 void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, double c = 1, double d = 1);
 
+/**
+* @brief: gets_the maximum amount of data we can put on the GPU (assuming everything is a uint32_t)
+* @param device: device to scan
+* @returns the amount of uint32_t to load
+*/
+static size_t compute_max_chunk_size(cl_device_id device);
+
+/**
+* @brief merges two already sorted arrays
+* @param left first array
+* @param L first array size
+* @param right second array
+* @param R second array size
+* @param merged ptr to the merged array
+*/
+static void merge_arrays(const uint32_t* left, size_t L,const uint32_t* right, size_t R,uint32_t* merged);
+
+cl_program compile_sorting_kernels();
+
+/**
+* @brief sorts an array using the gpu
+* @param input: ptr to the start of the arrya
+* @param output: array onto which to write
+* @param N: size of the array
+*/
+void sort(uint64_t* input, uint64_t* output, size_t N);
 }
 
 
