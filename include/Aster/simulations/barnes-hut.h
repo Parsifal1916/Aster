@@ -16,7 +16,6 @@ namespace Barnes{
 .                    //===---------------------------------------------------------===*/
 
 #define PRECISION_BITS 10
-#define IGNORED_BITS 2
 
 template <typename T> class Barnes_Hut;
 
@@ -154,7 +153,7 @@ uint32_t get_morton(Barnes_Hut<T>* _s, T point);
 /**
 * @brief interleaps the bits of a given number
 */
-uint32_t interleap_coord(uint16_t num, size_t shift = 1);
+uint32_t interleap_coord(uint16_t num);
 
 
 template <typename T>

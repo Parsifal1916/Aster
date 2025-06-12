@@ -436,8 +436,10 @@ void update_symplectic4(Simulation<vec3>* _s){
 
 template <>
 vec3 newtonian(double m1, double m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<vec3>* _s){
-    vec3 d = p2 - p1;
-    return d.normalize() *_s -> get_G()* m1*m1/ (d.sqr_magn()+ 1);
+    vec3 n = (p2 - p1);
+    double r = n.magnitude();
+
+    return n.normalize() * _s -> get_G() *m1*m2/(r*r);
 }
 
 template <>

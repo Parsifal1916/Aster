@@ -73,14 +73,9 @@ class Renderer2d{
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     
     std::vector<render_func> render_modes = {
-        &Renderer2d::draw_detailed,      
-        //&Renderer2d::draw_barnes,
-        //&Renderer2d::draw_barnes,
-        //&Renderer2d::draw_barnes,
-        //&Renderer2d::draw_barnes,
+        &Renderer2d::draw_detailed,    
         &Renderer2d::draw_minimal,
         &Renderer2d::draw_minimal,
-        //&Renderer2d::draw_barnes,
         &Renderer2d::draw_termal,
         
     };

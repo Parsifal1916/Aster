@@ -146,6 +146,14 @@ void vec3::reset() {
     z = 0;
 }
 
+double& vec3::operator[](size_t index){
+    assert(index < 3);
+    if (index == 0) return x;
+    if (index == 1) return y;
+    return z;
+}
+
+
 vec3 vec3::operator*(double scalar) const {
     return vec3(x * scalar, y * scalar, z * scalar);
 }

@@ -19,6 +19,8 @@
 
 #include "Aster/simulations/barnes-hut.h"
 
+#include <bitset>
+
 namespace Aster{   
 
 namespace GPU{
@@ -202,15 +204,19 @@ void NodesArray<T>::merge(Simulation<T>* _s, size_t _b, size_t index){
 
 template <typename T>
 void barnes_update_forces(Simulation<T>* _sim){
+    
     auto _s = reinterpret_cast<Barnes_Hut<T>*>(_sim);
     _s ->make_sections(); // for threading
     _s -> make_tree(); // generates the quad-tree / oct-tree
         
     // calculates the forces
-    for (int i = 0; i < _s -> get_cores(); ++i)
-        update_bundle(_s, i);
-    }
+    parallel(_s -> get_cores(), _s -> bodies.positions.size(), [&, _s](size_t i){
+        _s -> bodies.get_acc_of(i).reset();
+        _s -> get_node_body(_s -> compressed_mortons_size, i, _s -> bounding_box.magnitude());
+    });
 
+
+}
 /*                   //===---------------------------------------------------------===//
 .                    // BARNES HUT IMPLEMENTATION                                     //
 .                    //===---------------------------------------------------------===*/
@@ -242,7 +248,7 @@ Barnes_Hut<T>::Barnes_Hut(){
 template <typename T>
 void Barnes_Hut<T>::step(){
 
-    this -> update_forces(this);
+    barnes_update_forces(this);
     this -> update_bodies(this);
 
     // triggers graph and steps the time
@@ -279,9 +285,11 @@ void Barnes_Hut<T>::make_sections(){
 */
 template <typename T>
 void Barnes_Hut<T>::get_node_body(signed long int node, size_t index, double size){
-    if (node < 0 || node >= static_cast<signed long int>(nodes.size())) return;
-
+    if (node < 0 || node >= static_cast<signed long int>(nodes.size()))
+        return;
+        
     double d_squared = (this -> bodies.get_position_of(index) - nodes.centers_of_mass[node]).sqr_magn();
+    
     if (d_squared == 0) return;
 
     if (size * size < d_squared * theta * theta || nodes.is_leaf(node)){ // use the optmisation
@@ -291,7 +299,7 @@ void Barnes_Hut<T>::get_node_body(signed long int node, size_t index, double siz
             this -> bodies.get_position_of(index), nodes.centers_of_mass[node],
             this
         ) / this -> bodies.get_mass_of(index);
-        
+
         return;
     } 
 
@@ -340,9 +348,7 @@ inline signed int count_leading_zeros(uint32_t num){
 
 template <typename T>
 uint32_t get_tbreaked_morton(Barnes_Hut<T>* _s, const T& pos, size_t body_index) {
-    uint64_t morton = static_cast<uint64_t>(get_morton<T>(_s, pos));
-    //morton = (morton << 16) | (body_index & 0xFFFF);
-    return morton;
+    return get_morton<T>(_s, pos);
 }
 
 template <typename T>
@@ -395,7 +401,7 @@ void Barnes_Hut<T>::make_tree(){
         enhanced_mortons.emplace_back(morton_code, i);
     }
 
-    std::sort(enhanced_mortons.begin(), enhanced_mortons.end());
+    std::sort(enhanced_mortons.begin(), enhanced_mortons.end(), [](const std::pair<uint32_t, size_t>& a, const std::pair<uint32_t, size_t>&b ){ return a.first < b.first;});
 
     translate2nodes<T>(this, nodes, enhanced_mortons);
     size_t num_leaves = nodes.size();
@@ -451,15 +457,13 @@ void Barnes_Hut<T>::make_tree(){
         
         size_t left_range = std::min(i, j);
         size_t right_range = std::max(i, j);
-        
-        // Figlio sinistro
+         
         if (left_range == gamma) {
             nodes.left_nodes[internal_node] = gamma; 
         } else {
             nodes.left_nodes[internal_node] = num_leaves + gamma; 
         }
         
-        // Figlio destro
         if (right_range == gamma + 1) {
             nodes.right_nodes[internal_node] = gamma + 1;  
         } else {
@@ -468,14 +472,6 @@ void Barnes_Hut<T>::make_tree(){
     }
     
     nodes.unite(num_leaves);
-//
-    //for (int i = 0; i < nodes.size(); ++i){
-    //    std::cout << "Node with mass  : " << nodes.masses[i] << "\n"
-    //              << "Node with center: (" << nodes.centers_of_mass[i].x << ", " << nodes.centers_of_mass[i].y << ")\n"
-    //              << "Left            : " << nodes.left_nodes[i] << "\n"
-    //              << "Right           : " << nodes.right_nodes [i] << "\n"
-    //              << "==============================\n";
-    //}
 
     this->compressed_mortons_size = num_leaves;
 
