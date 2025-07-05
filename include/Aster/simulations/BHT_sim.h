@@ -24,7 +24,7 @@ class BHT final : public Barnes_Hut<T> {
 };
 
 template <typename T>
-double update_bundle(BHT<T>* _s, unsigned short index);
+REAL update_bundle(BHT<T>* _s, unsigned short index);
 
 }
 

@@ -12,12 +12,12 @@
 
 
 namespace Aster{
-extern const double PI;
-std::uniform_real_distribution<double> angle_rnd(0.0f, 360.0f);
-std::uniform_real_distribution<double> normalized_rnd(0.0f, 1.f);
+extern const REAL PI;
+std::uniform_real_distribution<REAL> angle_rnd(0.0f, 360.0f);
+std::uniform_real_distribution<REAL> normalized_rnd(0.0f, 1.f);
 
 const int digit_precision = 4;
-const double digit_coefficient = std::pow(10, digit_precision);
+const REAL digit_coefficient = std::pow(10, digit_precision);
 
 /*                   //===---------------------------------------------------------===//
 .                    // rng generation functions                                      //
@@ -30,7 +30,7 @@ const double digit_coefficient = std::pow(10, digit_precision);
 * @param pos: position of the body
 * @param vel: velocity of the body
 */
-void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, double temp = 0){
+void add_body(Simulation<vec2>* _s, REAL mass, vec2 pos, vec2 vel, REAL temp = 0){
     if (warn_if(!_s, "the given simulation to make add the body to is a nullptr"))
         return;
 
@@ -45,7 +45,7 @@ void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, double temp
     _s -> obj ++;
 }
 
-void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double temp = 0){
+void add_body(Simulation<vec3>* _s, REAL mass, vec3 pos, vec3 vel, REAL temp = 0){
     if (warn_if(!_s, "the given simulation to make add the body to is a nullptr"))
         return;
 
@@ -68,7 +68,7 @@ void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double temp
 * @param theta: y-z angle in degrees
 * @return rotated vector
 */
-vec3 rotate_point(vec3 v, double phi, double theta){
+vec3 rotate_point(vec3 v, REAL phi, REAL theta){
     float x1, z1, y1, z2;
 
     // converts the angles in radiants
@@ -91,10 +91,10 @@ vec3 rotate_point(vec3 v, double phi, double theta){
 * @brief returns a number from 0 to 1
 * @return a random number from 0 to 1
 */
-double rng_percent(){
+REAL rng_percent(){
     if (critical_if(!digit_coefficient, "digit coefficient has been set to zero"))
         exit(-1);
-    return double(std::rand() % (int)digit_coefficient) / digit_coefficient;
+    return REAL(std::rand() % (int)digit_coefficient) / digit_coefficient;
 }
 
 /**
@@ -104,15 +104,15 @@ double rng_percent(){
 * @param b: second value
 * @return a random number 
 */
-double rng_val(double a, double b){
+REAL rng_val(REAL a, REAL b){
     if (a == b) return b;
 
     // orders the numbers based on who's bigger
-    double highest = std::max(a, b);
-    double lowest = std::min(a, b);
+    REAL highest = std::max(a, b);
+    REAL lowest = std::min(a, b);
 
     // gets the total range
-    double range = highest - lowest;
+    REAL range = highest - lowest;
 
     // both of them are negative...
     if (highest < 0){
@@ -123,7 +123,7 @@ double rng_val(double a, double b){
     }
 
     // calculates the random number
-    double zero_2max = std::rand() % int(range * digit_coefficient);
+    REAL zero_2max = std::rand() % int(range * digit_coefficient);
     zero_2max *= (range < 0 && lowest < 0) ? -1 : 1;
 
     // it then gets adjusted and scaled
@@ -164,12 +164,12 @@ vec2 rng_point_in_square(vec2 start, vec2 stop = {0,0}){
 * @param min_r: inner circle
 * @returns the point
 */
-vec2 rng_point_in_circle(double max_r, double min_r = 1){
+vec2 rng_point_in_circle(REAL max_r, REAL min_r = 1){
     //if (warn_if(max_r <= 0 || min_r <= 0 || min_r > max_r, "invalid radius value when generating random point"))
     //    return {0,0};
 
-    double theta = rng_val(0, 2*PI);
-    double r = rng_val(min_r, max_r);
+    REAL theta = rng_val(0, 2*PI);
+    REAL r = rng_val(min_r, max_r);
 
     return {
         r * std::cos(theta),
@@ -183,7 +183,7 @@ vec2 rng_point_in_circle(double max_r, double min_r = 1){
 * @param min_r: inner circle (default = 1)
 * @param thickness: hight of the cylinder (default = 1)
 */
-vec3 rng_point_in_cylinder(double max_r, double min_r = 1, double thickness = 1){
+vec3 rng_point_in_cylinder(REAL max_r, REAL min_r = 1, REAL thickness = 1){
     if (warn_if(max_r <= 0 || min_r <= 0 || min_r > max_r, "invalid radius value when generating random point"))
         return {0,0,0};
 
@@ -191,14 +191,14 @@ vec3 rng_point_in_cylinder(double max_r, double min_r = 1, double thickness = 1)
         thickness = -thickness;
 
     // generates a random angle and radius using rng_val
-    double theta = rng_val(0, 2*PI);
-    double r = rng_val(min_r, max_r);
+    REAL theta = rng_val(0, 2*PI);
+    REAL r = rng_val(min_r, max_r);
 
     // converts the coordinates to cartesian
     return {
         r * std::cos(theta),
         r * std::sin(theta),
-        (rng_percent() - .5)* thickness // shifts the cylinder downwards
+        (rng_percent() - (REAL).5)* thickness // shifts the cylinder downwards
     };
 }
 
@@ -207,13 +207,13 @@ vec3 rng_point_in_cylinder(double max_r, double min_r = 1, double thickness = 1)
 * @param max_r: sphere's radius 
 * @param min_r: inner radius (default = 1)
 */
-vec3 rng_point_in_sphere(double max_r, double min_r = 1){
+vec3 rng_point_in_sphere(REAL max_r, REAL min_r = 1){
     if (warn_if(max_r <= 0 || min_r <= 0 || min_r > max_r, "invalid radius value when generating random point"))
         return {0,0,0};
 
-    double theta = rng_val(0, 2*PI);
-    double phi = rng_val(0, 2*PI);
-    double r = rng_val(min_r, max_r);
+    REAL theta = rng_val(0, 2*PI);
+    REAL phi = rng_val(0, 2*PI);
+    REAL r = rng_val(min_r, max_r);
 
     return {
         r * std::sin(theta) * std::cos(phi),
@@ -236,8 +236,8 @@ vec2 rng_vec(Simulation<vec2>* _s){
         exit(-1);
 
     return {
-        double(std::rand() % (int)(_s  -> get_width())), 
-        double(std::rand() % (int)_s  -> get_height())
+        REAL(std::rand() % (int)(_s  -> get_width())) * _s -> get_scale(), 
+        REAL(std::rand() % (int)_s  -> get_height())  * _s -> get_scale() 
     };
 }
 
@@ -255,9 +255,9 @@ vec3 rng_vec(Simulation<vec3>* _s){
         exit(-1);
 
     return {
-        double(std::rand() % (int)_s  -> get_width()), 
-        double(std::rand() % (int)_s  -> get_height()), 
-        double(std::rand() % (int)_s -> get_depth())
+        REAL(std::rand() % (int)_s  -> get_width())  * _s -> get_scale(), 
+        REAL(std::rand() % (int)_s  -> get_height()) * _s -> get_scale(), 
+        REAL(std::rand() % (int)_s -> get_depth())   * _s -> get_scale()
     };
 }
 
@@ -276,7 +276,7 @@ vec3 rng_vec(Simulation<vec3>* _s){
 * @param avr_mass: average mass of the bodies
 * @param v: velocity of the cluster 
 */
-void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, double inner, double avr_mass = 10e6, vec2 v = {0,0}){
+void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, REAL outer, REAL inner, REAL avr_mass = 10e6, vec2 v = {0,0}){
     //if (warn_if(outer <= 0 || inner <= 0 || outer < inner, "invalid radius value when generating random point"))
     //    return;
 
@@ -295,18 +295,18 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
     cluster.number = nums;
     cluster.name = "Disk";
 
-    double g_pull = nums *  _s -> get_G()  * avr_mass;
+    REAL g_pull = nums *  _s -> get_G()  * avr_mass;
 
     // creates the builder lambda
     cluster.builder = [g_pull, outer, inner, v, avr_mass, center, _s ](Cluster<vec2> cl2d, size_t _) {
         vec2 pos = rng_point_in_circle(outer, inner)* _s -> get_scale(); // gets a random point inside the disk
 
         // generates the radius from the position
-        double radius = pos.sqr_magn();
+        REAL radius = pos.sqr_magn();
 
         // velocty on that point
-        double magn_vel =std::sqrt(_s -> get_G() * avr_mass / radius) *100;
-        vec2 vel = vec2(-pos.x/radius * magn_vel, pos.y/radius * magn_vel) + v;
+        REAL magn_vel =std::sqrt(_s -> get_G() * avr_mass / radius) *100;
+        vec2 vel = vec2(-pos.y/radius * magn_vel, pos.x/radius * magn_vel) + v;
 
         // assembles the body
         add_body(_s,
@@ -326,7 +326,7 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
 * @param nums: number of bodies to spawn
 * @param avr_mass: average mass of each body
 */
-void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass){
+void cosmic_web(Simulation<vec2>* _s, int nums, REAL avr_mass){
     if (warn_if(!_s, "the given simulation to make a cosmic web is a nullptr"))
         return;
 
@@ -385,7 +385,7 @@ void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass){
 * @param avr_mass: average mass of the bodies
 * @param v: velocity of the disk
 */
-void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, double thickness, vec3 rotation, double avr_mass = 10e6, vec3 v = {0,0,0}){
+void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, REAL radius, REAL thickness, vec3 rotation, REAL avr_mass = 10e6, vec3 v = {0,0,0}){
     if (warn_if(!_s, "the given simulation to make the disk is a nullptr"))
         return;
 
@@ -406,17 +406,17 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
     cluster.number = nums;
     cluster.name = "Disk";
 
-    double g_pull = nums *  _s -> get_G()  * avr_mass;
+    REAL g_pull = nums *  _s -> get_G()  * avr_mass;
 
     // sets up the builder lambda
     cluster.builder = [g_pull, radius, v, avr_mass, center, thickness, rotation, _s ](Cluster<vec3> cl3d, size_t _) {
         vec3 pos = rng_point_in_cylinder(radius, 1, thickness); // gets a random point in the disk
 
         // generates the radius
-        double r = pos.sqr_magn() + .1;
+        REAL r = pos.sqr_magn() + .1;
 
         // calculates the tangential velocity
-        double magn_vel = g_pull*r/1000000 + std::exp(-(r*r)/80);
+        REAL magn_vel = g_pull*r/1000000 + std::exp(-(r*r)/80);
         vec3 vel = vec3(-pos.y/r *magn_vel, pos.x/r* magn_vel, rng_percent() - 1) + v;
 
         // rotates velocity and position
@@ -441,7 +441,7 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
 * @param nums: number of bodies to spawn
 * @param avr_mass: average mass of each body
 */
-void cosmic_web(Simulation<vec3>* _s, int nums, double avr_mass){
+void cosmic_web(Simulation<vec3>* _s, int nums, REAL avr_mass){
     // sets up the noise generator
     fnl_state noise = fnlCreateState();
     noise.noise_type = FNL_NOISE_OPENSIMPLEX2;

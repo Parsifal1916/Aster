@@ -49,7 +49,7 @@ size_t Cluster<T>::get_objects(){
 * @return a pointer to the cluster
 */
 template <typename T>
-Cluster<T>* Cluster<T>::rotate(double x, double y, double z){
+Cluster<T>* Cluster<T>::rotate(REAL x, REAL y, REAL z){
     rotation += vec3({x, y, z});
     return this;
 } 
@@ -74,7 +74,7 @@ Cluster<T>* Cluster<T>::rotate(T rot){
 * @return a pointer to the cluster
 */
 template <typename T>
-Cluster<T>* Cluster<T>::move(double x, double y, double z){
+Cluster<T>* Cluster<T>::move(REAL x, REAL y, REAL z){
     position += vec3({x, y, z});
     return this;
 } 
@@ -98,7 +98,7 @@ Cluster<T>* Cluster<T>::move(T dis){
 * @return a pointer to the cluster
 */
 template <typename T>
-Cluster<T>* Cluster<T>::set_rotation(double x, double y, double z){
+Cluster<T>* Cluster<T>::set_rotation(REAL x, REAL y, REAL z){
     rotation = vec3({x, y, z});
     return this;
 } 
@@ -122,7 +122,7 @@ Cluster<T>* Cluster<T>::set_rotation(T rot){
 * @return a pointer to the cluster
 */
 template <typename T>
-Cluster<T>* Cluster<T>::set_position(double x, double y, double z){
+Cluster<T>* Cluster<T>::set_position(REAL x, REAL y, REAL z){
     position = vec3({x, y, z});
     return this;
 } 

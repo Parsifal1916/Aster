@@ -15,6 +15,9 @@ namespace Barnes{
 .                    // Nodes definition                                              //
 .                    //===---------------------------------------------------------===*/
 
+template <typename T>
+void barnes_update_forces(Simulation<T>* _sim);
+
 #define PRECISION_BITS 10
 
 template <typename T> class Barnes_Hut;
@@ -27,9 +30,9 @@ struct NodesArray{
     std::vector<T> centers_of_mass; // center of mass of the node
     std::vector<T> velocities; // avrg velocity of the node
     
-    std::vector<signed long int> left_nodes, right_nodes;
-    std::vector<float> temps; // avrg temperature of the node
-    std::vector<double> masses;  // combined mass of the node
+    std::vector<signed int> left_nodes, right_nodes;
+    std::vector<REAL> temps; // avrg temperature of the node
+    std::vector<REAL> masses;  // combined mass of the node
 
     NodesArray(){}
 
@@ -88,7 +91,7 @@ struct NodesArray{
 template <typename T>
 class Barnes_Hut: public Simulation<T>{
     public:
-    double theta = 0.8;
+    REAL theta = 0.8;
     long int compressed_mortons_size  = 0;
     T bounding_box;
     std::vector<std::thread> threads;
@@ -102,7 +105,7 @@ class Barnes_Hut: public Simulation<T>{
     */
     void step() override;
 
-    Barnes_Hut<T>* set_theta(double _t);
+    Barnes_Hut<T>* set_theta(REAL _t);
 
     /**
     * @brief calculates the force acting between a node and a body **recursive**+
@@ -110,7 +113,7 @@ class Barnes_Hut: public Simulation<T>{
     * @param body: ptr to the body being acted upon
     * @returns nothing everything is done internally
     */
-    virtual void get_node_body(signed long node, size_t  body, double size = 0);
+    virtual void get_node_body(signed long node, size_t  body, REAL size = 0);
 
     void make_tree();
 

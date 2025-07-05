@@ -24,4 +24,5 @@
 #include "Aster/simulations/sim_helper.h"
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/simulations/barnes-hut.h"
+#include "Aster/simulations/barnes_hut_GPU.h"
 #include "Aster/simulations/simulation.h"

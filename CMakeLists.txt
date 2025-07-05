@@ -18,6 +18,9 @@ find_dependency(OpenGL REQUIRED)
 find_dependency(GLEW REQUIRED)
 find_dependency(glfw3 REQUIRED)
 find_dependency(OpenCL REQUIRED)
+find_dependency(TBB REQUIRED)
+find_dependency(Threads REQUIRED)
+
 
 file(GLOB_RECURSE ASTER_SOURCES src/*.cpp)
 file(GLOB_RECURSE ASTER_HEADERS include/Aster/.h include/Aster/*.hpp)
@@ -34,6 +37,8 @@ target_link_libraries(Aster PUBLIC
     GLEW::GLEW
     glfw
     OpenCL::OpenCL
+    Threads::Threads
+    TBB::tbb
     ${CMAKE_DL_LIBS}
 )
 
@@ -53,7 +58,8 @@ set_target_properties(Aster PROPERTIES
 if(NOT MSVC)
     target_compile_options(Aster PRIVATE 
         -Wno-aggressive-loop-optimizations
-        -O0 -g
+        -O3
+        -lTBB
     )
 endif()
 

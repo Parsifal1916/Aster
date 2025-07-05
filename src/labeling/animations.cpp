@@ -15,13 +15,13 @@ namespace Renderer{
 * @param window: window pointer to draw in
 * @param percent: loading bar percentage
 */
-void draw_quad(GLFWwindow* window, double percent){
+void draw_quad(GLFWwindow* window, REAL percent){
     if (critical_if(!window, "can't draw a loading bar onto a nullptr"))
         return;
     if (warn_if(percent < 0, "got unexpected loading value"))
         return;
 
-    double 
+    REAL 
         bar_width = .6,
         bar_height = .05,
         padding = 0.02

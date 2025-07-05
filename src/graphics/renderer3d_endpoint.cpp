@@ -241,7 +241,8 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
 */
 void Renderer3d::reset_mouse(){
     clicked = false;
-    mouse_init_pos = {0,0};
+    mouse_init_x = 0;
+    mouse_init_y = 0;
 }
 
 /**
@@ -252,7 +253,7 @@ void Renderer3d::mouse_clicked(){
     clicked = true;
 
     // saves the new cursor position
-    glfwGetCursorPos(window, &mouse_init_pos.x, &mouse_init_pos.y);
+    glfwGetCursorPos(window, &mouse_init_x, &mouse_init_y);
 }
 
 /**
@@ -276,8 +277,8 @@ void Renderer3d::handle_displacement(){
 
         // updates the mouse position and angles
         glfwGetCursorPos(window, &mouse_x, &mouse_y);         
-        x_theta = atan2((mouse_init_pos.x - mouse_x)*6, distance);
-        y_theta = atan2(-(mouse_init_pos.y - mouse_y)*6, distance);
+        x_theta = atan2((mouse_init_x - mouse_x)*6, distance);
+        y_theta = atan2(-(mouse_init_y - mouse_y)*6, distance);
     }else 
         // otherwise it resets the mouse
         reset_mouse();
@@ -335,7 +336,7 @@ void Renderer3d::draw_minimal3d(){
         temp = map_point(_s -> bodies.get_position_of(i));
 
         // calculates the color based on parallax
-        double mult = _s -> get_render_depth()/std::max(temp.z, .001) + .2;
+        REAL mult = _s -> get_render_depth()/std::max((double)temp.z, .001) + .2;
         glColor3f(
             mult, mult, mult
         );
@@ -365,7 +366,7 @@ void Renderer3d::draw_detailed3d() {
                   rng_colors[i % 15][2]); 
 
         // calculates the radius based on the log_{10} of the mass by some constant
-        double radius = std::log10(_s -> bodies.get_mass_of(i)) / 3000;
+        REAL radius = std::log10(_s -> bodies.get_mass_of(i)) / 3000;
 
         // draws a circle around the body using a triangle fan
         glBegin(GL_TRIANGLE_FAN);

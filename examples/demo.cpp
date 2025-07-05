@@ -18,7 +18,7 @@ void load_solar_system(Simulation<vec3>* sim){
     add_body(sim, 5.9721e24, sim -> get_center() - vec3(1.00 * AU, 0, 0), {0, 29782, 0}); //earth 
     add_body(sim, 6.4171e23, sim -> get_center() - vec3(1.67 * AU, 0, 0), {0, 23130, 0}); //mars
     add_body(sim, 1.8982e27, sim -> get_center() - vec3(4.95 * AU, 0, 0), {0, 16060, 0}); //jupiter
-    add_body(sim, 1.0000e30, sim -> get_center() + vec3(9.04 * AU, 0, 0), {0, -9680, 0}); //saturn
+    //add_body(sim, 1.0000e30, sim -> get_center() + vec3(9.04 * AU, 0, 0), {0, -9680, 0}); //saturn
     add_body(sim, 8.6810e25, sim -> get_center() - vec3(18.3 * AU, 0, 0), {0,  6800, 0}); //uranus
     add_body(sim, 1.0240e26, sim -> get_center() - vec3(29.8 * AU, 0, 0), {0,  5430, 0}); //neptune
 }//
@@ -30,7 +30,7 @@ void load_solar_system(Simulation<vec2>* sim){
     add_body(sim, 5.9721e24, sim -> get_center() - vec2(1.00 * AU, 0), {0, 29782}); //earth 
     add_body(sim, 6.4171e23, sim -> get_center() - vec2(1.67 * AU, 0), {0, 23130}); //mars
     add_body(sim, 1.8982e27, sim -> get_center() - vec2(4.95 * AU, 0), {0, 16060}); //jupiter
-    add_body(sim, 1.0000e30, sim -> get_center() + vec2(9.04 * AU, 0), {0, -9680}); //saturn
+    //add_body(sim, 1.0000e30, sim -> get_center() + vec2(9.04 * AU, 0), {0, -9680}); //saturn
     add_body(sim, 8.6810e25, sim -> get_center() - vec2(18.3 * AU, 0), {0,  6800}); //uranus
     add_body(sim, 1.0240e26, sim -> get_center() - vec2(29.8 * AU, 0), {0,  5430}); //neptune
 }//
@@ -67,67 +67,49 @@ void add_bodies(Simulation<vec3>* _s){
     }
 }
 
+//template <typename type>
+//void test_sim(float n){
+//    Barnes::BHG<type>* sim = new Barnes::BHG <type>;
+//
+//    sim 
+//    -> set_theta(0.8)
+//    -> use_GPU()
+//    -> set_scale(1000)
+//    -> set_dt(1)
+//    -> update_with(update_sim<type>);
+//    ;
+//    add_disk(sim, n, sim -> get_center(), 200, 10, 10e13);
+//
+//    sim -> load();
+//
+//    sim -> integrate(10);
+//    delete sim;
+//}
+
 int main(){ 
+    //for (const auto& i : {100, 150, 500, 1000, 1500, 10000, 50000, 100000, 500000, 1000000}){
+    //    test_sim<vec2>(i);
+    //}
     using type = vec2;
 
-    //for (const auto& _c : {SABA1, SABA2, SABA3, SABA4, SABA5, SABA6, SABA7, SABA8, SABA9, SABA10}){
-    Barnes::Barnes_Hut<type>* sim = new Barnes::Barnes_Hut<type>;
-
-    //auto* sim = bake(HEAVY);
+    auto* sim = new Barnes::BHG <type>;
 
     sim 
+    -> set_theta(.9)
     //-> use_GPU()
-    -> set_theta(.2)
+    -> update_with(SABA6)
     -> set_scale(150e6)
-    //-> get_force_with(NEWTON)
-    -> set_dt(2e3)
+    -> set_dt(10e3)
     -> update_with(update_sim<type>);
-   // -> collect_error()
     ;
-
-    load_solar_system(sim);
-    //add_disk(sim, 20e2, sim -> get_center()*7/4, 80, 1, 55e9,-sim -> get_center()/ (sim -> get_scale()*1000));
-    //add_disk(sim, 20e2, sim -> get_center()*1/4, 80, 1, 55e9, sim -> get_center()/ (sim -> get_scale()*1000));
-    //cosmic_web(sim, 10e3, 10e12);
-    //add_bodies(sim);
+    //load_solar_system(sim);
+    add_disk(sim, 1e6, sim -> get_center(), 200, 10, 10e16);
 
     sim -> load();
-
-    //for (int i = 0; i< 100; i++){
-    //    sim -> step();
-    //    std::cout << sim -> bodies.positions[0].magnitude() << " " << sim -> bodies.velocities[0].magnitude() << "\n";
-    //}
-
-    //sim -> integrate(100);
-
-    render(sim) -> show();
-    //sim -> integrate(100);
-
-    /*
-    auto* sim = bake3d(BARNES_HUT);
-    
-    sim 
-    -> update_with(EULER)
-    -> get_force_with(NEWTON)
-    -> set_dt(1e-50)
-    -> set_scale(1)
-    ;
-    
-    //add_body(sim, 2e30, sim -> get_center(), {0,0});
-    //add_body(sim, 5e24, {sim -> get_width() * 3/4, sim -> get_height()/2},{0, 2000});
-    //add_body(sim, 5e24, {sim -> get_width(), sim -> get_height()/2},{0, 2790});
-    //add_disk3d(sim, 1e4, sim -> get_center(), 60e1, .3, {}, 10e10);
-    add_disk(sim, 1e4, sim -> get_center(), 60e1, .3, {90, 45, 0}, 10e10);
-    //add_disk(sim, 1e3, sim -> get_center(), 100, 0);
-    //sim -> load();
-    //rng_sphere(sim, 10e3, {meta.WIDTH, meta.HEIGHT, meta.depth}, 10e2);
-    
-
-
-    render(sim)
-    -> show_axis()
-    -> show();
-*/}
+    //sim -> step();
+    //render(sim) -> show();
+    sim -> integrate(100);
+}
 
 
 

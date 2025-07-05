@@ -76,19 +76,21 @@ class Renderer2d{
         &Renderer2d::draw_detailed,    
         &Renderer2d::draw_minimal,
         &Renderer2d::draw_minimal,
+        &Renderer2d::draw_minimal, 
         &Renderer2d::draw_termal,
+        &Renderer2d::draw_minimal
         
     };
     /**
     * @brief updates the scale by ns
     * @param ns: value to update the scale with
     */
-    Renderer2d* update_scale(double ns);
+    Renderer2d* update_scale(REAL ns);
 
     /**
     * @brief return the scale
     */
-    double get_scale() const;
+    REAL get_scale() const;
 
     private:
 
@@ -107,7 +109,7 @@ class Renderer2d{
     bool show_axis_b = false;    
     Simulation<vec2>* _s = nullptr;
     render_func render = nullptr;
-    double scale = 1;
+    REAL scale = 1;
 };
 
 }

@@ -9,10 +9,10 @@
 namespace Aster{
 
 //used to generate a random angle (0-360)
-extern std::uniform_real_distribution<double> angle_rnd;
+extern std::uniform_real_distribution<REAL> angle_rnd;
 
-// returns a double from 0 to 1
-extern std::uniform_real_distribution<double> normalized_rnd;
+// returns a REAL from 0 to 1
+extern std::uniform_real_distribution<REAL> normalized_rnd;
 
 /**
 * @brief single core force update function

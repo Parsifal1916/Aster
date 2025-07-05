@@ -5,6 +5,7 @@
 #include <functional>
 
 #include "Aster/physics/body.h"
+#include "Aster/physics/vectors.h"
 
 namespace Aster{
 template <typename T> struct Simulation;
@@ -16,16 +17,16 @@ namespace Graphs{
 template <typename T>
 struct Graph{
     // func pointer to a ONCE or FOR_EACH  
-    using listener_fptr = std::function<double(struct Graph<T>*, Simulation<T>*  ,size_t)>;
+    using listener_fptr = std::function<REAL(struct Graph<T>*, Simulation<T>*  ,size_t)>;
     
     // func pointer to a BETWEEN
-    using collector_fptr = std::function<double(struct Graph<T>*, Simulation<T>*  ,size_t, size_t)>;
+    using collector_fptr = std::function<REAL(struct Graph<T>*, Simulation<T>*  ,size_t, size_t)>;
 
     Simulation<T>* _s = nullptr; 
     
     listener_fptr listener;
     collector_fptr collector;
-    std::vector<std::vector<double>> data;
+    std::vector<std::vector<REAL>> data;
     std::string name = "Graph";
 
     Graph(Simulation<T>* _s, listener_fptr listener,  graph_type type = ONCE);
@@ -57,7 +58,7 @@ struct Graph{
     // maximum buffer size
     int buffer_size = 50;
     // internal cumulative counter
-    double internal_counter = 0;
+    REAL internal_counter = 0;
 
     bool save = true; // should it save?
     bool done = false; // has it loaded?
@@ -79,16 +80,16 @@ struct Graph{
 };
 
 template <typename T>
-double hamiltonian_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
+ REAL hamiltonian_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
 
 template <typename T>
-double get_total_energy(Simulation<T>* _s);
+ REAL get_total_energy(Simulation<T>* _s);
 
 template <typename T>
-double error_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
+ REAL error_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
 
 template <typename T>
-double distance_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
+ REAL distance_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
 }
 }
 

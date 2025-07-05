@@ -41,7 +41,7 @@ namespace Renderer{
 * @brief updates the scale by ns
 * @param ns: value to update the scale with
 */
-Renderer2d* Renderer2d::update_scale(double ns){
+Renderer2d* Renderer2d::update_scale(REAL ns){
     scale += ns;
     return this;
 }
@@ -49,7 +49,7 @@ Renderer2d* Renderer2d::update_scale(double ns){
 /**
 * @brief return the scale
 */
-double Renderer2d::get_scale() const{
+REAL Renderer2d::get_scale() const{
     return scale;
 }
 
@@ -299,8 +299,8 @@ void Renderer2d::draw_termal(){
     
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         // trasforms the coordinates to -> [-1, 1]
-        double x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        double y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+        REAL x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        REAL y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
           
         //in-bounds check
         if (std::abs(x) > 1 || std::abs(y) > 1) continue;
@@ -336,8 +336,8 @@ void Renderer2d::draw_minimal(){
     
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         // trasforms the coordinates to -> [-1, 1]
-        double x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        double y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+        REAL x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        REAL y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
           
         //in-bounds check
         if (std::abs(x) > 1 || std::abs(y) > 1) continue;
@@ -396,8 +396,8 @@ inline void Renderer2d::draw_barnes(){
 
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         // trasforms the coordinates to -> [-1, 1]
-        double x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        double y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+        REAL x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        REAL y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
         
         //in-bounds check
         if (std::abs(x) > 1 || std::abs(y) > 1) continue;
@@ -429,24 +429,24 @@ void Renderer2d::draw_detailed(){
 
         // chooses a random color from the array
         glColor3f(rng_colors[i % 14][0], rng_colors[i % 14][1], rng_colors[i % 14][2]); 
-        double radius = std::max(
+        REAL radius = std::max(
             std::min(
-                std::log10(_s -> bodies.get_mass_of(i) * _s -> get_render_width() / _s -> get_width() ) / (200 * get_scale()),
+                double( std::log10(_s -> bodies.get_mass_of(i) * _s -> get_render_width() / _s -> get_width() ) / (200 * get_scale())),
                 .2
             ),
             0.005
         ); // scales the radius based on the log_{10} of the mass
 
         // trasforms the coordinates to -> [-1, 1]
-        double x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        double y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
+        REAL x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
+        REAL y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
               
         //in-bounds check
         if (std::abs(x) > 1.3 || std::abs(y) > 1.3) continue; 
 
         /*
         * the 1.3 in the if above is there to prevent objects form suddenly disappearing 
-        * where almost on the edge of the screen
+        * when almost on the edge of the screen
         */
 
         // calculates the center 
@@ -498,7 +498,7 @@ void draw_graph(Simulation* _s){
     for (int i = 0; i < _s -> get_height(); ++i)
         clients[_s].screen.setPixel(i, _s -> data.graph_height, sf::Color::White);
 
-    double p1, p2 = 0;
+    REAL p1, p2 = 0;
     int max_height = _s -> get_width() - _s -> data.graph_height;
 
     for (int index = 1; index < _s -> lagrangians.size(); index++){
@@ -524,7 +524,7 @@ void reset(Simulation* _s){
     clients[_s].screen = clients[_s].blank;
 }
 
-int clamp_rgb(double x){
+int clamp_rgb(REAL x){
     return (int)std::max(std::min(int(x), 255), 0);
 }
 */

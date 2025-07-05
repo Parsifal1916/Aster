@@ -17,7 +17,7 @@ memory_pool<T>* make_memory_pool(size_t size) {
 }
 
 template <typename T>
-void memory_pool<T>::double_size() {
+void memory_pool<T>::REAL_size() {
     current_size *= 2;
     data = std::aligned_alloc(alignof(T), current_size); // lento
 }
@@ -30,7 +30,7 @@ void memory_pool<T>::reset(){
 template <typename T>
 void* memory_pool<T>::get_place(size_t size) {
     if (this -> used_memory + size > this -> current_size) 
-        this -> double_size();
+        this -> REAL_size();
 
     void* ptr = (char*)this -> data + this -> used_memory;
     this -> used_memory += size;

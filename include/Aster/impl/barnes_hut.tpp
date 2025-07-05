@@ -5,9 +5,13 @@
 #include <thread>
 #include <type_traits>
 #include <algorithm>
+#include <bitset>
 #include <unordered_map>
+#include <tbb/parallel_for.h>
+#include <tbb/parallel_sort.h>
 
-#define CL_TARGET_OPENCL_VERSION 300
+using namespace tbb;
+
 
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/building-api/builder.h"
@@ -15,7 +19,7 @@
 #include "Aster/graphics/2d_graphics.h"
 
 #include "Aster/physics/vectors.h"
-#include "Aster/physics/body.h"
+#include "Aster/physics/body.h" 
 
 #include "Aster/simulations/barnes-hut.h"
 
@@ -27,35 +31,35 @@ namespace GPU{
     void sort(uint64_t* input, uint64_t* output, size_t N);
 }
 
-template <typename T> void get_new_temp(Simulation<T>* _s, size_t body, T pos, T vel, double temp, double mass);
+template <typename T> void get_new_temp(Simulation<T>* _s, size_t body, T pos, T vel, REAL temp, REAL mass);
 
 namespace Barnes{
 
-
 template <typename F>
 FORCE_INLINE void parallel(int cores, size_t num, F func) {
+
     const size_t n_threads = std::min(num, static_cast<size_t>(cores));
-    
+
     if (num == 0) return;
-    
+
     std::vector<std::thread> threads;
     threads.reserve(n_threads);
-    
+
     const size_t chunk_size = (num + n_threads - 1) / n_threads;
-    
+
     for (size_t i = 0; i < n_threads; ++i) {
         const size_t start = i * chunk_size;
         const size_t end = std::min(start + chunk_size, num);
-        
+
         if (start >= end) break;
-        
+
         threads.emplace_back([start, end, &func]() {
             for (size_t b = start; b < end; ++b) {
                 func(b);
             }
         });
     }
-    
+
     for (auto& t : threads) {
         t.join();
     }
@@ -172,7 +176,7 @@ void NodesArray<T>::unite(size_t start){
     unite(left_nodes[start]);
     unite(right_nodes[start]);
     
-    double total_mass = masses[right_nodes[start]] + masses[left_nodes[start]];
+    REAL total_mass = masses[right_nodes[start]] + masses[left_nodes[start]];
     if (total_mass <= 0) return;
 
     masses[start] = total_mass;
@@ -181,7 +185,6 @@ void NodesArray<T>::unite(size_t start){
     temps[start] = std::max(temps[right_nodes[start]], temps[left_nodes[start]]);
 }
 
-
 /**
 * @brief merges two bodies in one node in case of conflict
 * @param body: index to the body to merge
@@ -189,8 +192,8 @@ void NodesArray<T>::unite(size_t start){
 template <typename T>
 void NodesArray<T>::merge(Simulation<T>* _s, size_t _b, size_t index){
     // combines the key values
-    double body_mass = _s -> bodies.get_mass_of(_b);
-    double total_mass = masses[index] + body_mass;
+    REAL body_mass = _s -> bodies.get_mass_of(_b);
+    REAL total_mass = masses[index] + body_mass;
     
     if (total_mass <= 0) return;
 
@@ -199,7 +202,7 @@ void NodesArray<T>::merge(Simulation<T>* _s, size_t _b, size_t index){
     masses[index] = total_mass;
     
     // for the temperature it uses the maximum
-    temps[index] = std::max(double(temps[index]), _s -> bodies.get_temp_of(_b));
+    temps[index] = std::max(REAL(temps[index]), _s -> bodies.get_temp_of(_b));
 }
 
 template <typename T>
@@ -210,16 +213,20 @@ void barnes_update_forces(Simulation<T>* _sim){
     _s -> make_tree(); // generates the quad-tree / oct-tree
         
     // calculates the forces
-    parallel(_s -> get_cores(), _s -> bodies.positions.size(), [&, _s](size_t i){
+    parallel_for(size_t(0), _s -> bodies.positions.size(), [&, _s](size_t i){
         _s -> bodies.get_acc_of(i).reset();
         _s -> get_node_body(_s -> compressed_mortons_size, i, _s -> bounding_box.magnitude());
     });
 
 
 }
+
+
 /*                   //===---------------------------------------------------------===//
 .                    // BARNES HUT IMPLEMENTATION                                     //
 .                    //===---------------------------------------------------------===*/
+
+
 
 template <typename T>
 Barnes_Hut<T>::Barnes_Hut(){
@@ -227,7 +234,7 @@ Barnes_Hut<T>::Barnes_Hut(){
 
     num_childs = 4; // sets up the child number
 
-    if constexpr (std::is_same<T, vec3>::value) // if its 3d it sets it up for an oct-tree
+    if constexpr (std::is_same<T, vec3>::value) // if its 3d it sets  it up for an oct-tree
         num_childs = 8;
     
     // sets up the simulation
@@ -247,7 +254,6 @@ Barnes_Hut<T>::Barnes_Hut(){
 */
 template <typename T>
 void Barnes_Hut<T>::step(){
-
     barnes_update_forces(this);
     this -> update_bodies(this);
 
@@ -281,18 +287,18 @@ void Barnes_Hut<T>::make_sections(){
 * @brief calculates the force acting between a node and a body **recursive**
 * @param node: node to calculate the force from
 * @param body: ptr to the body being acted upon
-* @returns nothing everything is done internally
+* @returns nothing, everything is done internally
 */
 template <typename T>
-void Barnes_Hut<T>::get_node_body(signed long int node, size_t index, double size){
+void Barnes_Hut<T>::get_node_body(signed long int node, size_t index, REAL size){
     if (node < 0 || node >= static_cast<signed long int>(nodes.size()))
         return;
-        
-    double d_squared = (this -> bodies.get_position_of(index) - nodes.centers_of_mass[node]).sqr_magn();
-    
-    if (d_squared == 0) return;
 
-    if (size * size < d_squared * theta * theta || nodes.is_leaf(node)){ // use the optmisation
+    REAL d_squared = (this -> bodies.get_position_of(index) - nodes.centers_of_mass[node]).sqr_magn();
+    
+    if (d_squared == 0) return; 
+
+    if (size * size < d_squared *theta * theta || nodes.is_leaf(node)){ // use the optmisation
         this -> bodies.get_acc_of(index) += this -> get_force(
             this -> bodies.get_mass_of(index),     nodes.masses[node],
             this -> bodies.get_velocity_of(index), nodes.velocities[node],
@@ -352,7 +358,7 @@ uint32_t get_tbreaked_morton(Barnes_Hut<T>* _s, const T& pos, size_t body_index)
 }
 
 template <typename T>
-inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const std::vector<std::pair<uint32_t, size_t>>& mortons){
+inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const std::vector<std::pair<uint32_t, unsigned int>>& mortons){
     base_layer.clear();
     base_layer.resize(mortons.size());
 
@@ -367,10 +373,11 @@ inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const 
             base_layer.init(_s, mortons[i].second, last);
         }
     }
+    base_layer.resize(last+1);
 }
 
 template <typename T>
-Barnes_Hut<T>* Barnes_Hut<T>::set_theta(double _t){
+Barnes_Hut<T>* Barnes_Hut<T>::set_theta(REAL _t){
     assert(_t > 0);
     theta = _t;
     return this;
@@ -392,7 +399,7 @@ void Barnes_Hut<T>::make_tree(){
     size_t N = this->bodies.positions.size();
     if (N == 0) return;
     
-    std::vector<std::pair<uint32_t, size_t>> enhanced_mortons;
+    std::vector<std::pair<uint32_t, unsigned int>> enhanced_mortons;
     enhanced_mortons.reserve(N);
     this->bounding_box = this->get_center() * 2;
 
@@ -419,7 +426,7 @@ void Barnes_Hut<T>::make_tree(){
         return __builtin_clz(enhanced_mortons[i].first ^ enhanced_mortons[j].first);
     };
 
-    for (size_t i = 0; i < num_internal; ++i) {
+    parallel_for(size_t(0), num_internal, [&, delta, this](size_t i){
         int d_left = (i == 0) ? -1 : delta(i, i - 1);
         int d_right = delta(i, i + 1);
         int d = (d_right > d_left) ? 1 : -1;
@@ -469,8 +476,8 @@ void Barnes_Hut<T>::make_tree(){
         } else {
             nodes.right_nodes[internal_node] = num_leaves + gamma + 1; 
         }
-    }
-    
+    });
+
     nodes.unite(num_leaves);
 
     this->compressed_mortons_size = num_leaves;

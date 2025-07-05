@@ -1,10 +1,11 @@
 #include "Aster/impl/barnes_hut.tpp"
 #include "Aster/impl/BHT_impl.tpp"
+#include "Aster/impl/barnes_hut_GPU.tpp"
 
 namespace Aster{
 namespace Barnes{
 
-double variation(){
+REAL variation(){
     return ((std::rand() % 100) + 50)/150; 
 }
 
@@ -63,8 +64,8 @@ uint32_t get_morton<vec3>(Barnes_Hut<vec3>* _s, vec3 pt) {
 
 template <> 
 uint32_t get_morton<vec2>(Barnes_Hut<vec2>* _s, vec2 point) {
-    point.x = (point.x) / (_s -> bounding_box.x);
-    point.y = (point.y) / (_s -> bounding_box.y);
+    point.x = (point.x + _s -> bounding_box.x) / (2* _s -> bounding_box.x);
+    point.y = (point.y + _s -> bounding_box.y) / (2* _s -> bounding_box.y);
     uint32_t ix = std::min((uint32_t)(point.x * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
     uint32_t iy = std::min((uint32_t)(point.y * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
     return (interleap_coord(iy) << 1) | interleap_coord(ix); 

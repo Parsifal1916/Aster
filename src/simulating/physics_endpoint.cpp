@@ -5,8 +5,10 @@
 
 #include "Aster/simulations/sim_obj.h"
 
+#include "Aster/impl/tool_chain_impl.tpp"
+
 namespace Aster{
-const double PI = 3.141592653589793238462643383279;
+const REAL PI = 3.141592653589793238462643383279;
 
 //===---------------------------------------------------------===//
 // Cosmology stuff                                               //
@@ -18,9 +20,9 @@ const double PI = 3.141592653589793238462643383279;
 */
 template <typename T>
 float get_da(float s, Simulation<T>* _s){
-    double term1 = _s -> data.cosmological_constant * s *s / 3 + 10e-11;
+    REAL term1 = _s -> data.cosmological_constant * s *s / 3 + 10e-11;
 
-    double term2 = _s -> data.field_eq_scalar * _s -> data.c_squared * s *s /3 * _s -> obj / (_s -> data.HEIGHT * _s -> data.WIDTH * s * s * _s -> data.simulation_scale * _s -> data.simulation_scale);
+    REAL term2 = _s -> data.field_eq_scalar * _s -> data.c_squared * s *s /3 * _s -> obj / (_s -> data.HEIGHT * _s -> data.WIDTH * s * s * _s -> data.simulation_scale * _s -> data.simulation_scale);
     return _s -> data.c * std::sqrt(term2  + term1 );
 }
 
@@ -30,10 +32,10 @@ float get_da(float s, Simulation<T>* _s){
 */
 template <typename T> 
 void update_scale(Simulation<T>* _s){
-    double k1 = get_da<T>(_s -> data.current_a, _s) * _s -> data.dt;
-    double k2 = get_da<T>(_s -> data.current_a + k1 * 0.5, _s) * _s -> data.dt;
-    double k3 = get_da<T>(_s -> data.current_a + k2 * 0.5, _s) * _s -> data.dt;
-    double k4 = get_da<T>(_s -> data.current_a + k3, _s) * _s -> data.dt;
+    REAL k1 = get_da<T>(_s -> data.current_a, _s) * _s -> data.dt;
+    REAL k2 = get_da<T>(_s -> data.current_a + k1 * 0.5, _s) * _s -> data.dt;
+    REAL k3 = get_da<T>(_s -> data.current_a + k2 * 0.5, _s) * _s -> data.dt;
+    REAL k4 = get_da<T>(_s -> data.current_a + k3, _s) * _s -> data.dt;
 
     _s -> data.current_a += (k1 + 2 * k2 + 2 * k3 + k4) / 6;
 }
@@ -91,11 +93,11 @@ vec2 vec2::operator/(const int& other) const{
 }
 
 
-double vec2::operator*(const vec2& other) const{
+REAL vec2::operator*(const vec2& other) const{
     return x * other.x + y + other.y;
 }
 
-vec2& vec2::operator/=(const double& other){
+vec2& vec2::operator/=(const REAL& other){
     this -> x /= other;
     this -> y /= other;
     return *this;
@@ -117,22 +119,22 @@ vec2 vec2::normalize(){
     return vec2(this -> x/magn, this -> y/magn);
 }
 
-double vec2::sqr_magn() const {
+REAL vec2::sqr_magn() const {
     return x*x + y*y;
 }
 
-bool vec2::is_fine() const {
+bool vec2::is_fine () const {
     return !std::isnan(x) && !std::isnan(x);
 }
 
-vec2 vec2::update_by(vec2* v, double delta){
+vec2 vec2::update_by(vec2* v, REAL delta){
     return {
         x + v -> x *delta,
         y + v -> y *delta
     };
 }
 
-double& vec2::operator[](size_t index){
+REAL& vec2::operator[](size_t index){
     assert(index < 2);
     return index == 0 ? x : y;
 }
@@ -146,7 +148,7 @@ void vec3::reset() {
     z = 0;
 }
 
-double& vec3::operator[](size_t index){
+REAL& vec3::operator[](size_t index){
     assert(index < 3);
     if (index == 0) return x;
     if (index == 1) return y;
@@ -197,11 +199,11 @@ vec3 vec3::operator/(const int& other) const{
     return vec3(x/other, y/other, z/other);
 } 
 
-double vec3::operator*(const vec3& other) const{
+REAL vec3::operator*(const vec3& other) const{
     return x * other.x + y * other.y + z*other.z;
 }
 
-vec3& vec3::operator/=(const double& other){
+vec3& vec3::operator/=(const REAL& other){
     this -> x /= other;
     this -> y /= other;
     this -> z /= other;
@@ -225,11 +227,11 @@ vec3 vec3::normalize(){
        return vec3(this -> x/magn, this -> y/magn, this -> z/magn);
 }
 
-double vec3::sqr_magn() const{
+REAL vec3::sqr_magn() const{
     return x*x + y*y + z*z;
 }
 
-vec3 vec3::update_by(vec3* v, double delta){
+vec3 vec3::update_by(vec3* v, REAL delta){
     return {
         x + v -> x *delta,
         y + v -> y *delta,
@@ -238,11 +240,11 @@ vec3 vec3::update_by(vec3* v, double delta){
 }
 
 
-vec2 operator*(double scalar, vec2 v){
+vec2 operator*(REAL scalar, vec2 v){
     return v * scalar;
 }
 
-vec3 operator*(double scalar, vec3 v){
+vec3 operator*(REAL scalar, vec3 v){
     return v * scalar;
 }
 

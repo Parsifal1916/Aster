@@ -9,8 +9,8 @@ namespace Aster{
 template <typename T>
 struct BodyArray{
 public:
-       std::vector<double> masses = {};
-       std::vector<double> temps = {};
+       std::vector<REAL> masses = {};
+       std::vector<REAL> temps = {};
        std::vector<T> positions = {};
        std::vector<T> velocities = {};
        std::vector<T> accs = {};
@@ -19,8 +19,8 @@ public:
 
        T& get_position_of(size_t i);
        T& get_velocity_of(size_t i);
-       double& get_mass_of(size_t i);
-       double& get_temp_of(size_t i);
+       REAL& get_mass_of(size_t i);
+       REAL& get_temp_of(size_t i);
        T& get_acc_of(size_t i);
 };
 
@@ -34,12 +34,12 @@ T& BodyArray<T>::get_velocity_of(size_t i){
 }
 
 template<typename T>
-double& BodyArray<T>::get_mass_of(size_t i){
+REAL& BodyArray<T>::get_mass_of(size_t i){
        return masses[i];
 }
 
 template<typename T>
-double& BodyArray<T>::get_temp_of(size_t i){
+REAL& BodyArray<T>::get_temp_of(size_t i){
        return temps[i];
 }
 

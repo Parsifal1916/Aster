@@ -7,9 +7,9 @@
 
 namespace Aster{
 
-extern const double PI;
+extern const REAL PI;
 extern const int digit_precision;
-extern const double digit_coefficient;
+extern const REAL digit_coefficient;
 
 /**
 * @brief rotates a point by some angles
@@ -18,13 +18,13 @@ extern const double digit_coefficient;
 * @param theta: y-z angle in degrees
 * @return rotated vector
 */
-vec3 rotate_point(vec3 v, double phi, double theta);
+vec3 rotate_point(vec3 v, REAL phi, REAL theta);
 
 /**
 * @brief returns a number from 0 to 1
 * @return a random number from 0 to 1
 */
-double rng_percent();
+REAL rng_percent();
 
 /**
 * @brief returns a random value from a to b
@@ -33,7 +33,7 @@ double rng_percent();
 * @param b: second value
 * @return a random number 
 */
-double rng_val(double a, double b);
+REAL rng_val(REAL a, REAL b);
 
 /**
 * @brief returns a random point in a box with vertecies start and stop
@@ -57,7 +57,7 @@ vec2 rng_point_in_square(vec2 start, vec2 stop = {0,0});
 * @param min_r: inner circle
 * @returns the point
 */
-vec2 rng_point_in_circle(double max_r, double min_r = 1);
+vec2 rng_point_in_circle(REAL max_r, REAL min_r = 1);
 
 /**
 * @brief returns a random point in a cylinder
@@ -65,14 +65,14 @@ vec2 rng_point_in_circle(double max_r, double min_r = 1);
 * @param min_r: inner circle (default = 1)
 * @param thickness: hight of the cylinder (default = 1)
 */
-vec3 rng_point_in_cylinder(double max_r, double min_r = 1, double thickness = 1);
+vec3 rng_point_in_cylinder(REAL max_r, REAL min_r = 1, REAL thickness = 1);
 
 /**
 * @brief returns a random point in sphere
 * @param max_r: sphere's radius 
 * @param min_r: inner radius (default = 1)
 */
-vec2 rng_point_in_sphere(double max_r, double min_r = 1, double thickness = 1);
+vec2 rng_point_in_sphere(REAL max_r, REAL min_r = 1, REAL thickness = 1);
 
 /**
 * @brief picks a random point in a simulation
@@ -98,7 +98,7 @@ vec3 rng_vec(Simulation<vec3>* _s);
 * @param avr_mass: average mass of the bodies
 * @param v: velocity of the cluster 
 */
-void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, double inner, double avr_mass = 10e6, vec2 v = {0,0});
+void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, REAL outer, REAL inner, REAL avr_mass = 10e6, vec2 v = {0,0});
 
 /**
 * @brief generates a disk onto the given simulation
@@ -111,7 +111,7 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, double outer, doub
 * @param avr_mass: average mass of the bodies
 * @param v: velocity of the disk
 */
-void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, double thickness, vec3 rotation, double avr_mass = 10e6, vec3 v = {0,0,0});
+void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, REAL radius, REAL thickness, vec3 rotation, REAL avr_mass = 10e6, vec3 v = {0,0,0});
 
 /**
 * @brief covers the simulation with bodies using a perlin noise
@@ -119,7 +119,7 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, double radius, dou
 * @param nums: number of bodies to spawn
 * @param avr_mass: average mass of each body
 */
-void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass);
+void cosmic_web(Simulation<vec2>* _s, int nums, REAL avr_mass);
 
 /**
 * @brief adds a body to the simulation
@@ -128,7 +128,7 @@ void cosmic_web(Simulation<vec2>* _s, int nums, double avr_mass);
 * @param pos: position of the body
 * @param vel: velocity of the body
 */
-void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, double temp = 0);
+void add_body(Simulation<vec2>* _s, REAL mass, vec2 pos, vec2 vel, REAL temp = 0);
 
 
 /**
@@ -138,7 +138,7 @@ void add_body(Simulation<vec2>* _s, double mass, vec2 pos, vec2 vel, double temp
 * @param pos: position of the body
 * @param vel: velocity of the body
 */
-void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double temp = 0);
+void add_body(Simulation<vec3>* _s, REAL mass, vec3 pos, vec3 vel, REAL temp = 0);
 
 /**
 * @brief covers the simulation with bodies using a perlin noise
@@ -146,5 +146,5 @@ void add_body(Simulation<vec3>* _s, double mass, vec3 pos, vec3 vel, double temp
 * @param nums: number of bodies to spawn
 * @param avr_mass: average mass of each body
 */
-void cosmic_web(Simulation<vec3>* _s, int nums, double avr_mass);
+void cosmic_web(Simulation<vec3>* _s, int nums, REAL avr_mass);
 }

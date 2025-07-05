@@ -1,11 +1,11 @@
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
-libdir=${prefix}/lib
-includedir=${prefix}/include
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
 
 Name: Aster
-Description: Aster physics simulation library
+Description: Aster Graphics Library
 Version: @PROJECT_VERSION@
-Requires: sfml-graphics sfml-window sfml-system sfml-audio
-Libs: -L${libdir} -lAster
+Libs: -L${libdir} -lAster -ltbb
+Libs.private: -lGL -lGLEW -lglfw -lOpenCL -lpthread -ldl
 Cflags: -I${includedir}

@@ -23,7 +23,7 @@ struct Cluster{
     T rotation; // rotation over all axis
     size_t number; // number of objects to load
     size_t loaded; // number of loaded objects
-    double avr_mass; // average mass of the bodies
+    REAL avr_mass; // average mass of the bodies
 
     public:
     // cluster name
@@ -60,7 +60,7 @@ struct Cluster{
     * @param z: rotation over z
     * @return a pointer to the cluster
     */
-    Cluster<T>* rotate(double x, double y, double z = 0);
+    Cluster<T>* rotate(REAL x, REAL y, REAL z = 0);
 
     /**
     * @brief adds angles to the rotation parameter
@@ -77,7 +77,7 @@ struct Cluster{
     * @param z: traslation over z
     * @return a pointer to the cluster
     */
-    Cluster<T>* move(double x, double y, double z = 0);
+    Cluster<T>* move(REAL x, REAL y, REAL z = 0);
 
     /**
     * @brief moves the cluster
@@ -94,7 +94,7 @@ struct Cluster{
     * @param z: z rotation
     * @return a pointer to the cluster
     */
-    Cluster<T>* set_rotation(double x, double y, double z = 0);
+    Cluster<T>* set_rotation(REAL x, REAL y, REAL z = 0);
 
     /**
     * @brief rotates the cluester
@@ -110,7 +110,7 @@ struct Cluster{
     * @param z: new z position 
     * @return a pointer to the cluster
     */
-    Cluster<T>* set_position(double x, double y, double z = 0);
+    Cluster<T>* set_position(REAL x, REAL y, REAL z = 0);
 
     /**
     * @brief moves the cluester

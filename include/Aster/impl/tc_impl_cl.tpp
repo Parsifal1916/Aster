@@ -75,6 +75,13 @@ void select_best_device() {
 
     platform = best_plat;
     device = best_device;
+
+    cl_ulong global_mem_size;
+    clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(global_mem_size), &global_mem_size, NULL);
+
+    log_info(std::string("Available memory on selected device: " + std::to_string(global_mem_size/(1024*1024)) + std::string("MB")));
+
+    
 }
 
 /**
@@ -168,7 +175,7 @@ struct ub_functor {
     cl_kernel k;
     int order;
     void operator()(Simulation<T>* _s){
-        static const double* sequence = saba_coeffs[order];
+        static const REAL* sequence = saba_coeffs[order];
 
         // fstep
         for (int i = 0; i < saba_coeff_lng[order]; i+=2){
@@ -207,16 +214,16 @@ template <typename T>
 func_ptr<T> compile_uf(force_type t) {
     log_info("compiling GPU scripts from source...");
     size_t index = static_cast<size_t>(t);
-    
+
     std::string* force_kernel = std::is_same<T, vec2>::value 
         ? (t == NEWTON ? &newton_cl : &cl_pns)
         : (t == NEWTON ? &newton_cl3d : &cl_pns3d)
     ;
 
     std::string kernel_names[] = {"newton", "pn1", "pn2", "pn25"};
-    cl_kernel k;
+    cl_kernel k; 
 
-    if (critical_if(index >= static_cast<int>(CUSTOM_FU) || index < 0, 
+    if (critical_if(index > 3 || index < 0, 
     "could not find a suitable GPU-accelerated function for kernel " + kernel_names[index]))
         exit(1);
     

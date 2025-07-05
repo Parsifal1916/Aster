@@ -14,6 +14,36 @@ namespace Aster{
 
 namespace Graphs{
 
+template <typename F>
+inline void parallel(int cores, size_t num, F func) {
+    const size_t n_threads = std::min(num, static_cast<size_t>(cores));
+    
+    if (num == 0) return;
+    
+    std::vector<std::thread> threads;
+    threads.reserve(n_threads);
+    
+    const size_t chunk_size = (num + n_threads - 1) / n_threads;
+    
+    for (size_t i = 0; i < n_threads; ++i) {
+        const size_t start = i * chunk_size;
+        const size_t end = std::min(start + chunk_size, num);
+        
+        if (start >= end) break;
+        
+        threads.emplace_back([start, end, &func]() {
+            for (size_t b = start; b < end; ++b) {
+                func(b);
+            }
+        });
+    }
+    
+    for (auto& t : threads) {
+        t.join();
+    }
+}
+    
+
 template <typename T>
 Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::listener_fptr listener, graph_type type)
 : _s(_s), listener(listener), type(type) {
@@ -195,8 +225,9 @@ void Graph<T>::update_data(){
             return;
         
         // updates the data with a listener for each body
-        for (int i = 0; i < _s -> bodies.positions.size(); ++i)
+        parallel(_s -> get_cores(), _s -> bodies.positions.size(), [&,this](size_t i){
             this -> data[i].push_back(listener(this, this -> _s, i));    
+        });
 
         return;
     }

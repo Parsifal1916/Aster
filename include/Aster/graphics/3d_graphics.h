@@ -30,7 +30,7 @@ class Renderer3d{
 
     vec3 rot_center = vec3(0,0,0); 
 
-    double 
+    REAL 
         x_theta = 0, 
         y_theta = 0,
         sin_x_theta = 0,
@@ -83,7 +83,8 @@ class Renderer3d{
         &Renderer3d::draw_minimal3d, 
         &Renderer3d::draw_minimal3d, 
         &Renderer3d::draw_minimal3d, 
-        &Renderer3d::draw_termal3d
+        &Renderer3d::draw_termal3d,
+        &Renderer3d::draw_minimal3d
     };
     
     // keyboard to input mapping
@@ -103,7 +104,7 @@ class Renderer3d{
     int current_width, current_height;
 
     // mouse position before clicking
-    vec2 mouse_init_pos = {0,0};
+    double mouse_init_x = 0, mouse_init_y = 0;
 
     /**
     * @brief draws the axis on screen

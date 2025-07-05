@@ -17,7 +17,7 @@ namespace Aster{
 
 // !!! POSITIVE FORCE = ATTRACTION
 
-extern const double PI;
+extern const REAL PI;
 
 template <typename T, typename F>
 FORCE_INLINE void for_each_body(Simulation<T>* _s, F func) {
@@ -52,21 +52,21 @@ FORCE_INLINE void for_each_body(Simulation<T>* _s, F func) {
 }
 
 template <typename T> 
-FORCE_INLINE double get_A1(double eta, T v, double r_dot, double m, double r){
+FORCE_INLINE REAL get_A1(REAL eta, T v, REAL r_dot, REAL m, REAL r){
     // -(1 + 3η)v² + 1.5ηv² + 2(2 + η)m/r
     return - (1 + 3*eta) * v.sqr_magn() + 3/2 * eta * r_dot * r_dot + 2*(2 + eta) * m / r; 
 }
 
 template <typename T> 
-FORCE_INLINE double get_B1(double eta){
+FORCE_INLINE REAL get_B1(REAL eta){
     // 2(2 - η)
     return 2*(2 - eta); 
 }
 
 template <typename T> 
-FORCE_INLINE double get_A2(double eta, T v, double r_dot, double m, double r){
+FORCE_INLINE REAL get_A2(REAL eta, T v, REAL r_dot, REAL m, REAL r){
     // -η(3 - 4η)v^4 + .5η(13 - 4η)v²m/r + 3/2η(3 - 4η)v²r_dot² + (2 + 25η + 2η²)r_dot²m/r - 15/8η(1 - 3η)r_dot^4 - 3/4 (12 + 29η)(m/r)²
-    double retval = - eta * (3 - 4 * eta) * std::pow(v.sqr_magn(), 2);
+    REAL retval = - eta * (3 - 4 * eta) * std::pow(v.sqr_magn(), 2);
     retval += 1.0/2.0 * eta * (13 - 4*eta) * v.sqr_magn() * m / r;
     retval += 3.0/2.0 * eta * (3 - 4*eta) * v.sqr_magn() * r_dot * r_dot;
     retval += (2 + 25*eta + 2 *eta *eta) * r_dot * r_dot * m /r;
@@ -76,8 +76,8 @@ FORCE_INLINE double get_A2(double eta, T v, double r_dot, double m, double r){
 }
 
 template <typename T> 
-FORCE_INLINE double get_B2(double eta, T v, double r_dot, double m, double r){
-    double retval = 1/2 * eta * (15 + 4 *eta) * v.sqr_magn();
+FORCE_INLINE REAL get_B2(REAL eta, T v, REAL r_dot, REAL m, REAL r){
+    REAL retval = 1/2 * eta * (15 + 4 *eta) * v.sqr_magn();
     retval += -3.0/2.0 * eta * (3+ 2*eta) * r_dot *r_dot;
     retval += -1.0/2 * (4 + 41*eta + 8*eta*eta) * m /r;
 
@@ -85,31 +85,31 @@ FORCE_INLINE double get_B2(double eta, T v, double r_dot, double m, double r){
 }
 
 template <typename T> 
-FORCE_INLINE double get_A25(double eta, T v, double r_dot, double m, double r){
+FORCE_INLINE REAL get_A25(REAL eta, T v, REAL r_dot, REAL m, REAL r){
     return 3 * v.sqr_magn() + 17.0/3.0 * m /r;
 }
 
 template <typename T> 
-FORCE_INLINE double get_B25(double eta, T v, double r_dot, double m, double r){
+FORCE_INLINE REAL get_B25(REAL eta, T v, REAL r_dot, REAL m, REAL r){
     return v.sqr_magn() + 3 * m /r;
 }
 
 template <typename T> 
-inline  T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
+inline  T pn25(REAL m1, REAL m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T x = (p2 - p1 + T(_s -> get_e_sqr()));
-    double r = x.magnitude() + 1;
-    double m = m1 + m2;
-    double eta = m1*m2 / (m*m);
+    REAL r = x.magnitude() + 1;
+    REAL m = m1 + m2;
+    REAL eta = m1*m2 / (m*m);
     
     T v = v1 - v2;
     T n = x / r;
-    double r_dot = v * n;
+    REAL r_dot = v * n;
 
-    double a_components = get_A1<T>(eta, v, r_dot, m, r) + get_A2<T>(eta, v, r_dot, m, r);
-    double b_components = get_B1<T>(eta                ) + get_B2<T>(eta, v, r_dot, m, r);
+    REAL a_components = get_A1<T>(eta, v, r_dot, m, r) + get_A2<T>(eta, v, r_dot, m, r);
+    REAL b_components = get_B1<T>(eta                ) + get_B2<T>(eta, v, r_dot, m, r);
 
-    double half_a = get_A25<T>(eta, v, r_dot, m, r);
-    double half_b = get_B25<T>(eta, v, r_dot, m, r);
+    REAL half_a = get_A25<T>(eta, v, r_dot, m, r);
+    REAL half_b = get_B25<T>(eta, v, r_dot, m, r);
 
     T acc = n * m1*m2 / (r*r); 
     acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3); 
@@ -119,18 +119,18 @@ inline  T pn25(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
 }
 
 template <typename T> 
-inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
+inline T pn2(REAL m1, REAL m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T x = (p2 - p1 + T(_s -> get_e_sqr()));
-    double r = x.magnitude();
-    double m = m1 + m2;
-    double eta = m1*m2 / (m*m);
+    REAL r = x.magnitude();
+    REAL m = m1 + m2;
+    REAL eta = m1*m2 / (m*m);
     
     T v = v1 - v2;
     T n = x / r;
-    double r_dot = v * n;
+    REAL r_dot = v * n;
 
-    double a_components = get_A1<T>(eta, v, r_dot, m, r) + get_A2<T>(eta, v, r_dot, m, r);
-    double b_components = get_B1<T>(eta                ) + get_B2<T>(eta, v, r_dot, m, r);
+    REAL a_components = get_A1<T>(eta, v, r_dot, m, r) + get_A2<T>(eta, v, r_dot, m, r);
+    REAL b_components = get_B1<T>(eta                ) + get_B2<T>(eta, v, r_dot, m, r);
 
 
     T acc = n * m1*m2 / (r*r); 
@@ -139,18 +139,18 @@ inline T pn2(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
 }
 
 template <typename T> 
-inline T pn1(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
+inline T pn1(REAL m1, REAL m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T x = (p2 - p1 + T(_s -> get_e_sqr()));
-    double r = x.magnitude();
-    double m = m1 + m2;
-    double eta = m1*m2 / (m*m);
+    REAL r = x.magnitude();
+    REAL m = m1 + m2;
+    REAL eta = m1*m2 / (m*m);
     
     T v = v1 - v2;
     T n = x / r;
-    double r_dot = v * n;
+    REAL r_dot = v * n;
 
-    double a_components = get_A1<T>(eta, v, r_dot, m, r);
-    double b_components = get_B1<T>(eta                );
+    REAL a_components = get_A1<T>(eta, v, r_dot, m, r);
+    REAL b_components = get_B1<T>(eta                );
 
 
     T acc = n * m1*m2 / (r*r); 
@@ -159,34 +159,34 @@ inline T pn1(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
 }
 
 template <typename T>
-double get_eccentricity(Simulation<T>* _s, size_t body, double relv_sq, double w_squared,  double radius, double mass2){
-    double mu = _s -> get_G() * (_s -> bodies.get_mass_of(body) + mass2);
-    double reduced_mass  = _s -> bodies.get_mass_of(body) * mass2 / (_s -> bodies.get_mass_of(body) + mass2 ); 
-    double orbital_energy = relv_sq / 2 - mu / radius;
+REAL get_eccentricity(Simulation<T>* _s, size_t body, REAL relv_sq, REAL w_squared,  REAL radius, REAL mass2){
+    REAL mu = _s -> get_G() * (_s -> bodies.get_mass_of(body) + mass2);
+    REAL reduced_mass  = _s -> bodies.get_mass_of(body) * mass2 / (_s -> bodies.get_mass_of(body) + mass2 ); 
+    REAL orbital_energy = relv_sq / 2 - mu / radius;
 
     return 1 + 2 * orbital_energy * w_squared / (reduced_mass * mu * mu + _s -> get_e_sqr());
 }
 
 template <typename T>
-void compute_rad_pressure(Simulation<T>* _s, size_t body, T pos, double temp){
+void compute_rad_pressure(Simulation<T>* _s, size_t body, T pos, REAL temp){
     T vec = (pos - _s -> bodies.get_position_of(body));
-    double r_sq = vec.sqr_magn();
-    double force = _s -> get_boltzmann() * std::pow(_s -> bodies.get_temp_of(body), 4) / (4 * PI * r_sq * _s -> get_c());
+    REAL r_sq = vec.sqr_magn();
+    REAL force = _s -> get_boltzmann() * std::pow(_s -> bodies.get_temp_of(body), 4) / (4 * PI * r_sq * _s -> get_c());
 
     _s -> bodies.get_acc_of(body) += - vec.normalize() * force / _s -> bodies.get_mass_of(body);
 }
 
 template <>
-void compute_rad_pressure(Simulation<vec2>* _s, size_t body, vec2 pos, double temp){
+void compute_rad_pressure(Simulation<vec2>* _s, size_t body, vec2 pos, REAL temp){
     vec2 vec = (pos - _s -> bodies.get_position_of(body));
-    double r_sq = vec.sqr_magn();
-    double force = _s -> get_boltzmann() * std::pow(_s -> bodies.get_temp_of(body), 4) / (4 * PI * r_sq * _s -> get_c());
+    REAL r_sq = vec.sqr_magn();
+    REAL force = _s -> get_boltzmann() * std::pow(_s -> bodies.get_temp_of(body), 4) / (4 * PI * r_sq * _s -> get_c());
 
     _s -> bodies.get_acc_of(body) += - vec.normalize() * force / _s -> bodies.get_mass_of(body);
 }
 
 template <>
-void get_new_temp<vec3>(Simulation<vec3>* _s, size_t body, vec3 pos, vec3 vel, double temp, double mass){ 
+void get_new_temp<vec3>(Simulation<vec3>* _s, size_t body, vec3 pos, vec3 vel, REAL temp, REAL mass){ 
     /*
     * we are trying to compute the delta T so we use the formula 
     *  21 * G * M * m * n * e²
@@ -200,8 +200,8 @@ void get_new_temp<vec3>(Simulation<vec3>* _s, size_t body, vec3 pos, vec3 vel, d
     if (_s -> bodies.get_acc_of(body).sqr_magn()) return;
 
     vec3 rel_v = _s -> bodies.get_velocity_of(body) - vel;
-    double relv_sq = rel_v.sqr_magn();
-    double r = (_s -> bodies.get_position_of(body) - pos).magnitude();
+    REAL relv_sq = rel_v.sqr_magn();
+    REAL r = (_s -> bodies.get_position_of(body) - pos).magnitude();
     
     /*
     * omega is the angular velocity of the body
@@ -212,11 +212,11 @@ void get_new_temp<vec3>(Simulation<vec3>* _s, size_t body, vec3 pos, vec3 vel, d
     * ergo 
     * W  = V x a / a x a * vec(a)
     */
-    double w_squared = (_s -> bodies.get_acc_of(body) * (rel_v * _s -> bodies.get_acc_of(body)) / (_s -> bodies.get_acc_of(body).sqr_magn())).sqr_magn();
+    REAL w_squared = (_s -> bodies.get_acc_of(body) * (rel_v * _s -> bodies.get_acc_of(body)) / (_s -> bodies.get_acc_of(body).sqr_magn())).sqr_magn();
 
-    double eccentricity = get_eccentricity<vec3>(_s, body, relv_sq, w_squared, r, mass);
+    REAL eccentricity = get_eccentricity<vec3>(_s, body, relv_sq, w_squared, r, mass);
 
-    double delta_temperature = 1;//21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    REAL delta_temperature = 1;//21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
     delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
     delta_temperature /= _s -> bodies.get_mass_of(body) * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
 
@@ -227,7 +227,7 @@ void get_new_temp<vec3>(Simulation<vec3>* _s, size_t body, vec3 pos, vec3 vel, d
 }
 
 template <>
-void get_new_temp<vec2>(Simulation<vec2>* _s, size_t body, vec2 pos, vec2 vel, double temp, double mass){
+void get_new_temp<vec2>(Simulation<vec2>* _s, size_t body, vec2 pos, vec2 vel, REAL temp, REAL mass){
     /*
     * we are trying to compute the delta T so we use the formula 
     *  21 * G * M * m * n * e²
@@ -239,19 +239,19 @@ void get_new_temp<vec2>(Simulation<vec2>* _s, size_t body, vec2 pos, vec2 vel, d
     */
 
     vec2 rel_v = _s -> bodies.get_velocity_of(body) - vel;
-    double relv_sq = rel_v.sqr_magn();
-    double r = (_s -> bodies.get_position_of(body) - pos).magnitude();
+    REAL relv_sq = rel_v.sqr_magn();
+    REAL r = (_s -> bodies.get_position_of(body) - pos).magnitude();
     /*
     * omega^2 = |V|^2 - (V x A / |A|) ^2 
     * omega being the hypoteetase of a right triangle
     * of sidelenghts equal to the velocity and the
     * projection of the velocity onto the acceleration
     */
-    double w_squared = (_s -> bodies.get_acc_of(body) * (rel_v * _s -> bodies.get_acc_of(body)) / _s -> bodies.get_acc_of(body).sqr_magn()).sqr_magn();
+    REAL w_squared = (_s -> bodies.get_acc_of(body) * (rel_v * _s -> bodies.get_acc_of(body)) / _s -> bodies.get_acc_of(body).sqr_magn()).sqr_magn();
 
-    double eccentricity = get_eccentricity<vec2>(_s, body, relv_sq, w_squared, r, mass);
+    REAL eccentricity = get_eccentricity<vec2>(_s, body, relv_sq, w_squared, r, mass);
 
-    double delta_temperature = 21.0 / 2.0 * _s -> get_G() * mass * _s -> bodies.get_mass_of(body) * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    REAL delta_temperature = 21.0 / 2.0 * _s -> get_G() * mass * _s -> bodies.get_mass_of(body) * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
     delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
     delta_temperature /= _s -> bodies.get_mass_of(body) * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
 
@@ -273,10 +273,10 @@ void update_euler(Simulation<vec2>* _s){
 
 template <>
 void update_symplectic4(Simulation<vec2>* _s){
-    constexpr double c1 = 0.6756035959798289;
-    constexpr double c2 = -0.17560359597982883;
-    constexpr double d1 = 1.3512071919596578;
-    constexpr double d2 = -1.7024143839193153;
+    constexpr REAL c1 = 0.6756035959798289;
+    constexpr REAL c2 = -0.17560359597982883;
+    constexpr REAL d1 = 1.3512071919596578;
+    constexpr REAL d2 = -1.7024143839193153;
 
     static vec2 temp_v;
 
@@ -311,16 +311,16 @@ void update_symplectic4(Simulation<vec2>* _s){
 template <typename T> 
 void adaptive_euler(Simulation<T>* _s){
     for (auto& body : _s -> bodies){
-        double magn = body.acceleration.magnitude();
+        REAL magn = body.acceleration.magnitude();
         T r = body.acceleration / magn;
 
-        double E_i = _s -> bodies.get_velocity_of(body).sqr_magn() * .5 *body.mass - std::sqrt(_s -> get_G() * (_s -> get_total_mass() - body.mass) / magn);
+        REAL E_i = _s -> bodies.get_velocity_of(body).sqr_magn() * .5 *body.mass - std::sqrt(_s -> get_G() * (_s -> get_total_mass() - body.mass) / magn);
 
         Body<T> rollback = body;
         update_euler<T>(_s);
 
-        double E_f = _s -> bodies.get_velocity_of(body).sqr_magn() * .5 *body.mass - std::sqrt(_s -> get_G() * (_s -> get_total_mass() - body.mass) / body.acceleration.magnitude());
-        double iters = std::log10(std::abs((E_i - E_f) / E_i));
+        REAL E_f = _s -> bodies.get_velocity_of(body).sqr_magn() * .5 *body.mass - std::sqrt(_s -> get_G() * (_s -> get_total_mass() - body.mass) / body.acceleration.magnitude());
+        REAL iters = std::log10(std::abs((E_i - E_f) / E_i));
 
         if (iters < _s -> get_adaptive_coeff())
             return;
@@ -333,7 +333,7 @@ void adaptive_euler(Simulation<T>* _s){
         _s -> bodies.get_velocity_of(body) = rollback.velocity;
 
         _s -> set_dt(_s -> get_dt() / iters);
-        for (double i = 0; i < iters; ++i){
+        for (REAL i = 0; i < iters; ++i){
             update_euler<T>(_s);
         }
 
@@ -345,15 +345,15 @@ void adaptive_euler(Simulation<T>* _s){
 //===---------------------------------------------------------===//
 
 template <typename T>
-T newtonian(double m1, double m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
+T newtonian(REAL m1, REAL m2, T v1, T v2, T p1, T p2, Simulation<T>* _s){
     T n = (p2 - p1);
-    double r = n.magnitude();
+    REAL r = n.magnitude();
 
-    return n.normalize() * _s -> get_G() *m1*m2/(r*r);
+    return n.normalize() * _s -> get_G() *m1*m2/(r*r+1);
 }
 
 template <>
-std::vector<vec2> get_new_pos(vec2* position, vec2* velocity, vec2* acceleration, double step){
+std::vector<vec2> get_new_pos(vec2* position, vec2* velocity, vec2* acceleration, REAL step){
     std::vector<vec2> retval;
     retval.push_back(velocity -> update_by(acceleration, step));
     retval.push_back(position -> update_by(&retval[0], step));
@@ -361,7 +361,7 @@ std::vector<vec2> get_new_pos(vec2* position, vec2* velocity, vec2* acceleration
 }
 
 template <>
-vec2 rk4(double m1, double m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2, Simulation<vec2>* _s){
+vec2 rk4(REAL m1, REAL m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2, Simulation<vec2>* _s){
     vec2 k1, k2, k3, k4;
     std::vector<vec2> dummy;
     k1 = _s -> get_force(m1, m2, v1, v2, p1, p2, _s) * _s -> get_dt() ;
@@ -372,7 +372,7 @@ vec2 rk4(double m1, double m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2, Simulation<ve
     dummy = get_new_pos(&p1, &v1, &k3, _s -> get_dt() );
     k4 = _s -> get_force(m1, m2, v1 + dummy[0]/2.f, v2, p1 + dummy[1]/2.f, p2, _s) * _s -> get_dt() ;
 
-    return (k1 + k2*2.f + k3*2.f + k4)/6.f;
+    return (k1 + k2*(REAL)2 + k3*(REAL)2 + k4)/(REAL)6;
 }
 
 //===---------------------------------------------------------===//
@@ -389,10 +389,10 @@ void update_euler(Simulation<vec3>* _s){
 
 template <>
 void update_symplectic4(Simulation<vec3>* _s){
-    constexpr double c1 = 0.675603595979828885909057589742587879;
-    constexpr double c2 = -0.175603595979828858153481974113674369;
-    constexpr double d1 = 1.35120719195965777181811517948517576;
-    constexpr double d2 = -1.70241438391931532159162543393904343;
+    constexpr REAL c1 = 0.675603595979828885909057589742587879;
+    constexpr REAL c2 = -0.175603595979828858153481974113674369;
+    constexpr REAL d1 = 1.35120719195965777181811517948517576;
+    constexpr REAL d2 = -1.70241438391931532159162543393904343;
     
     // first step 
     for_each_body(_s, [d1, c1, _s](size_t body){
@@ -435,15 +435,15 @@ void update_symplectic4(Simulation<vec3>* _s){
 //===---------------------------------------------------------===//
 
 template <>
-vec3 newtonian(double m1, double m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<vec3>* _s){
+vec3 newtonian(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<vec3>* _s){
     vec3 n = (p2 - p1);
-    double r = n.magnitude();
+    REAL r = n.magnitude();
 
-    return n.normalize() * _s -> get_G() *m1*m2/(r*r);
+    return n.normalize() * _s -> get_G() *m1*m2/(r*r+1);
 }
 
 template <>
-std::vector<vec3> get_new_pos(vec3* position, vec3* velocity, vec3* acceleration, double step){
+std::vector<vec3> get_new_pos(vec3* position, vec3* velocity, vec3* acceleration, REAL step){
     std::vector<vec3> retval;
     retval.push_back(velocity -> update_by(acceleration, step));
     retval.push_back(position -> update_by(&retval[0], step));
@@ -451,7 +451,7 @@ std::vector<vec3> get_new_pos(vec3* position, vec3* velocity, vec3* acceleration
 }
 
 template <>
-vec3 rk4(double m1, double m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<vec3>* _s){
+vec3 rk4(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<vec3>* _s){
     vec3 k1, k2, k3, k4;
     std::vector<vec3> dummy;
     k1 = _s -> get_force(m1, m2, v1, v2, p1, p2, _s) * _s -> get_dt() ;
@@ -462,7 +462,7 @@ vec3 rk4(double m1, double m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation<ve
     dummy = get_new_pos(&p1, &v1, &k3, _s -> get_dt() );
     k4 = _s -> get_force(m1, m2, v1 + dummy[0]/2.f, v2, p1 + dummy[1]/2.f, p2, _s) * _s -> get_dt() ;
 
-    return (k1 + k2*2.f + k3*2.f + k4)/6.f;
+    return (k1 + k2*(REAL)2 + k3*(REAL)2 + k4)/(REAL)6;
 }
 
 template <>

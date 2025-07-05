@@ -99,28 +99,33 @@ REAL get_y(Graphs::Graph<vec2>* g, Simulation<vec2>* _s, size_t b){
 int main(){
 
     auto* sim = bake(LIGHT);
-    vec2 velocity = vec2({60, -40})*3;
 
     sim 
     -> use_GPU()
-    -> get_force_with(PN25)
-    -> set_dt(2e8)
+    -> set_scale(60e7)
+    -> get_force_with(NEWTON)
     -> update_with(SABA10)
-    -> set_scale(10e11)
-    -> add_graph(error_collect<vec2>)
-    -> add_graph(get_x, FOR_EACH)   
-    -> add_graph(get_y, FOR_EACH)
+    -> set_dt(10e2)
+    //-> add_graph(error_collect<vec2>)
+    //-> add_graph(get_x, FOR_EACH)
+    //-> add_graph(get_y, FOR_EACH)
     ;
-    
+ 
+    double AU = 150e9;
 
-    add_body(sim, 2e30, {10e10*1366 * 1/4, sim -> get_height() - 10e10*768 /2}, vec2({0, 800}) + velocity);
-    add_body(sim, 2e30, {10e10*1366 * 3/4, sim -> get_height() - 10e10*768 /2},  vec2({0,-800}) + velocity);
+    REAL r = 150e8;
+    REAL vel = std::sqrt(1.989e30 * sim -> get_G() / r) / 2;
 
-    add_body(sim, 5e30, {sim -> get_width() * 3/4, sim -> get_height() * 1/4}, -velocity + vec2({0, 170}));
+    add_body(sim, 1.989e30, sim -> get_center() - vec2({13*r, 0}), {0,5*vel});
+    add_body(sim, 1.989e30, sim -> get_center() - vec2({12*r, 0}), {0,7*vel});
+    add_body(sim, 1.989e32, sim -> get_center(), {vel/10, vel/2});
     
+    add_body(sim, 1.989e30, sim -> get_center() + vec2({13*r, 0}), {0,-5*vel});
+    add_body(sim, 1.989e30, sim -> get_center() + vec2({12*r, 0}), {0,-7*vel});
+
     sim -> load();
     energy = get_total_energy(sim);    
 
-    sim -> integrate(5e6);
-    //render(sim) -> show();
+    //sim -> integrate(5e6);
+    render(sim) -> show();
 }

@@ -13,6 +13,7 @@
 #endif
 
 #include "Aster/building-api/logging.h"
+#include "Aster/building-api/GPU_endpoint.h"
 #include "Aster/simulations/basic.h" 
 #include "Aster/impl/config.h"
 #include "Aster/simulations/sim_obj.h"
@@ -32,7 +33,7 @@ FORCE_INLINE void check(cl_int a){
     
 
 template <typename T> 
-void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, double c, double d){
+void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, REAL c, REAL d){
     if (!has_initialized) {
         init_opencl();
         has_initialized = true;
@@ -41,10 +42,10 @@ void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, double c, double d){
     cl_int operation_result;
     if (_s -> bodies.positions.size() == 0) return;
     
-    const size_t num_bytes = _s -> bodies.positions.size() * sizeof(double);
+    const size_t num_bytes = _s -> bodies.positions.size() * sizeof(REAL);
     const cl_uint N = _s -> bodies.positions.size();
     const size_t arr_size = (std::is_same<T, vec2>::value ? 2 : 3) * num_bytes;
-    const double dt = _s -> get_dt();
+    const REAL dt = _s -> get_dt();
 
     auto pos_b = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, arr_size, _s -> bodies.positions.data(),&operation_result);
     check(operation_result);
@@ -55,16 +56,16 @@ void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, double c, double d){
 
     size_t LW_size = 64;
     size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
-    double c_arg = c;
-    double d_arg = d;
+    REAL c_arg = c;
+    REAL d_arg = d;
 
     operation_result = clSetKernelArg(k, 0, sizeof(unsigned int), &N);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 1, sizeof(double), &dt);
+    operation_result = clSetKernelArg(k, 1, sizeof(REAL), &dt);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 2, sizeof(double), &d_arg);
+    operation_result = clSetKernelArg(k, 2, sizeof(REAL), &d_arg);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 3, sizeof(double), &c_arg);
+    operation_result = clSetKernelArg(k, 3, sizeof(REAL), &c_arg);
     check(operation_result);
     operation_result = clSetKernelArg(k, 4, sizeof(cl_mem), &pos_b);
     check(operation_result);
@@ -77,11 +78,11 @@ void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, double c, double d){
     operation_result = clEnqueueNDRangeKernel(queue, k, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr );
     check(operation_result);
 
-    operation_result = clEnqueueReadBuffer(queue, pos_b, CL_TRUE, 0, arr_size, _s -> bodies.positions.data(), 0, nullptr, nullptr);
+    operation_result = clEnqueueReadBuffer(queue, pos_b, CL_FALSE, 0, arr_size, _s -> bodies.positions.data(), 0, nullptr, nullptr);
     check(operation_result);
-    operation_result = clEnqueueReadBuffer(queue, vel_b, CL_TRUE, 0, arr_size, _s -> bodies.velocities.data(), 0, nullptr, nullptr);
+    operation_result = clEnqueueReadBuffer(queue, vel_b, CL_FALSE, 0, arr_size, _s -> bodies.velocities.data(), 0, nullptr, nullptr);
     check(operation_result);
-    operation_result = clEnqueueReadBuffer(queue, acc_b, CL_TRUE, 0, arr_size, _s -> bodies.accs.data(), 0, nullptr, nullptr);
+    operation_result = clEnqueueReadBuffer(queue, acc_b, CL_FALSE, 0, arr_size, _s -> bodies.accs.data(), 0, nullptr, nullptr);
     check(operation_result);
     
     clFinish( queue );
@@ -101,10 +102,10 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     cl_int operation_result;
     if (_s -> bodies.positions.size() == 0) return;
 
-    const size_t num_bytes = _s -> bodies.positions.size() * sizeof(double);
+    const size_t num_bytes = _s -> bodies.positions.size() * sizeof(REAL);
     const cl_uint N = _s -> bodies.positions.size();
-    const double G = _s -> get_G();
-    const double C = _s -> get_c();
+    const REAL G = _s -> get_G();
+    const REAL C = _s -> get_c();
     const size_t vec_size = (std::is_same<T, vec2>::value ? 2 : 3) * num_bytes;
 
     // creates buffer for mass
@@ -112,7 +113,7 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     check(operation_result);
 
     // loads buffer for mass
-    operation_result = clEnqueueWriteBuffer(queue, masses_b, CL_TRUE, 0, num_bytes, _s -> bodies.masses.data(), 0, nullptr, nullptr);
+    operation_result = clEnqueueWriteBuffer(queue, masses_b, CL_FALSE, 0, num_bytes, _s -> bodies.masses.data(), 0, nullptr, nullptr);
     check(operation_result);
 
     // creates buffer for temperature
@@ -120,7 +121,7 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     check(operation_result);
     
     // loads buffer for temperature
-    operation_result = clEnqueueWriteBuffer(queue, temp_b, CL_TRUE, 0, num_bytes, _s -> bodies.temps.data(), 0, nullptr, nullptr);
+    operation_result = clEnqueueWriteBuffer(queue, temp_b, CL_FALSE, 0, num_bytes, _s -> bodies.temps.data(), 0, nullptr, nullptr);
     check(operation_result);
 
     // creates buffer for position
@@ -128,7 +129,7 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     check(operation_result);
 
     // loads buffer for position
-    operation_result = clEnqueueWriteBuffer(queue, pos_b, CL_TRUE, 0, vec_size, _s -> bodies.positions.data(), 0, nullptr, nullptr);
+    operation_result = clEnqueueWriteBuffer(queue, pos_b, CL_FALSE, 0, vec_size, _s -> bodies.positions.data(), 0, nullptr, nullptr);
     check(operation_result);
 
     // creates buffer for velocities
@@ -136,7 +137,7 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     check(operation_result);
 
     // loads buffer for velocities
-    operation_result = clEnqueueWriteBuffer(queue, vel_b, CL_TRUE, 0, vec_size, _s -> bodies.velocities.data(), 0, nullptr, nullptr);
+    operation_result = clEnqueueWriteBuffer(queue, vel_b, CL_FALSE, 0, vec_size, _s -> bodies.velocities.data(), 0, nullptr, nullptr);
     check(operation_result);
 
     //creates buffer for acceleration
@@ -148,9 +149,9 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
 
     operation_result = clSetKernelArg(k, 0, sizeof(unsigned int), &N);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 1, sizeof(double), &G);
+    operation_result = clSetKernelArg(k, 1, sizeof(REAL), &G);
     check(operation_result);
-    operation_result = clSetKernelArg(k, 2, sizeof(double), &C);
+    operation_result = clSetKernelArg(k, 2, sizeof(REAL), &C);
     check(operation_result);
     operation_result = clSetKernelArg(k, 3, sizeof(cl_mem), &temp_b);
     check(operation_result);
@@ -166,7 +167,7 @@ void upload_force_kernel(cl_kernel& k, Simulation<T>* _s){
     operation_result = clEnqueueNDRangeKernel(queue, k, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr );
     check(operation_result);
 
-    operation_result = clEnqueueReadBuffer( queue, acc_br, CL_TRUE, 0, vec_size, _s -> bodies.accs.data(), 0, nullptr, nullptr );
+    operation_result = clEnqueueReadBuffer( queue, acc_br, CL_FALSE, 0, vec_size, _s -> bodies.accs.data(), 0, nullptr, nullptr );
     check(operation_result);
 
     clFinish(queue);

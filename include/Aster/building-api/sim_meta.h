@@ -1,11 +1,12 @@
 #pragma once
 
 #include "Aster/simulations/basic.h"
+#include "Aster/physics/vectors.h"
 
 namespace Aster{
 
 // type of simulations
-enum simulation_types: int {LIGHT = 0, MEDIUM = 1, HEAVY = 2, BARNES_HUT = 3, BH_termal = 4};
+enum simulation_types: int {LIGHT = 0, MEDIUM = 1, HEAVY = 2, BARNES_HUT = 3, BH_termal = 4, BH_cl = 5};
 
 struct sim_meta{
    int 
@@ -19,7 +20,7 @@ struct sim_meta{
         1000  // z
     };
 
-    double  
+    REAL  
         avr_heat_capacity = 2e3,
         H_0 = 10,
         G = 6e-11,
@@ -31,7 +32,7 @@ struct sim_meta{
         graph_height = 3/4
     ;
 
-    double
+    REAL
         adaptive_coeff = 5,
         divergence = 14,
         takeover = 100,

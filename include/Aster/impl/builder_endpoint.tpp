@@ -83,7 +83,7 @@ bool Simulation<T>::is_fine(){
 * @param c_: screen's bg color
 */
 template <typename T>
-Simulation<T>* Simulation<T>::set_screen_size(double w_, double h_, double d_){
+Simulation<T>* Simulation<T>::set_screen_size(REAL w_, REAL h_, REAL d_){
     data.size = {
         w_, h_, d_
     };
@@ -138,7 +138,7 @@ Simulation<T>* Simulation<T>::integrate(size_t times){
 
     auto end = std::chrono::high_resolution_clock::now();
 
-    std::chrono::duration<double, std::milli> lasted_for = end - start;
+    std::chrono::duration<REAL, std::milli> lasted_for = end - start;
     std::ostringstream per_step;
     std::ostringstream total;
 
@@ -222,14 +222,14 @@ inline Simulation<T>* Simulation<T>::add_graph(typename Graphs::Graph<T>::listen
 }
 
 template <typename T>
-Simulation<T>* Simulation<T>::set_heat_capacity(double c_){
+Simulation<T>* Simulation<T>::set_heat_capacity(REAL c_){
     assert(c_ && "heat capacity cannot be 0");
     data.avr_heat_capacity = c_;
     return this;
 }
 
 template <typename T>
-double Simulation<T>::get_height() const{
+REAL Simulation<T>::get_height() const{
     return this -> data.size.y * get_scale();
 }
 
@@ -239,28 +239,28 @@ bool Simulation<T>::uses_GPU() const{
 }
 
 template <typename T>
-double Simulation<T>::get_width() const{
+REAL Simulation<T>::get_width() const{
     return this -> data.size.x * get_scale();
 }
 
 template <typename T>
-double Simulation<T>::get_depth() const{
+REAL Simulation<T>::get_depth() const{
     return this -> data.size.z * get_scale();
 }
 
 
 template <typename T>
-double Simulation<T>::get_render_height() const{
+REAL Simulation<T>::get_render_height() const{
     return this -> data.size.y;
 }
 
 template <typename T>
-double Simulation<T>::get_render_width() const{
+REAL Simulation<T>::get_render_width() const{
     return this -> data.size.x;
 }
 
 template <typename T>
-double Simulation<T>::get_render_depth() const{
+REAL Simulation<T>::get_render_depth() const{
     return this -> data.size.z;
 }
 
@@ -270,7 +270,7 @@ int Simulation<T>::get_cores() const{
 };
 
 template <typename T>
-double Simulation<T>::get_G() const{
+REAL Simulation<T>::get_G() const{
     return this -> data.G;
 };
 
@@ -281,48 +281,48 @@ simulation_types Simulation<T>::get_type() const{
 
 
 template <typename T>
-double Simulation<T>::get_c() const{
+REAL Simulation<T>::get_c() const{
     return this -> data.c;
 }
 
 template <typename T>
-double Simulation<T>::get_c_sqr() const{
+REAL Simulation<T>::get_c_sqr() const{
     return this -> data.c_squared;
 }
 
 template <typename T>
-double Simulation<T>::get_dt() const{
+REAL Simulation<T>::get_dt() const{
     return this -> data.dt;
 }
 
 template <typename T>
-double Simulation<T>::get_e_sqr() const{
+REAL Simulation<T>::get_e_sqr() const{
     return this -> data.e_squared;
 }
 
 template <typename T>
-double Simulation<T>::get_takeover() const{
+REAL Simulation<T>::get_takeover() const{
     return this -> data.takeover;
 }
 
 template <typename T>
-double Simulation<T>::get_scale() const{
+REAL Simulation<T>::get_scale() const{
     return this -> data.simulation_scale;
 }
 
 template <typename T>
-Simulation<T>* Simulation<T>::set_scale(double s){
+Simulation<T>* Simulation<T>::set_scale(REAL s){
     data.simulation_scale = s;
     return this;
 }
 
 template <typename T>
-double Simulation<T>::get_heat_capacity() const{
+REAL Simulation<T>::get_heat_capacity() const{
     return this -> data.avr_heat_capacity;
 }
 
 template <typename T>
-double Simulation<T>::get_boltzmann() const{
+REAL Simulation<T>::get_boltzmann() const{
     return this -> data.boltzmann;
 }
 
@@ -352,17 +352,17 @@ inline vec3 Simulation<vec3>::get_center() const{
 }
 
 template <typename T>
-double Simulation<T>::get_total_mass() const{
+REAL Simulation<T>::get_total_mass() const{
     return total_mass;
 }
 
 template <typename T>
-double Simulation<T>::get_adaptive_coeff() const{
+REAL Simulation<T>::get_adaptive_coeff() const{
     return data.adaptive_coeff;
 }
 
 template <typename T>
-Simulation<T>* Simulation<T>::set_adaptive_coeff(double s){
+Simulation<T>* Simulation<T>::set_adaptive_coeff(REAL s){
     data.adaptive_coeff = s;
     return this;
 }
@@ -400,7 +400,7 @@ inline vec3 Simulation<vec3>::get_corner(int n) const{
 }
 
 template <typename T>
-double Simulation<T>::get_time_passed() const {
+REAL Simulation<T>::get_time_passed() const {
     return time_passed;
 }
 
