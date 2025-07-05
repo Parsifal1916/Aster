@@ -23,7 +23,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2 ocl-icd-opencl-dev tbb
+        sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev freeglut3-dev catch2 ocl-icd-opencl-dev libtbb-dev
 
     - name: Setup dependencies (macOS)
       if: matrix.os == 'macos-latest'
