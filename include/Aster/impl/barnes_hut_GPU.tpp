@@ -62,12 +62,13 @@ void BHG<T>::upload_force_calc(size_t num_leaves, size_t tree_size, size_t num_b
     using namespace GPU;
     cl_int operation_result = 0 ;
     if (num_leaves == 0) return;
+    int mult = sizeof(T) / sizeof(REAL);
     
-    size_t double2_size_tree = sizeof(REAL) * 2 * tree_size;
+    size_t double2_size_tree = sizeof(REAL) * mult * tree_size;
     size_t int_size_tree = sizeof(int) * tree_size;
     size_t double_size_tree = sizeof(REAL) * tree_size;
 
-    size_t double2_size_bodies = sizeof(REAL) * 2 * num_bodies; 
+    size_t double2_size_bodies = sizeof(REAL) * mult * num_bodies; 
     size_t double_size_bodies = sizeof(REAL) * num_bodies;       
     
     cl_mem com_buff, rights_buff, lefts_buff, nmasses_buff, pos_buff, bmasses_buff;
@@ -92,9 +93,8 @@ void BHG<T>::upload_force_calc(size_t num_leaves, size_t tree_size, size_t num_b
     size_t LW_size = 64;
     size_t GW_size = ((num_bodies + LW_size - 1) / LW_size) * LW_size;
 
-    // Parametri corretti per il kernel
-    int root_node = num_leaves;  // Il nodo radice è il primo nodo interno
-    REAL tree_bound_size = this->bounding_box.magnitude();  // Dimensione reale del bounding box
+    int root_node = num_leaves;  
+    REAL tree_bound_size = this->bounding_box.magnitude(); 
     
     operation_result = clSetKernelArg(force_calculator, 0, sizeof(int), &num_bodies);
     check(operation_result);
@@ -102,25 +102,25 @@ void BHG<T>::upload_force_calc(size_t num_leaves, size_t tree_size, size_t num_b
     check(operation_result);
     operation_result = clSetKernelArg(force_calculator, 2, sizeof(REAL), &this->theta);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 3, sizeof(REAL), &tree_bound_size);  // Dimensione reale
+    operation_result = clSetKernelArg(force_calculator, 3, sizeof(REAL), &tree_bound_size);  
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 4, sizeof(int), &root_node);           // Nodo radice
+    operation_result = clSetKernelArg(force_calculator, 4, sizeof(int), &root_node);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 5, sizeof(int), &tree_size);           // Nodo radice
+    operation_result = clSetKernelArg(force_calculator, 5, sizeof(int), &tree_size); 
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 6, sizeof(cl_mem), &nmasses_buff);     // node_masses
+    operation_result = clSetKernelArg(force_calculator, 6, sizeof(cl_mem), &nmasses_buff);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 7, sizeof(cl_mem), &pos_buff);         // pos
+    operation_result = clSetKernelArg(force_calculator, 7, sizeof(cl_mem), &pos_buff); 
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 8, sizeof(cl_mem), &com_buff);         // com
+    operation_result = clSetKernelArg(force_calculator, 8, sizeof(cl_mem), &com_buff); 
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 9, sizeof(cl_mem), &lefts_buff);       // lefts
+    operation_result = clSetKernelArg(force_calculator, 9, sizeof(cl_mem), &lefts_buff); 
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 10, sizeof(cl_mem), &rights_buff);      // rights
+    operation_result = clSetKernelArg(force_calculator, 10, sizeof(cl_mem), &rights_buff); 
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &bmasses_buff);    // body_masses
+    operation_result = clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &bmasses_buff);  
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 12, sizeof(cl_mem), &accs_buff);       // acc_out
+    operation_result = clSetKernelArg(force_calculator, 12, sizeof(cl_mem), &accs_buff);  
     check(operation_result);
 
 
@@ -243,7 +243,6 @@ void BHG<T>::build_tree(){
 
     parallel_sort(enhanced_mortons.begin(), enhanced_mortons.end(), [](const std::pair<uint32_t, size_t>& a, const std::pair<uint32_t, size_t>&b ){ return a.first < b.first;});
 
-
     translate2nodes<T>(this, this ->  nodes, enhanced_mortons);
     size_t num_leaves = this -> nodes.size();
     
@@ -289,8 +288,12 @@ BHG<T>::BHG() {
     GPU::compile_kernel(&tree_kernel_name, &GPU::barnes_tree_cl, tree_builder);
     
     //if constexpr (sizeof(REAL) == sizeof(double)) 
+    
+    if constexpr (std::is_same<T, vec2>::value)
         GPU::compile_kernel(&force_kernel_name, &GPU::barnes_force_basic, force_calculator);
-    //else 
+    else
+        GPU::compile_kernel(&force_kernel_name, &GPU::barnes_force_basic_3d, force_calculator);
+        //else 
     //    GPU::compile_kernel(&force_kernel_name, &GPU::barnes_force_basic_lite, force_calculator);
     //GPU::compile_kernel(&lbit_kernel_name, &GPU::bitonic_sort_cl, this -> local_block_bitonic);
     //GPU::compile_kernel(&gbit_kernel_name, &GPU::bitonic_sort_cl, this -> global_bitonic_merge);
@@ -303,7 +306,8 @@ void BHG<T>::step(){
     this -> build_tree(); // generates the quad-tree / oct-tree
     
     upload_force_calc(this -> compressed_mortons_size, this ->nodes.size(), this -> bodies.positions.size());
-    
+    //barnes_update_forces(this);
+
     this -> update_bodies(this);
 
     // triggers graph and steps the time

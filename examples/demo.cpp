@@ -90,25 +90,27 @@ int main(){
     //for (const auto& i : {100, 150, 500, 1000, 1500, 10000, 50000, 100000, 500000, 1000000}){
     //    test_sim<vec2>(i);
     //}
-    using type = vec2;
+    using type = vec3;
 
     auto* sim = new Barnes::BHG <type>;
 
     sim 
-    -> set_theta(.9)
-    //-> use_GPU()
+    -> set_theta(.1)
+    -> use_GPU()
     -> update_with(SABA6)
     -> set_scale(150e6)
-    -> set_dt(10e3)
+    -> set_dt(1e5)
     -> update_with(update_sim<type>);
     ;
     //load_solar_system(sim);
-    add_disk(sim, 1e6, sim -> get_center(), 200, 10, 10e16);
+    add_disk(sim, 1e4, sim -> get_center(), 250, 10, {0,0,0},10e19);
 
     sim -> load();
     //sim -> step();
-    //render(sim) -> show();
-    sim -> integrate(100);
+    render(sim)
+    //-> render_as(TRAJ)
+    -> show();
+    //sim -> integrate(100);
 }
 
 

@@ -78,6 +78,7 @@ class Simulation{
     REAL get_render_height() const;
     REAL get_render_width() const;
     REAL get_render_depth() const;
+    T get_center_of_mass();
 
     REAL get_G() const;
     REAL get_time_passed() const;

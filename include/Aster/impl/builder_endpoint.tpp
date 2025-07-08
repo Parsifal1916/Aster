@@ -6,6 +6,8 @@
 #include <chrono>
 #include <cassert>
 #include <iomanip>
+#include <tbb/parallel_reduce.h>
+#include <tbb/blocked_range.h>
 
 #define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
@@ -89,6 +91,50 @@ Simulation<T>* Simulation<T>::set_screen_size(REAL w_, REAL h_, REAL d_){
     };
 
     return this;
+}
+
+template <typename T>
+struct CoMReducer {
+    const std::vector<REAL>& m;                 
+    const std::vector<T>& p;
+
+    REAL m_sum {};   
+    T mp_sum;
+
+    CoMReducer(const std::vector<REAL>& masses,
+               const std::vector<T>& positions)
+        : m{masses}, p{positions} {}
+
+    CoMReducer(CoMReducer& other, tbb::split)
+        : m{other.m}, p{other.p} {}
+
+    void operator()(const tbb::blocked_range<std::size_t>& r) {
+        REAL local_m_sum = m_sum;
+        T local_mp_sum = mp_sum;
+
+        for (std::size_t i = r.begin(); i != r.end(); ++i) {
+            const REAL mi = static_cast<REAL>(m[i]);
+            local_m_sum += mi;
+            local_mp_sum += mi * p[i];
+        }
+        m_sum   = local_m_sum;
+        mp_sum  = local_mp_sum;
+    }
+
+    void join(const CoMReducer& rhs) {
+        m_sum   += rhs.m_sum;
+        mp_sum += rhs.mp_sum;
+    }
+};
+
+template <typename T>
+T Simulation<T>::get_center_of_mass(){
+    CoMReducer<T> reducer{this -> bodies.masses, this -> bodies.positions};
+    tbb::parallel_reduce(tbb::blocked_range<std::size_t>(0, this -> bodies.positions.size()),
+                         reducer);
+
+    const double invTotalMass = 1.0 / reducer.m_sum;
+    return reducer.mp_sum[0] * invTotalMass;
 }
 
 template <typename T>

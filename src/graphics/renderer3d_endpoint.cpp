@@ -36,7 +36,6 @@ bool Renderer3d::does_show_axis(){
     return show_axis_b;
 }
 
-
 /**
 * @brief draws the axis on screen
 */
@@ -231,7 +230,7 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
         return; 
 
     // recalculates and clamps the parallax distance
-    renderer -> distance += renderer -> distance * static_cast<float>(yoffset) / 1000;
+    renderer -> distance -= renderer -> distance * static_cast<float>(yoffset) / 1000;
     renderer -> distance = (renderer -> distance < .5) ? .5 : renderer -> distance;
     renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> get_width()) ?  10 * renderer -> _s -> get_width() : renderer -> distance;
 }
@@ -336,7 +335,7 @@ void Renderer3d::draw_minimal3d(){
         temp = map_point(_s -> bodies.get_position_of(i));
 
         // calculates the color based on parallax
-        REAL mult = _s -> get_render_depth()/std::max((double)temp.z, .001) + .2;
+        REAL mult = _s -> get_depth()/std::max((temp.z/8), .3);
         glColor3f(
             mult, mult, mult
         );
@@ -348,7 +347,7 @@ void Renderer3d::draw_minimal3d(){
                 temp.y
             );
     }
-
+ 
     glEnd();
 }
 /**
@@ -356,10 +355,11 @@ void Renderer3d::draw_minimal3d(){
 */
 void Renderer3d::draw_detailed3d() { 
     vec3 mapped_pos = {0, 0,0}; // only one instance
+    float aspect_ratio = float(current_width) / float(current_height);
 
     for (int i = 0; i < _s -> bodies.positions.size(); ++i) {
         mapped_pos = map_point(_s -> bodies.get_position_of(i)); //saves the position
-        
+         
         // fetches the color from rng colors array
         glColor3f(rng_colors[i % 15][0], 
                   rng_colors[i % 15][1], 
@@ -371,13 +371,13 @@ void Renderer3d::draw_detailed3d() {
         // draws a circle around the body using a triangle fan
         glBegin(GL_TRIANGLE_FAN);
         // draws the center of the fan
-        glVertex2f(mapped_pos.x, mapped_pos.y);
+        glVertex2f(mapped_pos.x / aspect_ratio, mapped_pos.y / aspect_ratio);
 
         for (int j = 0; j <= NUM_SEGMENTS; j++) {
             // calculates the points's position with polar coordinates where r = radius
             float angle = 2.0f * M_PI * j / NUM_SEGMENTS;
-            float vx = mapped_pos.x + cos(angle) * radius;
-            float vy = mapped_pos.y + sin(angle) * radius;
+            float vx = (mapped_pos.x + cos(angle) * radius) / aspect_ratio;
+            float vy = (mapped_pos.y + sin(angle) * radius) / aspect_ratio;
 
             // draws the vertex
             glVertex2f(vx, vy);

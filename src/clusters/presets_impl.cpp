@@ -410,14 +410,15 @@ void add_disk(Simulation<vec3>* _s, size_t nums, vec3 center, REAL radius, REAL 
 
     // sets up the builder lambda
     cluster.builder = [g_pull, radius, v, avr_mass, center, thickness, rotation, _s ](Cluster<vec3> cl3d, size_t _) {
-        vec3 pos = rng_point_in_cylinder(radius, 1, thickness); // gets a random point in the disk
+        // calculates the tangential velocity
+        vec3 pos = rng_point_in_cylinder(radius, 10, thickness) * _s -> get_scale(); // gets a random point inside the disk
 
         // generates the radius
         REAL r = pos.sqr_magn() + .1;
 
-        // calculates the tangential velocity
-        REAL magn_vel = g_pull*r/1000000 + std::exp(-(r*r)/80);
-        vec3 vel = vec3(-pos.y/r *magn_vel, pos.x/r* magn_vel, rng_percent() - 1) + v;
+        // velocty on that point
+        REAL magn_vel =std::sqrt(_s -> get_G() * avr_mass / r)*1000000;
+        vec3 vel = vec3(-pos.y/r * magn_vel, pos.x/r * magn_vel, 0) + v;
 
         // rotates velocity and position
         pos = rotate_point(pos, rotation.x, rotation.z);

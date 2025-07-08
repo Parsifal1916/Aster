@@ -18,6 +18,7 @@ using force_func = T(*)(REAL, REAL, T, T, T, T, Simulation<T>*);
 
 enum force_type:  int {NEWTON = 0, PN1 = 1, PN2 = 2, PN25 = 3, CUSTOM_F = 4};
 enum update_type: int {EULER = 0, SABA2 = 1, SABA3 = 2, SABA4 = 3, SABA5 = 4, SABA6 = 5, SABA7 = 6, SABA8 = 7, SABA9 = 8, SABA10 = 9, CUSTOM_U};
+enum render_style: int {DETAILED = 0, SIMPLE = 1, THERMAL = 2, TRAJ = 3};
 
 #define SABA1 EULER
 #define LEAPFROG SABA2 

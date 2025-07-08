@@ -26,7 +26,7 @@ struct vec2 {
     REAL operator*(const vec2& other) const;
     vec2 operator*(const int& other) const;
     vec2& operator/=(const REAL& other);
-    float magnitude();
+    REAL magnitude() const;
     vec2 direction(vec2 v2);
     vec2 normalize();
     bool is_fine() const;
@@ -36,6 +36,7 @@ struct vec2 {
 
 };
 
+#pragma pack(push, 1)
 struct vec3 {
     REAL x;
     REAL y;
@@ -59,7 +60,7 @@ struct vec3 {
     REAL operator*(const vec3& other) const;
     vec3 operator*(const int& other) const;
     vec3& operator/=(const REAL& other);
-    float magnitude();
+    REAL magnitude() const;
     bool is_fine() const;
     vec3 update_by(vec3* v, REAL delta);
     vec3 direction(vec3 v3);

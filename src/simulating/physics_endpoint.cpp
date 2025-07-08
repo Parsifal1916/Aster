@@ -103,7 +103,7 @@ vec2& vec2::operator/=(const REAL& other){
     return *this;
 }
 
-float vec2::magnitude(){
+REAL vec2::magnitude() const{
     return std::sqrt(
         this -> x * this -> x + 
         this -> y * this -> y
@@ -210,7 +210,7 @@ vec3& vec3::operator/=(const REAL& other){
     return *this;
 }
 
-float vec3::magnitude(){
+REAL vec3::magnitude() const{
     return std::sqrt(
         this -> x * this -> x + 
         this -> y * this -> y + 
