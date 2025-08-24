@@ -87,7 +87,22 @@ void add_bodies(Simulation<vec3>* _s){
 //}
 
 int main(){ 
+    auto* simulation = bake(LIGHT);
 
+    cosmic_web(simulation, 100, 1e10);
+
+    simulation 
+    -> set_dt(10)
+    -> use_GPU()
+    -> get_force_with(PN1)
+    -> load();
+
+
+    simulation -> step(); 
+    std::cout << simulation -> is_fine() << "\n";
+    render(simulation) -> show();
+
+    return 0;
     using type = vec3;
 
     auto* sim = bake(LIGHT);//new Barnes::BHG <type>;
