@@ -23,6 +23,7 @@ core.*
 demo
 tests/*.mp4
 tests/demo
+tests/gpu.h
 
 .DS_Store
 Thumbs.db

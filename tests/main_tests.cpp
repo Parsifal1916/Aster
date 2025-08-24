@@ -9,3 +9,4 @@
 #include "sim_building.h"
 #include "math_sanity_test.h"
 #include "sim_step_testing.h"
+#include "gpu.h"

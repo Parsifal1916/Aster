@@ -43,7 +43,7 @@ bool Simulation<T>::is_fine(){
         break;
     }
 
-    warn_if(retval, "is_fine() call: simulation is not fine, NaN found in particle's data");
+    warn_if(!retval, "is_fine() call: simulation is not fine, NaN found in particle's data");
 
     return retval;
 }
