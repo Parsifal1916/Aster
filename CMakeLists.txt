@@ -56,10 +56,11 @@ set_target_properties(Aster PROPERTIES
 )
 
 if(NOT MSVC)
-    target_compile_options(Aster PRIVATE 
+    target_compile_options(Aster PUBLIC
         -Wno-aggressive-loop-optimizations
         -O3
         -lTBB
+        -lOpenCL
     )
 endif()
 

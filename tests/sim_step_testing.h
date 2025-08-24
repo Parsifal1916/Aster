@@ -10,7 +10,7 @@ using namespace Aster;
 using namespace Catch;
 
 TEST_CASE("Simulation step benchmarking", "[building]") {
-    SECTION("2d simulations"){
+    SECTION("2d Barnes"){
         auto* simulation = bake(BARNES_HUT);
 
         cosmic_web(simulation, 1e3, 1e4);
@@ -23,7 +23,7 @@ TEST_CASE("Simulation step benchmarking", "[building]") {
         free(simulation);
     }
 
-    SECTION("3d simulations"){
+    SECTION("3d Barnes"){
         auto* simulation = bake3d(BARNES_HUT);
         
         cosmic_web(simulation, 1e3, 1e4);
@@ -36,3 +36,31 @@ TEST_CASE("Simulation step benchmarking", "[building]") {
         free(simulation);
     }
 }
+/*
+TEST_CASE("GPU Simulation step benchmarking", "[building]") {
+    SECTION("GPU 2d Barnes"){
+        auto* simulation = new Barnes::BHG <vec2>;
+
+        cosmic_web(simulation, 1e3, 1e4);
+        simulation -> load();
+
+        BENCHMARK("Steps 2d"){
+            return simulation -> step();
+        };
+
+        free(simulation);
+    }
+
+    SECTION("GPU 3d Barnes"){
+        auto* simulation = new Barnes::BHG <vec2>;
+        
+        cosmic_web(simulation, 1e3, 1e4);
+        simulation -> load();
+
+        BENCHMARK("Steps 3d"){
+            return simulation -> step();
+        };
+
+        free(simulation);
+    }
+}*/

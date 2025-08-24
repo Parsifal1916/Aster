@@ -55,8 +55,7 @@ struct sim_meta{
     ;
     bool 
         flrw_on = false,
-        save = false,
-        show_trajectories = false
+        save = false
     ; 
     simulation_types type = HEAVY;
 

@@ -87,30 +87,28 @@ void add_bodies(Simulation<vec3>* _s){
 //}
 
 int main(){ 
-    //for (const auto& i : {100, 150, 500, 1000, 1500, 10000, 50000, 100000, 500000, 1000000}){
-    //    test_sim<vec2>(i);
-    //}
+
     using type = vec3;
 
-    auto* sim = new Barnes::BHG <type>;
+    auto* sim = bake(LIGHT);//new Barnes::BHG <type>;
 
     sim 
-    -> set_theta(.1)
-    -> use_GPU()
-    -> update_with(SABA6)
+    //-> set_theta(1000)
+    -> update_with(update_SABA10<vec2>)
+    -> get_force_with(NEWTON)
     -> set_scale(150e6)
-    -> set_dt(1e5)
-    -> update_with(update_sim<type>);
+    -> set_dt(4e3)
     ;
-    //load_solar_system(sim);
-    add_disk(sim, 1e4, sim -> get_center(), 250, 10, {0,0,0},10e19);
+    //add_body(sim, 3.3011e23, sim -> get_center() - vec2(0.31 * AU, 0), {0, 34700}); //mercury 
+    //add_body(sim, 1.989e30, sim -> get_center(), {0,0}); //sun
+    //add_disk(sim, 1e5, sim -> get_center(), 350, 10, 10e19);
+
+    load_solar_system(sim);
 
     sim -> load();
-    //sim -> step();
     render(sim)
-    //-> render_as(TRAJ)
     -> show();
-    //sim -> integrate(100);
+    //sim -> integrate(10e5);
 }
 
 

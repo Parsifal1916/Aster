@@ -6,8 +6,6 @@
 #include <chrono>
 #include <cassert>
 #include <iomanip>
-#include <tbb/parallel_reduce.h>
-#include <tbb/blocked_range.h>
 
 #define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
@@ -16,6 +14,9 @@
 #else
 #include <CL/opencl.h>
 #endif
+
+#include <tbb/parallel_reduce.h>
+#include <tbb/blocked_range.h>
 
 #include "Aster/impl/config.h"
 #include "Aster/simulations/basic.h"
@@ -93,6 +94,7 @@ Simulation<T>* Simulation<T>::set_screen_size(REAL w_, REAL h_, REAL d_){
     return this;
 }
 
+
 template <typename T>
 struct CoMReducer {
     const std::vector<REAL>& m;                 
@@ -136,6 +138,7 @@ T Simulation<T>::get_center_of_mass(){
     const double invTotalMass = 1.0 / reducer.m_sum;
     return reducer.mp_sum[0] * invTotalMass;
 }
+
 
 template <typename T>
 Simulation<T>* Simulation<T>::set_dt(float dt_){

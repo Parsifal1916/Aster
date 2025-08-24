@@ -36,6 +36,7 @@ bool Renderer3d::does_show_axis(){
     return show_axis_b;
 }
 
+
 /**
 * @brief draws the axis on screen
 */
@@ -230,7 +231,7 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
         return; 
 
     // recalculates and clamps the parallax distance
-    renderer -> distance -= renderer -> distance * static_cast<float>(yoffset) / 1000;
+    renderer -> distance += renderer -> distance * static_cast<float>(yoffset) / 1000;
     renderer -> distance = (renderer -> distance < .5) ? .5 : renderer -> distance;
     renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> get_width()) ?  10 * renderer -> _s -> get_width() : renderer -> distance;
 }
@@ -335,7 +336,7 @@ void Renderer3d::draw_minimal3d(){
         temp = map_point(_s -> bodies.get_position_of(i));
 
         // calculates the color based on parallax
-        REAL mult = _s -> get_depth()/std::max((temp.z/8), .3);
+        REAL mult = _s -> get_render_depth()/std::max((double)temp.z, .001) + .2;
         glColor3f(
             mult, mult, mult
         );
@@ -347,7 +348,7 @@ void Renderer3d::draw_minimal3d(){
                 temp.y
             );
     }
- 
+
     glEnd();
 }
 /**
@@ -359,7 +360,7 @@ void Renderer3d::draw_detailed3d() {
 
     for (int i = 0; i < _s -> bodies.positions.size(); ++i) {
         mapped_pos = map_point(_s -> bodies.get_position_of(i)); //saves the position
-         
+        
         // fetches the color from rng colors array
         glColor3f(rng_colors[i % 15][0], 
                   rng_colors[i % 15][1], 

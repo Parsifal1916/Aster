@@ -36,7 +36,6 @@ struct vec2 {
 
 };
 
-#pragma pack(push, 1)
 struct vec3 {
     REAL x;
     REAL y;

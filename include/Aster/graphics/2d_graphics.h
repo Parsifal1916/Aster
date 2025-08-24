@@ -5,7 +5,6 @@
 #include <iomanip>
 #include "Aster/simulations/sim_obj.h"
 #include "Aster/graphs/labeling.h"
-#include "Aster/simulations/basic.h"
 
 namespace Aster{
 
@@ -57,8 +56,6 @@ class Renderer2d{
 
     void draw_barnes();
 
-    Renderer2d* render_as(render_style s);
-
     /**
     * @brief creates a window and renderes the simulation
     */
@@ -107,13 +104,12 @@ class Renderer2d{
     */
     static void handle_mouse_scroll(GLFWwindow* window, double xoffset, double yoffset);
 
-    void draw_with_trajectories();
+
 
     bool show_axis_b = false;    
     Simulation<vec2>* _s = nullptr;
     render_func render = nullptr;
     REAL scale = 1;
-    bool show_trajectories;
 };
 
 }

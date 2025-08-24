@@ -64,6 +64,7 @@ class Simulation{
     
     REAL get_total_mass() const;
     REAL get_adaptive_coeff() const;
+    T get_center_of_mass();
     bool is_fine();
 
     bool has_loaded_yet() const;
@@ -78,7 +79,6 @@ class Simulation{
     REAL get_render_height() const;
     REAL get_render_width() const;
     REAL get_render_depth() const;
-    T get_center_of_mass();
 
     REAL get_G() const;
     REAL get_time_passed() const;
