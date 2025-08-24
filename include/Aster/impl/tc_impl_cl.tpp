@@ -1,5 +1,5 @@
 #pragma once
-#define CL_TARGET_OPENCL_VERSION 300
+#define CL_TARGET_OPENCL_VERSION 200
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 #include <fstream>

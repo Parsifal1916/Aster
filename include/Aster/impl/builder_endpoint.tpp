@@ -7,7 +7,7 @@
 #include <cassert>
 #include <iomanip>
 
-#define CL_TARGET_OPENCL_VERSION 300
+#define CL_TARGET_OPENCL_VERSION 200
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -17,6 +17,7 @@
 
 #include <tbb/parallel_reduce.h>
 #include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
 
 #include "Aster/impl/config.h"
 #include "Aster/simulations/basic.h"
@@ -28,41 +29,9 @@ namespace Aster{
 template class Simulation<vec2>;
 template class Simulation<vec3>;
 
-template <typename T, typename F>
-FORCE_INLINE void for_every_body(Simulation<T>* _s, F func) {
-    assert(_s->has_loaded_yet());
-    
-    const size_t n_bodies = _s->bodies.positions.size();
-    const size_t n_threads = std::min(n_bodies, static_cast<size_t>(_s->get_cores()));
-    
-    if (n_bodies == 0) return;
-    
-    std::vector<std::thread> threads;
-    threads.reserve(n_threads);
-    
-    const size_t chunk_size = (n_bodies + n_threads - 1) / n_threads;
-    
-    for (size_t i = 0; i < n_threads; ++i) {
-        const size_t start = i * chunk_size;
-        const size_t end = std::min(start + chunk_size, n_bodies);
-        
-        if (start >= end) break;
-        
-        threads.emplace_back([start, end, &func, _s]() {
-            for (size_t b = start; b < end; ++b) {
-                func(b);
-            }
-        });
-    }
-    
-    for (auto& t : threads) {
-        t.join();
-    }
-}
-
 template <typename T>
 bool Simulation<T>::is_fine(){
-    bool retval = false;
+    bool retval = true;
 
     for (int i = 0; i < this -> bodies.positions.size(); ++i){
         if (this -> bodies.positions[i].is_fine() && 
@@ -70,7 +39,7 @@ bool Simulation<T>::is_fine(){
             this -> bodies.accs[i].is_fine())
         continue;
 
-        retval = true;
+        retval = false;
         break;
     }
 
@@ -507,7 +476,7 @@ void parallel_fu(Simulation<T>* _s){
 
     _s -> obj = _s -> bodies.positions.size(); 
 
-    for_every_body(_s, [_s](size_t i){_s -> update_pair(i);});
+    tbb::parallel_for(size_t(0), _s -> bodies.positions.size(), [_s](size_t i){_s -> update_pair(i);});
 
 
     for (auto& graph : _s -> between_graphs)

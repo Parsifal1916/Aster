@@ -2,6 +2,9 @@
 
 #include <cmath>
 
+#include <tbb/parallel_for.h>
+using namespace tbb;
+
 #include "Aster/physics/tool-chain.h"
 #include "Aster/physics/vectors.h"
 
@@ -15,7 +18,7 @@ namespace Aster{
 // Update methods                                                //
 //===---------------------------------------------------------===//
 
-// !!! POSITIVE FORCE = ATTRACTION
+//! POSITIVE FORCE = ATTRACTION
 
 extern const REAL PI;
 
@@ -265,7 +268,7 @@ void get_new_temp<vec2>(Simulation<vec2>* _s, size_t body, vec2 pos, vec2 vel, R
 
 template <>
 void update_euler(Simulation<vec2>* _s){
-    for_each_body(_s, [_s](size_t body){
+    parallel_for(size_t(0), _s -> bodies.positions.size(), [_s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body)* _s -> get_dt() ;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * _s -> get_dt() ;
     }); 
@@ -280,7 +283,7 @@ void update_symplectic4(Simulation<vec2>* _s){
 
     static vec2 temp_v;
 
-    for_each_body(_s, [_s](size_t body){
+    parallel_for(size_t(0), _s -> bodies.positions.size(), [_s](size_t body){
         // first step 
         temp_v = _s -> bodies.get_velocity_of(body) + d1* _s -> bodies.get_acc_of(body) * _s -> get_dt();
 
@@ -381,7 +384,7 @@ vec2 rk4(REAL m1, REAL m2, vec2 v1, vec2 v2, vec2 p1, vec2 p2, Simulation<vec2>*
 
 template <>
 void update_euler(Simulation<vec3>* _s){
-    for_each_body(_s, [_s](size_t body){
+    parallel_for(size_t(0), _s -> bodies.positions.size(), [_s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body)* _s -> get_dt() ;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * _s -> get_dt() ;
     });
@@ -395,7 +398,7 @@ void update_symplectic4(Simulation<vec3>* _s){
     constexpr REAL d2 = -1.70241438391931532159162543393904343;
     
     // first step 
-    for_each_body(_s, [d1, c1, _s](size_t body){
+    parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c1, _s](size_t body){
         vec3 temp_v = _s -> bodies.get_velocity_of(body) + d1*_s -> bodies.get_acc_of(body) * _s -> get_dt();
 
         _s -> bodies.get_position_of(body) += c1* temp_v * _s -> get_dt();
@@ -405,7 +408,7 @@ void update_symplectic4(Simulation<vec3>* _s){
     // second
     _s -> update_forces(_s);
 
-    for_each_body(_s, [c2, _s](size_t body){
+    parallel_for(size_t(0), _s -> bodies.positions.size(), [c2, _s](size_t body){
         vec3 temp_v = _s -> bodies.get_velocity_of(body) + d2*_s -> bodies.get_acc_of(body) * _s -> get_dt();
 
         _s -> bodies.get_position_of(body) += c2* temp_v * _s -> get_dt();
@@ -415,7 +418,7 @@ void update_symplectic4(Simulation<vec3>* _s){
     //third
     _s -> update_forces(_s);
 
-    for_each_body(_s, [d1, c2, _s](size_t body){
+    parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, _s](size_t body){
         vec3 temp_v = _s -> bodies.get_velocity_of(body) + d1*_s -> bodies.get_acc_of(body) * _s -> get_dt();
 
         _s -> bodies.get_position_of(body) += c2* temp_v * _s -> get_dt();
@@ -425,7 +428,7 @@ void update_symplectic4(Simulation<vec3>* _s){
     //last
     _s -> update_forces(_s);
 
-    for_each_body(_s, [c1, _s](size_t body){
+    parallel_for(size_t(0), _s -> bodies.positions.size(), [c1, _s](size_t body){
         _s -> bodies.get_position_of(body) += c1 * _s -> bodies.get_velocity_of(body) * _s -> get_dt();
     });
 }

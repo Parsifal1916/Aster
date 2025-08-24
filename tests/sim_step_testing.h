@@ -36,7 +36,7 @@ TEST_CASE("Simulation step benchmarking", "[building]") {
         free(simulation);
     }
 }
-/*
+
 TEST_CASE("GPU Simulation step benchmarking", "[building]") {
     SECTION("GPU 2d Barnes"){
         auto* simulation = new Barnes::BHG <vec2>;
@@ -63,4 +63,24 @@ TEST_CASE("GPU Simulation step benchmarking", "[building]") {
 
         free(simulation);
     }
-}*/
+}
+
+TEST_CASE("update methods testing", "[parametric]") {
+    static update_type values[] = {SABA1, SABA2, SABA3, SABA4, SABA5, SABA6, SABA7, SABA8, SABA9, SABA10};
+
+    for (auto v : values) {
+        SECTION("update methods testing") {
+            auto* simulation = bake(LIGHT);
+
+            cosmic_web(simulation, 100, 10e6);
+            simulation -> update_with(v);
+            simulation -> load();
+
+            simulation -> integrate(10);
+
+            REQUIRE(simulation -> is_fine());
+
+            free(simulation);
+        }
+    }
+}
