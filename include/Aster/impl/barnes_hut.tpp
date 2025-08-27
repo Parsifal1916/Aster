@@ -298,11 +298,11 @@ void Barnes_Hut<T>::get_node_body(signed long int node, size_t index, REAL size)
     
     if (d_squared == 0) return; 
 
-    if (size * size < d_squared *theta * theta || nodes.is_leaf(node)){ // use the optmisation
+    if ( size * size < d_squared *theta * theta || nodes.is_leaf(node)){ // use the optmisation
         this -> bodies.get_acc_of(index) += this -> get_force(
-            this -> bodies.get_mass_of(index),     nodes.masses[node],
-            this -> bodies.get_velocity_of(index), nodes.velocities[node],
-            this -> bodies.get_position_of(index), nodes.centers_of_mass[node],
+            this -> bodies.get_mass_of(index), nodes.masses[node], 
+            this -> bodies.get_velocity_of(index), nodes.velocities[node], 
+            this -> bodies.get_position_of(index), nodes.centers_of_mass[node], 
             this
         ) / this -> bodies.get_mass_of(index);
 
@@ -389,6 +389,31 @@ Simulation<T>* Barnes_Hut<T>::use_GPU(){
     return this;
 }
 
+template <typename T>
+void printTreeRecursive(const NodesArray<T>& nodes, int node, std::string prefix = "", bool isRight = false) {
+    if (node == -1) return;
+
+    // Stampa il nodo corrente con connettori
+    std::cout << prefix;
+    if (!prefix.empty()) {
+        std::cout << (isRight ? "└── " : "├── ");
+    }
+    std::cout << node << "\n";
+
+    // Aggiorna prefisso per i figli
+    std::string newPrefix = prefix + (isRight ? "    " : "│   ");
+
+    // Stampa ramo sinistro e destro
+    printTreeRecursive(nodes, nodes.left_nodes[node], newPrefix, false);
+    printTreeRecursive(nodes, nodes.right_nodes[node], newPrefix, true);
+}
+
+// Wrapper
+template <typename T>
+void print_nodes(const NodesArray<T>& nodes, int root = 0) {
+    std::cout << "Tree structure:\n";
+    printTreeRecursive(nodes, root);
+}
 
 template <typename T>
 void Barnes_Hut<T>::make_tree(){
@@ -479,7 +504,6 @@ void Barnes_Hut<T>::make_tree(){
     });
 
     nodes.unite(num_leaves);
-
     this->compressed_mortons_size = num_leaves;
 
 }}

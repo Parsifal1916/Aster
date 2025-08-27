@@ -325,6 +325,7 @@ void Renderer3d::draw_termal3d(){
 * @brief fast method to draw every body in the simulation 
 */
 void Renderer3d::draw_minimal3d(){
+
     // sets up the glfw configuration
     glBegin(GL_POINTS);
     glPointSize(10);    

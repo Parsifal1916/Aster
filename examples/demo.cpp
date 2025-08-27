@@ -17,7 +17,7 @@ void load_solar_system(Simulation<vec3>* sim){
     add_body(sim, 4.8675e24, sim -> get_center() - vec3(0.71 * AU, 0, 0), {0, 34790, 0}); //venus 
     add_body(sim, 5.9721e24, sim -> get_center() - vec3(1.00 * AU, 0, 0), {0, 29782, 0}); //earth 
     add_body(sim, 6.4171e23, sim -> get_center() - vec3(1.67 * AU, 0, 0), {0, 23130, 0}); //mars
-    add_body(sim, 1.8982e27, sim -> get_center() - vec3(4.95 * AU, 0, 0), {0, 16060, 0}); //jupiter
+    add_body(sim, 1e27, sim -> get_center() - vec3(5.45 * AU, 0, 0), {0, 16000, 0}); //jupiter
     //add_body(sim, 1.0000e30, sim -> get_center() + vec3(9.04 * AU, 0, 0), {0, -9680, 0}); //saturn
     add_body(sim, 8.6810e25, sim -> get_center() - vec3(18.3 * AU, 0, 0), {0,  6800, 0}); //uranus
     add_body(sim, 1.0240e26, sim -> get_center() - vec3(29.8 * AU, 0, 0), {0,  5430, 0}); //neptune
@@ -87,16 +87,18 @@ void add_bodies(Simulation<vec3>* _s){
 //}
 
 int main(){ 
-    auto* simulation = bake(LIGHT);
-
-    cosmic_web(simulation, 100, 1e10);
+    Barnes::Barnes_Hut<vec3>* simulation = new Barnes::Barnes_Hut<vec3>();
+   //auto* simulation = bake(LIGHT);
+    load_solar_system(simulation);
 
     simulation 
-    -> set_dt(10)
-    -> use_GPU()
-    -> get_force_with(PN1)
+    -> set_theta(1e-160)
+    -> set_dt(20e4)
+    -> set_scale(200e7)
+    -> get_force_with(PN25)
+    -> update_with(SABA10)
+    -> collect_error()
     -> load();
-
 
     simulation -> step(); 
     std::cout << simulation -> is_fine() << "\n";

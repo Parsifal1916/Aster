@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 
 namespace Aster{
@@ -6,6 +7,24 @@ namespace GPU{
 inline std::string newton_cl = 
 "#define WG 256\n"
 "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+"double2 get_force(\n"
+"   const double G,\n"
+"   const double C,\n"
+"   const double  m1,\n"
+"   const double  m2,\n"
+"   const double2 p1,\n"
+"   const double2 p2,\n"
+"   const double2 v1,\n"
+"   const double2 v2\n"
+"){\n"
+"   double2 a = (double2)(0.0,0.0);"
+"   double2 r = p2 - p1;\n"
+"   double d2 = dot(r,r) + 10e-11;\n"
+"   double invDist = native_rsqrt(d2);\n"
+"   double invDist3 = invDist * invDist * invDist * G;\n" 
+"   a += m2 * r * invDist3;\n"
+"   return a;"
+"}"
 "__kernel void newton(\n"
 "    const uint    N,\n"
 "    const double  G,\n"
@@ -42,11 +61,7 @@ inline std::string newton_cl =
 "        for (int k = 0; k < WG; ++k) {\n"
 "            uint global_j = tile + k;\n"
 "            if (global_j < N && global_j != i) {\n"
-"                double2 r = spos[k] - pi;\n"
-"                double d2 = dot(r,r) + 10e-11;\n"
-"                double invDist = native_rsqrt(d2);\n"
-"                double invDist3 = invDist * invDist * invDist * G;\n" 
-"                ai += sm[k] * r * invDist3;\n"
+"               ai += get_force(G, C, 1.0, sm[k], pi, spos[k], vel[0], vel[0]);\n"
 "            }\n"
 "        }\n"
 "        barrier(CLK_LOCAL_MEM_FENCE);\n"
@@ -54,6 +69,7 @@ inline std::string newton_cl =
 "\n"
 "    acc_out[i] = ai;\n"
 "}";
+
 
 
 inline std::string newton_cl_lite = 

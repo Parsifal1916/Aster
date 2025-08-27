@@ -2,7 +2,7 @@
 #include <random>
 #include <string>
 
-#define CL_TARGET_OPENCL_VERSION 200
+#define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -43,7 +43,7 @@ class Simulation{
     Simulation<T>* set_scale(REAL s);
     Simulation<T>* set_adaptive_coeff(REAL s);
     
-    Simulation<T>* load();
+    virtual Simulation<T>* load();
     Simulation<T>* add_graph(typename Graphs::Graph<T>::listener_fptr listener, graph_type type = ONCE);
     Simulation<T>* add_graph(typename Graphs::Graph<T>::collector_fptr listener, graph_type type = BETWEEN);
 

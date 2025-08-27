@@ -9,7 +9,7 @@
 #include <iterator>
 #include <future>
 
-#define CL_TARGET_OPENCL_VERSION 200
+#define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 #ifdef __APPLE__
@@ -28,6 +28,10 @@
 
 #include "Aster/simulations/barnes_hut_GPU.h"
 #include "Aster/building-api/GPU_endpoint.h"
+#include "Aster/impl/kernels/PNs.cl.h"
+#include "Aster/impl/kernels/PNs3d.cl.h"
+#include "Aster/impl/kernels/newton_update.cl.h"
+#include "Aster/impl/kernels/newton_update3d.cl.h"
 #include "Aster/impl/kernels/barnes_tree_creation.cl.h"
 #include "Aster/impl/kernels/bitonic_sort.cl.h"
 #include "Aster/impl/kernels/basic_barnes_force.cl.h"
@@ -58,16 +62,17 @@ FORCE_INLINE void load_const_buff(size_t size, void* data, cl_mem& buff){
 }
 
 template <typename T> 
-void BHG<T>::upload_force_calc(size_t num_leaves, size_t tree_size, size_t num_bodies){
+void BHG<T>::upload_force_calc(int num_leaves, int tree_size, int num_bodies){
     using namespace GPU;
     cl_int operation_result = 0 ;
+    int mult = sizeof(T) / sizeof(double);
     if (num_leaves == 0) return;
     
-    size_t double2_size_tree = sizeof(REAL) * 2 * tree_size;
+    size_t double2_size_tree = sizeof(REAL) * mult * tree_size;
     size_t int_size_tree = sizeof(int) * tree_size;
     size_t double_size_tree = sizeof(REAL) * tree_size;
 
-    size_t double2_size_bodies = sizeof(REAL) * 2 * num_bodies; 
+    size_t double2_size_bodies = sizeof(REAL) * mult * num_bodies; 
     size_t double_size_bodies = sizeof(REAL) * num_bodies;       
     
     cl_mem com_buff, rights_buff, lefts_buff, nmasses_buff, pos_buff, bmasses_buff;
@@ -99,27 +104,29 @@ void BHG<T>::upload_force_calc(size_t num_leaves, size_t tree_size, size_t num_b
     check(operation_result);
     operation_result = clSetKernelArg(force_calculator, 1, sizeof(REAL), &this->data.G);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 2, sizeof(REAL), &this->theta);
+    operation_result = clSetKernelArg(force_calculator, 2, sizeof(REAL), &this->data.c);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 3, sizeof(REAL), &tree_bound_size);  
+    operation_result = clSetKernelArg(force_calculator, 3, sizeof(REAL), &this->theta);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 4, sizeof(int), &root_node);      
+    operation_result = clSetKernelArg(force_calculator, 4, sizeof(REAL), &tree_bound_size);  
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 5, sizeof(int), &tree_size);
+    operation_result = clSetKernelArg(force_calculator, 5, sizeof(int), &root_node);      
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 6, sizeof(cl_mem), &nmasses_buff);
+    operation_result = clSetKernelArg(force_calculator, 6, sizeof(int), &tree_size);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 7, sizeof(cl_mem), &pos_buff); 
+    operation_result = clSetKernelArg(force_calculator, 7, sizeof(cl_mem), &nmasses_buff);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 8, sizeof(cl_mem), &com_buff); 
+    operation_result = clSetKernelArg(force_calculator, 8, sizeof(cl_mem), &pos_buff); 
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 9, sizeof(cl_mem), &lefts_buff);
+    operation_result = clSetKernelArg(force_calculator, 9, sizeof(cl_mem), &com_buff); 
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 10, sizeof(cl_mem), &rights_buff); 
+    operation_result = clSetKernelArg(force_calculator, 10, sizeof(cl_mem), &lefts_buff);
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &bmasses_buff);
+    operation_result = clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &rights_buff); 
     check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 12, sizeof(cl_mem), &accs_buff);  
+    operation_result = clSetKernelArg(force_calculator, 12, sizeof(cl_mem), &bmasses_buff);
+    check(operation_result);
+    operation_result = clSetKernelArg(force_calculator, 13, sizeof(cl_mem), &accs_buff);  
     check(operation_result);
 
 
@@ -280,29 +287,85 @@ BHG<T>::BHG() {
     this -> threads.reserve(this -> get_cores());
     this -> obj = this -> bodies.positions.size(); 
 
-    GPU::init_opencl();
-    std::string tree_kernel_name = "build_tree";
-    std::string force_kernel_name = "barnes_force";
-    //std::string lbit_kernel_name = "local_block_bitonic";
-    //std::string gbit_kernel_name = "global_bitonic_merge";
-    GPU::compile_kernel(&tree_kernel_name, &GPU::barnes_tree_cl, tree_builder);
-    
-    if constexpr (sizeof(REAL) == sizeof(double)) 
-        GPU::compile_kernel(&force_kernel_name, &GPU::barnes_force_basic, force_calculator);
-    else 
-        GPU::compile_kernel(&force_kernel_name, &GPU::barnes_force_basic_3d, force_calculator);
     //GPU::compile_kernel(&lbit_kernel_name, &GPU::bitonic_sort_cl, this -> local_block_bitonic);
     //GPU::compile_kernel(&gbit_kernel_name, &GPU::bitonic_sort_cl, this -> global_bitonic_merge);
 }
 
+/*
+* @brief puts together the force calculation kernel
+*/
+template <>
+void BHG<vec2>::compose_force_kernel(){
+    static std::string* force_kernels[4] = {&GPU::newton_cl, &GPU::cl_pn1, &GPU::cl_pn2, &GPU::cl_pn25};
+
+    int index = static_cast<int>(this -> force_used);
+    if (critical_if(index > 3, "Cannot find suitable kernel for custom force calculating function")) exit(-1);
+
+    std::string kernel_code = *force_kernels[index];
+    
+    kernel_code += GPU::barnes_force_basic;
+
+    static std::string kernel_names  = "barnes_force";
+
+    GPU::compile_kernel(&kernel_names, &kernel_code, force_calculator);
+}
+
+template <>
+void BHG<vec3>::compose_force_kernel(){
+    static std::string* force_kernels[4] = {&GPU::newton_cl3d, &GPU::cl3d_pn1, &GPU::cl3d_pn2, &GPU::cl3d_pn25};
+
+    int index = static_cast<int>(this -> force_used);
+    if (critical_if(index > 3, "Cannot find suitable kernel for custom force calculating function")) exit(-1);
+
+    
+    std::string kernel_code = *force_kernels[index];
+    kernel_code += GPU::barnes_force_basic_3d;
+
+    static std::string kernel_name = "barnes_force";
+
+    GPU::compile_kernel(&kernel_name, &kernel_code, force_calculator);
+}
+
+
+/*
+* @brief loads the simulation
+*/
+template <typename T>
+Simulation<T>* BHG<T>::load(){
+    warn_if(this -> has_loaded, "the simulation has already been loaded");
+    this -> loading_queue.load(this);
+    this -> has_loaded = true;
+
+    // assigns base value for the total mass
+    this -> calculate_total_mass();
+
+    GPU::init_opencl();
+    std::string tree_kernel_name = "build_tree";
+    std::string force_kernel_name = "barnes_force"; 
+
+    GPU::compile_kernel(&tree_kernel_name, &GPU::barnes_tree_cl, tree_builder);
+    
+    this -> compose_force_kernel();
+
+    return this;
+}
 
 template <typename T>
 void BHG<T>::step(){
+    if (warn_if(!this -> has_loaded, "The simulation has not been loaded with -> load(). loading now... "))
+        this -> load();
+
     this -> make_sections(); // for threading
     this -> build_tree(); // generates the quad-tree / oct-tree
     
     upload_force_calc(this -> compressed_mortons_size, this ->nodes.size(), this -> bodies.positions.size());
     
+    //parallel_for(size_t(0), this -> bodies.positions.size(), [&, this](size_t i){
+    //    this -> bodies.get_acc_of(i).reset();
+    //    this -> get_node_body(this -> compressed_mortons_size, i, this -> bounding_box.magnitude());
+    //});
+
+
     this -> update_bodies(this);
 
     // triggers graph and steps the time

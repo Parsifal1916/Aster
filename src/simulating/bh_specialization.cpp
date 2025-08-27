@@ -38,28 +38,21 @@ void compare_bounding_vectors(const vec3& to_compare, vec3& res){
 
 
 static inline uint32_t part1by2(uint32_t n) {
-    n &= 0x000003FF;
     n = (n | (n << 16)) & 0x030000FF;
-    n = (n | (n << 8))  & 0x0300F00F;  
-    n = (n | (n << 4))  & 0x030C30C3;   
-    n = (n | (n << 2))  & 0x09249249;  
+    n = (n | (n <<  8)) & 0x0300F00F;
+    n = (n | (n <<  4)) & 0x030C30C3;
+    n = (n | (n <<  2)) & 0x09249249;
     return n;
 }
 template <>
 uint32_t get_morton<vec3>(Barnes_Hut<vec3>* _s, vec3 pt) { 
-    pt.x = pt.x / _s->bounding_box.x;
-    pt.y = pt.y / _s->bounding_box.y;
-    pt.z = pt.z / _s->bounding_box.z;
-
-    constexpr uint32_t M = (1u << PRECISION_BITS) - 1;
-    uint32_t ix = std::min(uint32_t(pt.x * M), M);
-    uint32_t iy = std::min(uint32_t(pt.y * M), M);
-    uint32_t iz = std::min(uint32_t(pt.z * M), M);
-
-    uint32_t mx = part1by2(ix);
-    uint32_t my = part1by2(iy)<<1;
-    uint32_t mz = part1by2(iz)<<2;
-    return  mx | my | mz;
+    pt.x = (pt.x + _s -> bounding_box.x) / (2* _s -> bounding_box.x);
+    pt.y = (pt.y + _s -> bounding_box.y) / (2* _s -> bounding_box.y);
+    pt.z = (pt.z + _s -> bounding_box.z) / (2* _s -> bounding_box.z);
+    uint32_t ix = std::min((uint32_t)(pt.x * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
+    uint32_t iy = std::min((uint32_t)(pt.y * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
+    uint32_t iz = std::min((uint32_t)(pt.z * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
+    return (part1by2(iz) << 2) | (part1by2(iy) << 1) | part1by2(ix); 
 }
 
 template <> 

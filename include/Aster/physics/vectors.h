@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 using REAL = double;
 
 namespace Aster{
@@ -36,6 +38,8 @@ struct vec2 {
 
 };
 
+
+
 struct vec3 {
     REAL x;
     REAL y;
@@ -71,4 +75,7 @@ struct vec3 {
 vec2 operator*(REAL scalar, vec2 v);
 
 vec3 operator*(REAL scalar, vec3 v);
+
+std::ostream& operator<<(std::ostream& os, const vec3& v);
+std::ostream& operator<<(std::ostream& os, const vec2& v);
 }

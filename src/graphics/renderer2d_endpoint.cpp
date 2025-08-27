@@ -299,9 +299,9 @@ void Renderer2d::draw_termal(){
     
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         // trasforms the coordinates to -> [-1, 1]
-        REAL x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        REAL y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
-          
+        REAL x = 2.f * (_s -> bodies.get_position_of(i).x * get_scale())/ (_s -> get_width());
+        REAL y = 2.f * (_s -> bodies.get_position_of(i).y * get_scale())/ (_s -> get_height());
+           
         //in-bounds check
         if (std::abs(x) > 1 || std::abs(y) > 1) continue;
 
@@ -336,9 +336,9 @@ void Renderer2d::draw_minimal(){
     
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         // trasforms the coordinates to -> [-1, 1]
-        REAL x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        REAL y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
-          
+        REAL x = 2.f * (_s -> bodies.get_position_of(i).x * get_scale())/ (_s -> get_width());
+        REAL y = 2.f * (_s -> bodies.get_position_of(i).y * get_scale())/ (_s -> get_height());
+           
         //in-bounds check
         if (std::abs(x) > 1 || std::abs(y) > 1) continue;
 
@@ -359,10 +359,9 @@ void write_boundary(Aster::Barnes::Barnes_Hut<vec2>* sim, size_t index, size_t l
     com.x = 2.f * (sim -> nodes.centers_of_mass[index].x)/ (sim -> get_width())  - 1; 
     com.y = 2.f * (sim -> nodes.centers_of_mass[index].y)/ (sim -> get_height()) - 1; 
 
-    float half_size = 0.5f / std::pow(2.0f, level); // metà lato del quadrato
+    float half_size = 0.5f / std::pow(2.0f, level);
 
-    // Disegna il quadrato centrato su center_of_mass
-    glColor3f(1.0f, 0.0f, 1.0f); // viola
+    glColor3f(1.0f, 0.0f, 1.0f);
     glLineWidth(3.0f);
     glBegin(GL_LINE_LOOP);
         glVertex2f(com.x - half_size, com.y - half_size);
@@ -371,7 +370,6 @@ void write_boundary(Aster::Barnes::Barnes_Hut<vec2>* sim, size_t index, size_t l
         glVertex2f(com.x - half_size, com.y + half_size);
     glEnd();
 
-    // Ricorsione su figli
     if (sim -> nodes.left_nodes[index] != -1)
         write_boundary(sim, sim -> nodes.left_nodes[index], level + 1);
 
@@ -395,10 +393,9 @@ inline void Renderer2d::draw_barnes(){
     glPointSize(10);
 
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
-        // trasforms the coordinates to -> [-1, 1]
-        REAL x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        REAL y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
-        
+        REAL x = 2.f * (_s -> bodies.get_position_of(i).x * get_scale())/ (_s -> get_width());
+        REAL y = 2.f * (_s -> bodies.get_position_of(i).y * get_scale())/ (_s -> get_height());
+           
         //in-bounds check
         if (std::abs(x) > 1 || std::abs(y) > 1) continue;
 
@@ -438,9 +435,9 @@ void Renderer2d::draw_detailed(){
         ); // scales the radius based on the log_{10} of the mass
 
         // trasforms the coordinates to -> [-1, 1]
-        REAL x = 2.f * (get_scale() * _s -> bodies.get_position_of(i).x - get_scale() * _s -> get_center().x + _s -> get_center().x)/ (_s -> get_width()) - 1;
-        REAL y = 2.f * (get_scale() * _s -> bodies.get_position_of(i).y - get_scale() * _s -> get_center().y + _s -> get_center().y)/ (_s -> get_height()) - 1;
-              
+        REAL x = 2.f * (_s -> bodies.get_position_of(i).x * get_scale())/ (_s -> get_width());
+        REAL y = 2.f * (_s -> bodies.get_position_of(i).y * get_scale())/ (_s -> get_height());
+           
         //in-bounds check
         if (std::abs(x) > 1.3 || std::abs(y) > 1.3) continue; 
 

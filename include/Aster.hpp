@@ -5,7 +5,7 @@
 // * ██║  ██║███████║   ██║   ███████╗██║  ██║
 // * ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
 
-#define CL_TARGET_OPENCL_VERSION 200
+#define CL_TARGET_OPENCL_VERSION 300
 
 #include "Aster/graphics/3d_graphics.h"
 #include "Aster/graphics/2d_graphics.h"

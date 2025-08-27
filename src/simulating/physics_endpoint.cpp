@@ -253,6 +253,14 @@ bool vec3::is_fine() const {
     return !std::isnan(x) && !std::isnan(x) && !std::isnan(z);
 }
 
+std::ostream& operator<<(std::ostream& os, const vec3& v) {
+    os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return os;
+}
 
+std::ostream& operator<<(std::ostream& os, const vec2& v) {
+    os << "(" << v.x << ", " << v.y << ")";
+    return os;
+}
 
 }

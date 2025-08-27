@@ -78,6 +78,7 @@ class Renderer2d{
         &Renderer2d::draw_minimal,
         &Renderer2d::draw_minimal, 
         &Renderer2d::draw_termal,
+         &Renderer2d::draw_detailed, 
         &Renderer2d::draw_minimal
         
     };

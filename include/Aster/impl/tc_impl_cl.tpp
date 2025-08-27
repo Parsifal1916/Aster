@@ -1,5 +1,5 @@
 #pragma once
-#define CL_TARGET_OPENCL_VERSION 200
+#define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 #include <fstream>
@@ -215,9 +215,12 @@ func_ptr<T> compile_uf(force_type t) {
     log_info("compiling GPU scripts from source...");
     size_t index = static_cast<size_t>(t);
 
-    std::string* force_kernel = std::is_same<T, vec2>::value 
-        ? (t == NEWTON ? &newton_cl : &cl_pns)
-        : (t == NEWTON ? &newton_cl3d : &cl_pns3d)
+    static std::string force_kernels2d[] = {newton_cl, cl_pn1, cl_pn2, cl_pn25};
+    static std::string force_kernels3d[] = {newton_cl3d, cl3d_pn1, cl3d_pn2, cl3d_pn25};
+
+    std::string& force_kernel = std::is_same<T, vec2>::value 
+        ? force_kernels2d[index]
+        : force_kernels3d[index]
     ;
 
     std::string kernel_names[] = {"newton", "pn1", "pn2", "pn25"};
@@ -227,7 +230,7 @@ func_ptr<T> compile_uf(force_type t) {
     "could not find a suitable GPU-accelerated function for kernel " + kernel_names[index]))
         exit(1);
     
-    compile_kernel(&kernel_names[index], force_kernel, k);
+    compile_kernel(&kernel_names[index], &force_kernel, k);
 
     log_info("done compiling force calculation scripts");
     return uf_functor<T>{k};

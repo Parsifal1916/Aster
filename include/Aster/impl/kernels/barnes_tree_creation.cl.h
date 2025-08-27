@@ -4,7 +4,7 @@ namespace Aster{
 namespace GPU{
 
 inline std::string barnes_tree_cl = 
-"int delta(int num_leaves, uint2* mortons, int ii, int jj){\n"
+"int delta(int num_leaves, const uint2* mortons, int ii, int jj){\n"
 "   if (jj >= (int)num_leaves) return -1;\n"
 "   uint key_i = mortons[ii].x;\n"
 "   uint key_j = mortons[jj].x;\n"
