@@ -33,7 +33,6 @@
 #include "Aster/impl/kernels/newton_update.cl.h"
 #include "Aster/impl/kernels/newton_update3d.cl.h"
 #include "Aster/impl/kernels/barnes_tree_creation.cl.h"
-#include "Aster/impl/kernels/bitonic_sort.cl.h"
 #include "Aster/impl/kernels/basic_barnes_force.cl.h"
 
 #include <bitset>
@@ -41,15 +40,14 @@
 namespace Aster{
 namespace Barnes{
 
-#define check(call)                                                    \
-do {                                                                   \
-    cl_int _err = (call);                                              \
-    if (_err != CL_SUCCESS) {                                          \
-        fprintf(stderr, "OpenCL error %d at %s:%d – %s\n",             \
-                _err, __FILE__, __LINE__, #call);                      \
-        abort();                                                       \
-    }                                                                  \
-} while (0)
+FORCE_INLINE void check(int a){
+    static int b = 0;
+    b++;
+    if (critical_if(a != CL_SUCCESS, "error in calculating the force (GPU side)")){
+        std::cout << b << " " << a  << "\n";
+        exit(-1);
+    }
+}
 
 FORCE_INLINE void load_const_buff(size_t size, void* data, cl_mem& buff){
     using namespace GPU;

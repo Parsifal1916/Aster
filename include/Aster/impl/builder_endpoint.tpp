@@ -186,7 +186,7 @@ Simulation<T>* Simulation<T>::set_sim_type(short type){
 
 template <typename T>
 Simulation<T>* Simulation<T>::load(){
-    assert(!has_loaded && "the simulation has already been loaded");
+    if (has_loaded) return this;
     loading_queue.load(this);
     has_loaded = true;
     this -> calculate_total_mass();

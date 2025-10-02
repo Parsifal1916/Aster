@@ -366,8 +366,12 @@ inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const 
     size_t last = 0;
 
     for (size_t i = 1; i < mortons.size(); ++i) {
-        last++;
-        base_layer.init(_s, mortons[i].second, last);
+        if (mortons[i-1].first == mortons[i].first)
+            base_layer.merge(_s, mortons[i].second, last);
+        else{
+            last++;
+            base_layer.init(_s, mortons[i].second, last);
+        }
     }
     base_layer.resize(last+1);
 }
@@ -418,7 +422,7 @@ void Barnes_Hut<T>::make_tree(){
     this->mortons.clear();
 
     size_t N = this->bodies.positions.size();
-    if (N == 0) return; 
+    if (N == 0) return;
     
     std::vector<std::pair<uint32_t, unsigned int>> enhanced_mortons;
     enhanced_mortons.reserve(N);
@@ -498,7 +502,6 @@ void Barnes_Hut<T>::make_tree(){
             nodes.right_nodes[internal_node] = num_leaves + gamma + 1; 
         }
     });
-
 
     nodes.unite(num_leaves);
     this->compressed_mortons_size = num_leaves;

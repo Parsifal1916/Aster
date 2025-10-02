@@ -27,7 +27,7 @@ vec3 rotate_point(vec3 v, REAL phi, REAL theta);
 REAL rng_percent();
 
 /**
-* @brief returns a random value from a to b
+* @brief returns a random value from a to b or b to a 
 * @warning the order of a and b does not matter
 * @param a: first value
 * @param b: second value

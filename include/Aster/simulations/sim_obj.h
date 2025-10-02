@@ -58,7 +58,7 @@ class Simulation{
     Simulation<T>* collect_error();
     Simulation<T>* collect_distance();
 
-    Simulation<T>* integrate(size_t time);
+    virtual Simulation<T>* integrate(size_t time);
     Simulation<T>* calculate_total_mass();
     virtual Simulation<T>* use_GPU();
     
@@ -146,6 +146,10 @@ class Simulation{
     bool GPU_on = false;
 };
 
+template <typename T>
+class Solver{
+
+};
 template <typename T> 
 void update_bundle(Simulation<T>*, short unsigned int);
 }

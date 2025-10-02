@@ -4,122 +4,72 @@
 namespace Aster{
 namespace GPU{
 
-inline std::string newton_cl3d = 
-"#define WG 256\n"
-"#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-"double3 get_force(\n"
-"   const double G,\n"
-"   const double C,\n"
-"   const double  m1,\n"
-"   const double  m2,\n"
-"   const double3 p1,\n"
-"   const double3 p2,\n"
-"   const double3 v1,\n"
-"   const double3 v2\n"
-"){\n"
-"   double3 a = (double3)(0.0,0.0,0.0);\n"
-"   double3 r = p2 - p1;\n"
-"   double d2 = dot(r,r) + 10e-11;\n"
-"   double invDist = native_rsqrt(d2);\n"
-"   double invDist3 = invDist * invDist * invDist * G;\n" 
-"   a += m2 * r * invDist3;\n"
-"   return a;"
-"}"
-"__kernel void newton(\n"
-"    const uint    N,\n"
-"    const double  G,\n"
-"    const double  C,\n"
-"    __global const double*   t,\n"
-"    __global const double*   m,\n"
-"    __global const double3*  pos,\n"
-"    __global const double3*  vel,\n"
-"    __global       double3*  acc_out)\n"
-"{\n"
-"    const uint i = get_global_id(0);\n"
-"    if (i >= N) return;\n"
-"\n"
-"    double3 pi = pos[i];\n"
-"    double3 ai = (double3)(0.0, 0.0, 0.0);\n"
-"\n"
-"    __local double3 spos[WG];\n"
-"    __local double  sm  [WG];\n"
-"\n"
-"    for (uint tile = 0; tile < N; tile += WG) {\n"
-"        uint lid = get_local_id(0);\n"
-"        uint j   = tile + lid;\n"
-"\n"
-"        if (j < N) {\n"
-"            spos[lid] = pos[j];\n"
-"            sm  [lid] = m[j];\n"
-"        } else {\n"
-"            spos[lid] = (double3)(0.0,0.0,0.0);\n"
-"            sm  [lid] = 0.0;\n"
-"        }\n"
+inline std::string newton_cl3d = R"CLC(
+#define WG 256
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+double3 get_force(
+   const double G,
+   const double C,
+   const double  m1,
+   const double  m2,
+   const double3 p1,
+   const double3 p2,
+   const double3 v1,
+   const double3 v2
+){
+   double3 a = (double3)(0.0,0.0,0.0);
+   double3 r = p2 - p1;
+   double d2 = dot(r,r) + 10e-11;
+   double invDist = native_rsqrt(d2);
+   double invDist3 = invDist * invDist * invDist * G; 
+   a += m2 * r * invDist3;
+   return a;
+}
+__kernel void cl3d_newton(
+    const uint    N,
+    const double  G,
+    const double  C,
+    __global const double*   t,
+    __global const double*   m,
+    __global const double*   pos,
+    __global const double*   vel,
+    __global       double*   acc_out)
+{
+    const uint i = get_global_id(0);
+    if (i >= N) return;
 
-"        barrier(CLK_LOCAL_MEM_FENCE);\n"
-"\n"
-"        for (int k = 0; k < WG; ++k) {\n"
-"            uint global_j = tile + k;\n"
-"            if (global_j < N && global_j != i) {\n"
-"               ai += get_force(G, C, 1.0, sm[k], pi, spos[k], vel[0], vel[0]);\n"
-"            }\n"
-"        }\n"
-"        barrier(CLK_LOCAL_MEM_FENCE);\n"
-"    }\n"
-"\n"
-"    acc_out[i] = ai;\n"
-"}";
+    double3 pi = vload3(i, pos);
+    double3 ai = (double3)(0.0, 0.0, 0.0);
 
-inline std::string newton_cl3d_lite = 
-"#define WG 256\n"
-"__kernel void newton(\n"
-"    const uint    N,\n"
-"    const float  G,\n"
-"    const float  C,\n"
-"    __global const float*   t,\n"
-"    __global const float*   m,\n"
-"    __global const float3*  pos,\n"
-"    __global const float3*  vel,\n"
-"    __global       float3*  acc_out)\n"
-"{\n"
-"    const uint i = get_global_id(0);\n"
-"    if (i >= N) return;\n"
-"\n"
-"    float3 pi = pos[i];\n"
-"    float3 ai = (float3)(0.0, 0.0, 0.0);\n"
-"\n"
-"    __local float3 spos[WG];\n"
-"    __local float  sm  [WG];\n"
-"\n"
-"    for (uint tile = 0; tile < N; tile += WG) {\n"
-"        uint lid = get_local_id(0);\n"
-"        uint j   = tile + lid;\n"
-"\n"
-"        if (j < N) {\n"
-"            spos[lid] = pos[j];\n"
-"            sm  [lid] = m[j];\n"
-"        } else {\n"
-"            spos[lid] = (float3)(0.0,0.0,0.0);\n"
-"            sm  [lid] = 0.0;\n"
-"        }\n"
+    __local double3 spos[WG];
+    __local double  sm  [WG];
 
-"        barrier(CLK_LOCAL_MEM_FENCE);\n"
-"\n"
-"        for (int k = 0; k < WG; ++k) {\n"
-"            uint global_j = tile + k;\n"
-"            if (global_j < N && global_j != i) {\n"
-"                float3 r = spos[k] - pi;\n"
-"                float d2 = dot(r,r) + 10e-11;\n"
-"                float invDist = native_rsqrt(d2);\n"
-"                float invDist3 = invDist * invDist * invDist * G;\n" 
-"                ai += sm[k] * r * invDist3;\n"
-"            }\n"
-"        }\n"
-"        barrier(CLK_LOCAL_MEM_FENCE);\n"
-"    }\n"
-"\n"
-"    acc_out[i] = ai;\n"
-"}";
+    for (uint tile = 0; tile < N; tile += WG) {
+        uint lid = get_local_id(0);
+        uint j   = tile + lid;
+
+        if (j < N) {
+            spos[lid] = vload3(j, pos);
+            sm  [lid] = m[j];
+        } else {
+            spos[lid] = (double3)(0.0,0.0,0.0);
+            sm  [lid] = 0.0;
+        }
+
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        for (int k = 0; k < WG; ++k) {
+            uint global_j = tile + k;
+            if (global_j < N && global_j != i) {
+               ai += get_force(G, C, 1.0, sm[k], pi, spos[k], vload3(0, vel), vload3(0, vel));
+            }
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+
+    vstore3(ai, i, acc_out);
+}
+)CLC";
 
 }
 }

@@ -37,7 +37,7 @@ class Renderer3d{
         cos_x_theta = 0,
         sin_y_theta = 0,
         cos_y_theta = 0,
-        distance = 10
+        distance = 1
     ;   
 
     Renderer3d(Simulation<vec3>* _s);
@@ -98,7 +98,7 @@ class Renderer3d{
 
     private:
     // should it show the axis on screen?
-    bool show_axis_b = false;
+    bool show_axis_b = true;
 
     // window current size
     int current_width, current_height;
@@ -132,14 +132,14 @@ class Renderer3d{
     * @param v: vector to map
     * @returns a mapped a vector
     */
-    vec3 map_point(vec3 v);
+    vec3 map_point(vec3 v, bool fixed = true);
 
     /**
     * @brief returns if the vector is container inside the simulation
     * @param v: vector to check
     * @returns wheter if it is in the simulation
     */
-    bool is_unitary_bound(vec3 v);
+    bool is_unitary_bound(vec3 v, vec3 a = {1.0,1.0,1.0});
 
     /**
     * @brief handles the mouse drag 

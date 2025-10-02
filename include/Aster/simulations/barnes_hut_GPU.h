@@ -17,8 +17,7 @@
 namespace Aster{   
 namespace Barnes{
 
-static cl_kernel tree_builder; 
-static cl_kernel force_calculator; 
+
 
 /*                   //===---------------------------------------------------------===//
 .                    // Barnes-Hut GPU definition                                     //
@@ -36,8 +35,8 @@ class BHG final : public Barnes_Hut<T> {
     ~BHG();
 
     private:
-    cl_kernel global_bitonic_merge;
-    cl_kernel local_block_bitonic;
+    cl_kernel tree_builder; 
+    cl_kernel force_calculator;     
 
     void compose_force_kernel();
     void build_tree();

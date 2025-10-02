@@ -235,10 +235,10 @@ vec2 rng_vec(Simulation<vec2>* _s){
     if (critical_if(!_s -> get_width() || !_s -> get_height(), "the simulation has no space! (width = 0 or height = 0)"))
         exit(-1);
 
-    return {
-        REAL(std::rand() % (int)(_s  -> get_width())) * _s -> get_scale(), 
-        REAL(std::rand() % (int)_s  -> get_height())  * _s -> get_scale() 
-    };
+    return vec2({
+        REAL(rng_percent() * _s  -> get_width()) , 
+        REAL(rng_percent() * _s  -> get_height()) 
+    }) - _s -> get_center();
 }
 
 /**
@@ -255,9 +255,9 @@ vec3 rng_vec(Simulation<vec3>* _s){
         exit(-1);
 
     return {
-        REAL(std::rand() % (int)_s  -> get_width())  * _s -> get_scale(), 
-        REAL(std::rand() % (int)_s  -> get_height()) * _s -> get_scale(), 
-        REAL(std::rand() % (int)_s -> get_depth())   * _s -> get_scale()
+        REAL(rng_percent() *  (int)_s  -> get_width()) , 
+        REAL(rng_percent() *  (int)_s  -> get_height()), 
+        REAL(rng_percent() *  (int)_s -> get_depth())  
     };
 }
 
@@ -302,10 +302,10 @@ void add_disk(Simulation<vec2>* _s, size_t nums, vec2 center, REAL outer, REAL i
         vec2 pos = rng_point_in_circle(outer, inner)* _s -> get_scale(); // gets a random point inside the disk
 
         // generates the radius from the position
-        REAL radius = pos.sqr_magn();
+        REAL radius = pos.magnitude();
 
         // velocty on that point
-        REAL magn_vel =std::sqrt(_s -> get_G() * avr_mass / radius) *100;
+        REAL magn_vel =std::sqrt(_s -> get_G() * avr_mass / radius);
         vec2 vel = vec2(-pos.y/radius * magn_vel, pos.x/radius * magn_vel) + v;
 
         // assembles the body
@@ -351,16 +351,17 @@ void cosmic_web(Simulation<vec2>* _s, int nums, REAL avr_mass){
 
 
     // sets up the builder lambda
-    cluster.builder = [&noise, _s, avr_mass](Cluster<vec2> cl2d, size_t _) {
+    cluster.builder = [&noise, _s, avr_mass](Cluster<vec2> cl2d, size_t _){
+         
         vec2 pos = rng_vec(_s); // gets a random point in the simulation
 
         // gets a random point until it is likely enough to generate a body
-        while ((fnlGetNoise2D(&noise, pos.x, pos.y) + 1)/2 < rng_percent()) 
+        while ((fnlGetNoise2D(&noise, pos.x / _s -> get_width(), pos.y / _s -> get_height()) + 1)/2 < rng_percent()) 
             pos = rng_vec(_s);
-
+        
         // assembles the body
         add_body(_s, 
-            avr_mass,
+            avr_mass, // (fnlGetNoise2D(&noise, pos.x, pos.y) + 1) * avr_mass / 2,
             pos,
             vec2({0,0}),
             (fnlGetNoise2D(&noise, pos.x, pos.y) + 1) * 5

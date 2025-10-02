@@ -26,3 +26,4 @@
 #include "Aster/simulations/barnes-hut.h"
 #include "Aster/simulations/barnes_hut_GPU.h"
 #include "Aster/simulations/simulation.h"
+#include "Aster/simulations/full_GPU.h"

@@ -42,38 +42,52 @@ bool Renderer3d::does_show_axis(){
 */
 void Renderer3d::draw_axis(){
     // gets the needed points in simulation space
-    vec3 origin = {0, 0, 0};
-    vec3 point1 = {_s -> get_width(),      0.0,               0.0        };
-    vec3 point2 = {       0.0,      _s -> get_height(),       0.0        };
-    vec3 point3 = {       0.0,            0.0,          _s -> get_depth()};
+    vec3 origin = {0.0, 0.0, 0.0};
+    vec3 opp =    {1.0, 1.0, 1.0};
+    vec3 point1 = {1.0, 0.0, 0.0};
+    vec3 point2 = {0.0, 1.0, 0.0};
+    vec3 point3 = {0.0, 0.0, 1.0};
+    vec3 mid1   = {1.0, 1.0, 0.0};
+    vec3 mid2   = {0.0, 1.0, 1.0};
+    vec3 mid3   = {1.0, 0.0, 1.0};
 
     // maps the point onto the screen
     point1 = map_point(point1); // width
     point2 = map_point(point2); // height
     point3 = map_point(point3); // depth
     origin = map_point(origin); // origin
+    mid1 = map_point(mid1);
+    mid2 = map_point(mid2);
+    mid3 = map_point(mid3);
+    opp = map_point(opp);
+
+    auto connect = [](vec3 a, vec3 b){
+        glColor3f(1.0, 0.0, 0.0);
+        glVertex2f(a.x, a.y);
+        glVertex2f(b.x, b.y);
+    };
     
     // sets the line thickness
     glLineWidth(2.0f);
 
     // begines drawing the segments
     glBegin(GL_LINES);
-        // connects the width (x) segment
-        glColor3f(1.0, 0.0, 0.0);
-        glVertex2f(origin.x, origin.y);
-        glVertex2f(point1.x, point1.y);
+        connect(origin, point1);
+        connect(origin, point2);
+        connect(origin, point3);
 
-        // conencts the height (y) segment
-        glColor3f(0.0, 1.0, 0.0);
-        glVertex2f(origin.x, origin.y);
-        glVertex2f(point2.x, point2.y);
+        connect(mid2, point2);
+        connect(mid2, point3);
+        
+        connect(mid1, point1);
+        connect(mid1, point2);
 
-        // connects the depth (z) segment
-        glColor3f(0.0, 0.0, 1.0);
-        glVertex2f(origin.x, origin.y);
-        glVertex2f(point3.x, point3.y);
+        connect(mid3, point1);
+        connect(mid3, point3);
 
-    // ends the bacth
+        connect(mid1, opp);
+        connect(mid2, opp);
+        connect(mid3, opp);
     glEnd();
 
 }
@@ -83,41 +97,47 @@ void Renderer3d::draw_axis(){
 * @param v: vector to map
 * @returns a mapped a vector
 */
-vec3 Renderer3d::map_point(vec3 v) {
+vec3 Renderer3d::map_point(vec3 v, bool fixed) {
     // offsets the vector on the center
-    v = v - _s->get_center();
+    v = v* distance;
+    v = v - vec3(.5, .5, .5) * distance;
+
+    if (!fixed && !is_unitary_bound(v*2))
+        return {10,10,10};
+        
+    
 
     // applies the z-x rotation
-    float x1 = v.x * cos_x_theta + v.z * sin_x_theta;
+    float x1 =  v.x * cos_x_theta + v.z * sin_x_theta;
     float z1 = -v.x * sin_x_theta + v.z * cos_x_theta;
 
     // applies the z-y rotation
-    float y1 = v.y * cos_y_theta + z1 * sin_y_theta;
+    float y1 = v.y *  cos_y_theta + z1 * sin_y_theta;
     float z2 = -v.y * sin_y_theta + z1 * cos_y_theta;
 
     // calculates the parallax strenght
-    float scale = 1 / (distance + z2/ _s -> get_width() + .1);
+    float scale_z = 1 / (distance + z2/ _s -> get_depth()  + 1e-10); 
+    float scale_x = 1 / (distance + x1/ _s -> get_width()  + 1e-10);
+    float scale_y = 1 / (distance + y1/ _s -> get_height() + 1e-10);
 
-    // calculates the rescaling factor on x y and z
-    float scale_x = _s->get_render_width() / _s->get_width();
-    float scale_y = _s->get_render_height() / _s->get_height();
-
-    // maps everything onto [-1, 1]
-    float ndc_x = (x1 * scale_x * scale) / (_s->get_render_width() / 2.0f);
-    float ndc_y = (y1 * scale_y * scale) / (_s->get_render_height() / 2.0f);
-
-    // returns the transformed vector
-    return { ndc_x, ndc_y, z2 };
+    v = {x1, y1, z2};
+    
+    if (fixed)
+        return v / distance;
+    
+    return v;
 }
+
 
 /**
 * @brief returns if the vector is container inside the simulation
 * @param v: vector to check
 * @returns wheter if it is in the simulation
 */
-bool Renderer3d::is_unitary_bound(vec3 v){
-    return v.x >= -1 && v.x <= 1 && 
-           v.y >= -1 && v.y <= 1;
+bool Renderer3d::is_unitary_bound(vec3 v, vec3 a){
+    return v.x >= -a.x && v.x <= a.x && 
+           v.y >= -a.y && v.y <= a.y &&
+           v.z >= -a.z && v.z <= a.z;
 }
 
 Renderer3d::Renderer3d(Simulation<vec3>* _s) : _s(_s){
@@ -231,9 +251,7 @@ void Renderer3d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
         return; 
 
     // recalculates and clamps the parallax distance
-    renderer -> distance += renderer -> distance * static_cast<float>(yoffset) / 1000;
-    renderer -> distance = (renderer -> distance < .5) ? .5 : renderer -> distance;
-    renderer -> distance = (renderer -> distance > 10 * renderer -> _s -> get_width()) ?  10 * renderer -> _s -> get_width() : renderer -> distance;
+    renderer -> distance += renderer -> distance * static_cast<float>(yoffset) / 200;
 }
 
 /**
@@ -277,8 +295,8 @@ void Renderer3d::handle_displacement(){
 
         // updates the mouse position and angles
         glfwGetCursorPos(window, &mouse_x, &mouse_y);         
-        x_theta = atan2((mouse_init_x - mouse_x)*6, distance);
-        y_theta = atan2(-(mouse_init_y - mouse_y)*6, distance);
+        x_theta = atan2((mouse_init_x - mouse_x), distance);
+        y_theta = atan2(-(mouse_init_y - mouse_y), distance);
     }else 
         // otherwise it resets the mouse
         reset_mouse();
@@ -333,27 +351,26 @@ void Renderer3d::draw_minimal3d(){
     vec3 temp = {0,0,0}; // makes only one instance of the position vector
 
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
+        glColor3f(1.0,1.0,1.0);
         // maps the point in 2d space 
-        temp = map_point(_s -> bodies.get_position_of(i));
-
-        // calculates the color based on parallax
-        REAL mult = _s -> get_render_depth()/std::max((double)temp.z, .001) + .2;
-        glColor3f(
-            mult, mult, mult
-        );
+        vec3 v = _s -> bodies.positions[i];
+        v.x = (v.x + _s -> get_width()) / (2*_s -> get_width()) ;
+        v.y = (v.y + _s -> get_height())/ (2*_s -> get_height());
+        v.z = (v.z + _s -> get_depth()) / (2*_s -> get_depth()) ;
+        v = map_point(v, false);
     
         // draws the point if it's in range
-        if (is_unitary_bound(temp))
+        if (is_unitary_bound(v))
             glVertex2f( 
-                temp.x, 
-                temp.y
+                v.x, 
+                v.y
             );
     }
 
     glEnd();
 }
 /**
-* @brief costly method to draw every body in the simulation, useful for few body problems
+* @brief slow method to draw every body in the simulation, useful for few body problems
 */
 void Renderer3d::draw_detailed3d() { 
     vec3 mapped_pos = {0, 0,0}; // only one instance

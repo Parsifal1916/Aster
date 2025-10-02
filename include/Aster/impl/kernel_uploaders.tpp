@@ -22,7 +22,7 @@ namespace Aster{
 namespace GPU{
 
 
-FORCE_INLINE void check(cl_int a){
+FORCE_INLINE void check(int a){
     static int b = 0;
     b++;
     if (critical_if(a != CL_SUCCESS, "error in calculating the force (GPU side)")){

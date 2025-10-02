@@ -110,52 +110,59 @@ void init_opencl(){
 * @param name: pointer to the name of the function
 * @param source: source code of the kernel
 * @param k: kernel object onto which to write the kernel 
-*/
-void compile_kernel(std::string* name, std::string* source, cl_kernel& k){
-
+*/void compile_kernel(std::string* name, std::string* source, cl_kernel& k) {
     cl_int programResult;
     const char* c = source->c_str();
     size_t l = source->size();
 
+    // Create the OpenCL program
     cl_program program = clCreateProgramWithSource(context, 1, &c, &l, &programResult);
-
-    if (critical_if(programResult != CL_SUCCESS, 
-                   "could not create program: " + std::to_string(programResult)))
+    if (critical_if(programResult != CL_SUCCESS,
+                   "Could not create program: " + std::to_string(programResult)))
         exit(1);
 
-    cl_int build_result = clBuildProgram(program, 1, &device, "", nullptr, nullptr);
+    // Compiler optimization flags
+    std::string build_options = 
+        "-cl-fast-relaxed-math "
+        "-cl-mad-enable "
+        "-cl-no-signed-zeros " 
+        "-cl-denorms-are-zero";
+
+    cl_device_fp_config fp_config;
+    if (clGetDeviceInfo(device, CL_DEVICE_DOUBLE_FP_CONFIG, sizeof(fp_config), &fp_config, nullptr) == CL_SUCCESS) {
+        if (fp_config > 0)
+            build_options += " -cl-kernel-arg-info";
+    }
+
+    cl_int build_result = clBuildProgram(program, 1, &device, build_options.c_str(), nullptr, nullptr);
 
     size_t log_size = 0;
     clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
-
     if (log_size > 1) {
         std::vector<char> log(log_size);
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
-        std::string build_log(log.begin(), log.end());
-        log_info("Build log for kernel \"" + *name + "\":\n" + build_log);
+        log_info("Build log for kernel \"" + *name + "\":\n" + std::string(log.begin(), log.end()));
     }
 
-    if (critical_if(build_result != CL_SUCCESS, 
-                   "could not build kernel"))
+    if (critical_if(build_result != CL_SUCCESS, "Could not build kernel"))
         exit(3);
 
     cl_uint num_ks = 0;
     cl_int enumResult = clCreateKernelsInProgram(program, 0, nullptr, &num_ks);
-
-    if (critical_if(num_ks == 0, "no kernels found in program"))
+    if (critical_if(num_ks == 0, "No kernels found in program"))
         exit(-1);
 
-    log_info("creating kernel \"" + *name +"\"");
+    log_info("Creating kernel \"" + *name + "\"");
 
     cl_int kernel_res;
     k = clCreateKernel(program, name->c_str(), &kernel_res);
-
-    if (critical_if(kernel_res != CL_SUCCESS, 
-                   "could not load kernel '" + *name + 
-                   "', error code: " + std::to_string(kernel_res))) {
+    if (critical_if(kernel_res != CL_SUCCESS,
+                   "Could not load kernel '" + *name + "', error code: " + std::to_string(kernel_res)))
         exit(4);
-    }
+
+  clRetainProgram(program);
 }
+
 
 //===---------------------------------------------------------===//
 // Bodies Update (UB) compiling                                  //
@@ -176,10 +183,9 @@ struct ub_functor {
     int order;
     void operator()(Simulation<T>* _s){
         static const REAL* sequence = saba_coeffs[order];
-
         // fstep
         for (int i = 0; i < saba_coeff_lng[order]; i+=2){
-            upload_update_kernel(k, _s, sequence[i], sequence[i+1]);
+            upload_update_kernel(k, _s, sequence[i+1], sequence[i]);
             _s -> update_forces(_s);
         }
     }
