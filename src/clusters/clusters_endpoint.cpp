@@ -1,7 +1,5 @@
-#pragma once
-
 #include "Aster/building-api/clusters.h"
-
+#include "Aster/simulations/sim_obj.h"
 #include "Aster/physics/vectors.h"
 #include "Aster/physics/body.h"
 #include "Aster/building-api/logging.h"
@@ -17,8 +15,8 @@ namespace Aster{
 * @param n: number of newly loaded bodies
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::update(size_t n){
+
+Cluster* Cluster::update(size_t n){
     loaded += n;
     return this;
 } 
@@ -27,8 +25,8 @@ Cluster<T>* Cluster<T>::update(size_t n){
 * @brief returns the number of loaded bodies
 * @return the number of loaded bodies
 */
-template <typename T>
-size_t Cluster<T>::get_status(){
+
+size_t Cluster::get_status(){
     return loaded;
 } 
 
@@ -36,8 +34,8 @@ size_t Cluster<T>::get_status(){
 * @brief returns the number of bodies to load
 * @return the number of bodies to load
 */
-template <typename T>
-size_t Cluster<T>::get_objects(){
+
+size_t Cluster::get_objects(){
     return number;
 } 
 
@@ -48,8 +46,8 @@ size_t Cluster<T>::get_objects(){
 * @param z: rotation over z
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::rotate(REAL x, REAL y, REAL z){
+
+Cluster* Cluster::rotate(REAL x, REAL y, REAL z){
     rotation += vec3({x, y, z});
     return this;
 } 
@@ -59,8 +57,8 @@ Cluster<T>* Cluster<T>::rotate(REAL x, REAL y, REAL z){
 * @param rot: rotation vector to add
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::rotate(T rot){
+
+Cluster* Cluster::rotate(vec3 rot){
     rotation += rot;
     return this;
 } 
@@ -73,8 +71,8 @@ Cluster<T>* Cluster<T>::rotate(T rot){
 * @param z: traslation over z
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::move(REAL x, REAL y, REAL z){
+
+Cluster* Cluster::move(REAL x, REAL y, REAL z){
     position += vec3({x, y, z});
     return this;
 } 
@@ -84,8 +82,8 @@ Cluster<T>* Cluster<T>::move(REAL x, REAL y, REAL z){
 * @param dis: traslation vector
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::move(T dis){
+
+Cluster* Cluster::move(vec3 dis){
     position += dis;
     return this;
 } 
@@ -97,8 +95,8 @@ Cluster<T>* Cluster<T>::move(T dis){
 * @param z: z rotation
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::set_rotation(REAL x, REAL y, REAL z){
+
+Cluster* Cluster::set_rotation(REAL x, REAL y, REAL z){
     rotation = vec3({x, y, z});
     return this;
 } 
@@ -108,8 +106,8 @@ Cluster<T>* Cluster<T>::set_rotation(REAL x, REAL y, REAL z){
 * @param rot: new rotation 
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::set_rotation(T rot){
+
+Cluster* Cluster::set_rotation(vec3 rot){
     rotation = rot;
     return this;
 } 
@@ -121,8 +119,8 @@ Cluster<T>* Cluster<T>::set_rotation(T rot){
 * @param z: new z position 
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::set_position(REAL x, REAL y, REAL z){
+
+Cluster* Cluster::set_position(REAL x, REAL y, REAL z){
     position = vec3({x, y, z});
     return this;
 } 
@@ -132,8 +130,8 @@ Cluster<T>* Cluster<T>::set_position(REAL x, REAL y, REAL z){
 * @param  pos: new position 
 * @return a pointer to the cluster
 */
-template <typename T>
-Cluster<T>* Cluster<T>::set_position(T pos){
+
+Cluster* Cluster::set_position(vec3 pos){
     position = pos;
     return this;
 } 
@@ -148,8 +146,8 @@ Cluster<T>* Cluster<T>::set_position(T pos){
 * @param cl: cluster to add
 * @return returns a pointer to the queue
 */
-template <typename T>
-ClusterQueue<T>* ClusterQueue<T>::add_cluster(Cluster<T> cl){
+
+ClusterQueue* ClusterQueue::add_cluster(Cluster cl){
     // acquires the general lock before adding the cluster
     std::lock_guard<std::mutex> lock(mtx);
 
@@ -161,8 +159,8 @@ ClusterQueue<T>* ClusterQueue<T>::add_cluster(Cluster<T> cl){
 * @brief removes the last cluster
 * @return a pointer to the queue
 */
-template <typename T>
-ClusterQueue<T>* ClusterQueue<T>::pop_cluster(){
+
+ClusterQueue* ClusterQueue::pop_cluster(){
     // checks if there are still elements in the queue
     if (warn_if(!data.size(), "queue has no data inside, cannot remove elements from it"))
         return this;
@@ -180,8 +178,8 @@ ClusterQueue<T>* ClusterQueue<T>::pop_cluster(){
 * @param _s: simulation to load the bodies to
 * @return a pointer to the queue
 */
-template <typename T>
-ClusterQueue<T>* ClusterQueue<T>::load(Simulation<T>* _s){
+
+ClusterQueue* ClusterQueue::load(Simulation* _s){
     warn_if(data.size() == 0, "no clusters to load from the queue"); 
 
     if (critical_if(!_s, "simulation given is nullptr"))

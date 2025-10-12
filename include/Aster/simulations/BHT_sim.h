@@ -13,8 +13,8 @@ namespace Barnes{
 .                    //===---------------------------------------------------------===*/
 
 
-template <typename T>
-class BHT final : public Barnes_Hut<T> {
+
+class BHT final : public Barnes_Hut {
     public: 
 
     BHT(sim_meta m);
@@ -23,11 +23,6 @@ class BHT final : public Barnes_Hut<T> {
     
 };
 
-template <typename T>
-REAL update_bundle(BHT<T>* _s, unsigned short index);
-
 }
 
 }
-
-#include "Aster/impl/BHT_impl.tpp"

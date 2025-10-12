@@ -1,44 +1,37 @@
 #include <cmath>
+#include <cassert>
 
-#include "Aster/physics/tool-chain.h"
-#include "Aster/physics/vectors.h"
-
+#include "Aster/physics/body.h"
 #include "Aster/simulations/sim_obj.h"
 
-#include "Aster/impl/tool_chain_impl.tpp"
-
 namespace Aster{
-const REAL PI = 3.141592653589793238462643383279;
+extern const REAL PI = 3.141592653589793238462643383279;
 
-//===---------------------------------------------------------===//
-// Cosmology stuff                                               //
-//===---------------------------------------------------------===//
-
-/*
-* gets the delta a from the previous 
-* value of the scale factor 
-*/
-template <typename T>
-float get_da(float s, Simulation<T>* _s){
-    REAL term1 = _s -> data.cosmological_constant * s *s / 3 + 10e-11;
-
-    REAL term2 = _s -> data.field_eq_scalar * _s -> data.c_squared * s *s /3 * _s -> obj / (_s -> data.HEIGHT * _s -> data.WIDTH * s * s * _s -> data.simulation_scale * _s -> data.simulation_scale);
-    return _s -> data.c * std::sqrt(term2  + term1 );
+vec3& BodyArray::get_position_of(size_t i){
+       return positions[i];
 }
 
-/*
-* updates the scale factor with the
-* rk4 method
-*/
-template <typename T> 
-void update_scale(Simulation<T>* _s){
-    REAL k1 = get_da<T>(_s -> data.current_a, _s) * _s -> data.dt;
-    REAL k2 = get_da<T>(_s -> data.current_a + k1 * 0.5, _s) * _s -> data.dt;
-    REAL k3 = get_da<T>(_s -> data.current_a + k2 * 0.5, _s) * _s -> data.dt;
-    REAL k4 = get_da<T>(_s -> data.current_a + k3, _s) * _s -> data.dt;
-
-    _s -> data.current_a += (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+vec3& BodyArray::get_velocity_of(size_t i){
+       return velocities[i];
 }
+
+
+REAL& BodyArray::get_mass_of(size_t i){
+       return masses[i];
+}
+
+
+REAL& BodyArray::get_temp_of(size_t i){
+       return temps[i];
+}
+
+
+vec3& BodyArray::get_acc_of(size_t i){
+       return accs[i];
+}
+
+
+
 
 //===---------------------------------------------------------===//
 // Vectors                                                       //

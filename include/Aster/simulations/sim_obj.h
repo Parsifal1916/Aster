@@ -16,61 +16,106 @@
 
 #include "Aster/building-api/clusters.h"
 #include "Aster/building-api/sim_meta.h"
+#include "Aster/physics/tool-chain.h"
 
 #include "Aster/graphs/graph_collection.h"
+#include "Aster/building-api/clusters.h"
 
 namespace Aster{
 
-template <typename T> struct ClusterQueue;
+class Simulation;
 
-template <typename T>
+
+vec3 newtonian(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s);
+
+
+void update_euler(Simulation* _s);
+
+
+class Solver{
+    public:
+    Solver(Simulation* _s);
+    Solver() {}
+
+    solver_type get_type();
+    void set_force(force_type _t);
+    void set_force(force_func _t);
+    virtual void load() {};
+    virtual void compute_forces() {};
+    Simulation* get_s() {return _s;};
+
+    protected:
+    force_func get_force;
+    force_type _t = NEWTON;
+    solver_type type = SINGLE_THREAD;
+    Simulation* _s = nullptr;
+};
+
+
+class Updater{
+    public:
+    Updater(Simulation* _s, int _o, update_type _t);
+
+    update_type get_type();
+    virtual void update_bodies();
+    int get_order();
+
+    protected:
+    int order = 0;  
+    func_ptr update;
+    update_type type = EULER;
+    Simulation* _s = nullptr;
+};
+
+
 class Simulation{
     public:
     float current_a = 0;
+
+    Simulation();
     
-    BodyArray<T> bodies;
+    BodyArray bodies;
 
-    Simulation<T>* set_numof_objs(unsigned int n_);
-    Simulation<T>* set_screen_size(REAL  w_, REAL h_, REAL d_ = 1000);
-    Simulation<T>* set_dt(float dt_);
-    Simulation<T>* set_omega_m(float om_);
-    Simulation<T>* set_omega_l(float ol_);
-    Simulation<T>* set_hubble(float h_);
-    Simulation<T>* set_vacuum_density(float d_);
-    Simulation<T>* set_max_frames(unsigned int f_);
-    Simulation<T>* set_sim_type(short type);
-    Simulation<T>* set_heat_capacity(REAL c_);
-    Simulation<T>* set_scale(REAL s);
-    Simulation<T>* set_adaptive_coeff(REAL s);
-    
-    virtual Simulation<T>* load();
-    Simulation<T>* add_graph(typename Graphs::Graph<T>::listener_fptr listener, graph_type type = ONCE);
-    Simulation<T>* add_graph(typename Graphs::Graph<T>::collector_fptr listener, graph_type type = BETWEEN);
+    Simulation* set_screen_size(REAL  w_, REAL h_, REAL d_ = 1000);
+    Simulation* set_dt(float dt_);
+    Simulation* set_omega_m(float om_);
+    Simulation* set_omega_l(float ol_);
+    Simulation* set_hubble(float h_);
+    Simulation* set_vacuum_density(float d_);
+    Simulation* set_max_frames(unsigned int f_);
+    Simulation* set_heat_capacity(REAL c_);
+    Simulation* set_scale(REAL s);
+    Simulation* set_adaptive_coeff(REAL s);
 
-    Simulation<T>* get_force_with(force_type t);
-    Simulation<T>* update_with(update_type t);
-    Simulation<T>* get_force_with(force_func<T> p);
-    Simulation<T>* update_with(func_ptr<T> p);
-    Simulation<T>* update_forces_with(func_ptr<T> p);
-    Simulation<T>* update_forces_with(forces_update_type p);
+    bool always_read_pos = true;
+    Simulation* load();
+    Simulation* load_gpu_buffers();
+    Simulation* read_bodies_gpu();
+    Simulation* add_graph(typename Graphs::Graph::listener_fptr listener, graph_type type = ONCE);
+    Simulation* add_graph(typename Graphs::Graph::collector_fptr listener, graph_type type = BETWEEN);
 
-    Simulation<T>* collect_hamiltonian();
-    Simulation<T>* collect_error();
-    Simulation<T>* collect_distance();
+    Simulation* get_force_with(force_type t);
+    Simulation* update_with(update_type t);
+    Simulation* update_with(Updater* p);
 
-    virtual Simulation<T>* integrate(size_t time);
-    Simulation<T>* calculate_total_mass();
-    virtual Simulation<T>* use_GPU();
+    Simulation* get_force_with(force_func p);
+
+    Simulation* collect_hamiltonian();
+    Simulation* collect_error();
+    Simulation* collect_distance();
+
+    virtual Simulation* integrate(size_t time, bool precision_test = false);
+    Simulation* calculate_total_mass();
     
     REAL get_total_mass() const;
     REAL get_adaptive_coeff() const;
-    T get_center_of_mass();
+    vec3 get_center_of_mass();
     bool is_fine();
 
     bool has_loaded_yet() const;
     
-    T get_center() const;
-    T get_corner(int n) const;
+    vec3 get_center() const;
+    vec3 get_corner(int n) const;
 
     REAL get_height() const;
     REAL get_width() const;
@@ -93,47 +138,29 @@ class Simulation{
 
     bool uses_GPU() const;
 
-    simulation_types get_type() const;
-    
     int get_cores() const;
 
-    virtual void step() {}
+    void step();
 
-    virtual void update_pair(size_t  b1){
-        for (int b2 = 0; b2 < bodies.positions.size(); ++b2){
-            if (b2 == b1) continue;
-    
-            this -> bodies.get_acc_of(b1) += get_force(
-                bodies.get_mass_of(b1), bodies.get_mass_of(b2),
-                bodies.get_velocity_of(b1), bodies.get_velocity_of(b2),
-                bodies.get_position_of(b1), bodies.get_position_of(b2),
-                this
-            ) / bodies.get_mass_of(b1);
+    force_type force_used = NEWTON;
+    solver_type gravity_solver = PARALLEL;
+    update_type integrator = EULER;
+    int integrator_order = 0;
 
-            for (auto& graph : between_graphs)
-                graph.trigger_on(b1, b2);
-    
-        }
-    }
-
-    func_ptr<T> update_bodies;
-    force_func<T> get_force;
-    func_ptr<T> update_forces;
-    int obj;
-    std::vector<Graphs::Graph<T>> between_graphs;
-    ClusterQueue<T> loading_queue;
+    std::vector<Graphs::Graph> between_graphs;
+    ClusterQueue loading_queue;
     std::pair<std::string, REAL> loading_meta = {"", 0};
-
+    Solver* solver = nullptr;
+    Updater* updater = nullptr;
+    cl_mem positions_cl, accs_cl, velocities_cl, masses_cl;
 
     protected:
     REAL total_mass = 0;
     sim_meta data;
 
-    force_type force_used = NEWTON;
-    forces_update_type force_update_used = PARALLEL;
-    update_type update_used = EULER;
+
     
-    std::vector<Graphs::Graph<T>> graphs;
+    std::vector<Graphs::Graph> graphs;
  
     REAL
         c_squared,
@@ -146,12 +173,9 @@ class Simulation{
     bool GPU_on = false;
 };
 
-template <typename T>
-class Solver{
 
-};
-template <typename T> 
-void update_bundle(Simulation<T>*, short unsigned int);
+func_ptr resolve_gpu_updater(update_type, int ord = 0);
+func_ptr bake_update_function(update_type _t, int ord = 0);
+Solver* bake_solver(Simulation* _s, solver_type _t);
+
 }
-
-#include "Aster/impl/builder_endpoint.tpp"

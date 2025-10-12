@@ -6,16 +6,27 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 
+#include <tbb/parallel_sort.h>
+using namespace tbb;
+
 #include "Aster/graphics/3d_graphics.h"
 #include "Aster/graphics/color_scale.h"
+#include "Aster/building-api/logging.h"
 
 
 namespace Aster{
 
 namespace Renderer{
-    #define NUM_SEGMENTS 15
+/**
+* @brief bakes a renderer for a specific simulation
+* @param s: simulation to render
+*/ 
+Renderer::Renderer3d* render(Simulation* s){
+    return new Renderer::Renderer3d(s);
+}
 
-    #define depth_factor 1.2
+#define NUM_SEGMENTS 15
+#define depth_factor 1.2
 
 //===---------------------------------------------------------===//
 // 3d rendering impl                                             //
@@ -40,31 +51,41 @@ bool Renderer3d::does_show_axis(){
 /**
 * @brief draws the axis on screen
 */
-void Renderer3d::draw_axis(){
+void Renderer3d::draw_axis(bool is_back){
     // gets the needed points in simulation space
-    vec3 origin = {0.0, 0.0, 0.0};
-    vec3 opp =    {1.0, 1.0, 1.0};
-    vec3 point1 = {1.0, 0.0, 0.0};
-    vec3 point2 = {0.0, 1.0, 0.0};
-    vec3 point3 = {0.0, 0.0, 1.0};
-    vec3 mid1   = {1.0, 1.0, 0.0};
-    vec3 mid2   = {0.0, 1.0, 1.0};
-    vec3 mid3   = {1.0, 0.0, 1.0};
+    static vec3 cube_vertecies[8] = {
+        {0,0,0}, {0,1,0}, {1,1,0}, {1,0,0},
+        {0,0,1}, {0,1,1}, {1,1,1}, {1,0,1} 
+    };
 
-    // maps the point onto the screen
-    point1 = map_point(point1); // width
-    point2 = map_point(point2); // height
-    point3 = map_point(point3); // depth
-    origin = map_point(origin); // origin
-    mid1 = map_point(mid1);
-    mid2 = map_point(mid2);
-    mid3 = map_point(mid3);
-    opp = map_point(opp);
+    float aspect_ratio = float(current_width) / current_height;
 
-    auto connect = [](vec3 a, vec3 b){
-        glColor3f(1.0, 0.0, 0.0);
-        glVertex2f(a.x, a.y);
-        glVertex2f(b.x, b.y);
+    vec3 mapped_vs[8];
+    vec3 excluded = {0,0,100};
+
+    // maps all the points and then finds the fartherst one from the screen
+    // in order to exclude the three verticies correlated to that one 
+    // to draw them first since they are behind the bodies and the otehr 9 verticies
+    #pragma unroll
+    for (int i = 0; i < 8; i++) {
+        mapped_vs[i] = map_point(cube_vertecies[i]);
+        if (mapped_vs[i].z < excluded.z)
+            excluded = mapped_vs[i];
+    }
+    
+    auto connect = [excluded, is_back, mapped_vs, aspect_ratio](int x, int y){
+        //exstracts the vectors from the array
+        vec3 a = mapped_vs[x], b = mapped_vs[y];
+
+        // check if they should be drawn using isback
+        if (!((a == excluded || b == excluded) == is_back)) return;
+
+        //sets the color proportional to the distance
+        glColor3f((a.z/2 + b.z/2 +2)/2, 0.0, 0.0);
+
+        // connects the points
+        glVertex2f(a.x, a.y * aspect_ratio);
+        glVertex2f(b.x, b.y * aspect_ratio);
     };
     
     // sets the line thickness
@@ -72,22 +93,18 @@ void Renderer3d::draw_axis(){
 
     // begines drawing the segments
     glBegin(GL_LINES);
-        connect(origin, point1);
-        connect(origin, point2);
-        connect(origin, point3);
-
-        connect(mid2, point2);
-        connect(mid2, point3);
-        
-        connect(mid1, point1);
-        connect(mid1, point2);
-
-        connect(mid3, point1);
-        connect(mid3, point3);
-
-        connect(mid1, opp);
-        connect(mid2, opp);
-        connect(mid3, opp);
+        connect(0, 1);
+        connect(0, 3);
+        connect(0, 4);
+        connect(1, 5);
+        connect(1, 2);
+        connect(2, 6);
+        connect(2, 3);
+        connect(3, 7);
+        connect(4, 5);
+        connect(5, 6);
+        connect(4, 7);
+        connect(6, 7);
     glEnd();
 
 }
@@ -101,11 +118,14 @@ vec3 Renderer3d::map_point(vec3 v, bool fixed) {
     // offsets the vector on the center
     v = v* distance;
     v = v - vec3(.5, .5, .5) * distance;
+    v = v*gui_scale;
 
-    if (!fixed && !is_unitary_bound(v*2))
+    v = v*2/gui_scale;
+
+    if (!fixed && !(v.x < 1 && v.x > -1 && v.y < float(current_width)/current_height && v.y > -float(current_width)/current_height))
         return {10,10,10};
         
-    
+     v = v*gui_scale * gui_scale/2;
 
     // applies the z-x rotation
     float x1 =  v.x * cos_x_theta + v.z * sin_x_theta;
@@ -140,12 +160,11 @@ bool Renderer3d::is_unitary_bound(vec3 v, vec3 a){
            v.z >= -a.z && v.z <= a.z;
 }
 
-Renderer3d::Renderer3d(Simulation<vec3>* _s) : _s(_s){
-    if (critical_if(!_s, "simulation to render is a nullptr"))
-        exit(-1);
+void Renderer3d::setup(){
+    render3d = &Renderer3d::draw_detailed3d;
 
-    // sets up the user-defined rendering functions
-    render3d = render_modes3d[_s -> get_type()];
+    if (this -> _s -> bodies.positions.size() >= 50)
+        render3d = &Renderer3d::draw_minimal3d;
 
     // defines the center of rotation
     rot_center = {
@@ -157,11 +176,11 @@ Renderer3d::Renderer3d(Simulation<vec3>* _s) : _s(_s){
     // checks if glfw can initialize correctly
     if (critical_if(!glfwInit(), "failed to load glfw")) 
         exit(-1);
-
+ 
     // generates the window
     window = glfwCreateWindow(
-        _s -> get_render_width(), 
-        _s -> get_render_height(), 
+        1366, 
+        768, 
         "Aster's simulation", 
         nullptr, nullptr
     );
@@ -171,7 +190,14 @@ Renderer3d::Renderer3d(Simulation<vec3>* _s) : _s(_s){
         glfwTerminate();
         exit(0);
     }
+}
 
+Renderer3d::Renderer3d(Simulation* _s) : _s(_s){
+    
+    if (critical_if(!_s, "simulation to render is a nullptr"))
+        exit(-1);
+
+    this -> setup();
 }
 
 /**
@@ -180,6 +206,9 @@ Renderer3d::Renderer3d(Simulation<vec3>* _s) : _s(_s){
 void Renderer3d::show(){
     if (critical_if(!_s, "simulation to render is a nullptr"))
         exit(-1);
+    
+    if (!(window))
+        this -> setup();
 
     // changes the context and defines callback related variables
     glfwMakeContextCurrent(window);
@@ -199,16 +228,18 @@ void Renderer3d::show(){
         // clears the screen
         glClear(GL_COLOR_BUFFER_BIT);
         
+        
         // if it is not paused it steps the simulation
         if (!paused) 
             body_update_func();
 
         // shows the axis if it should
-        if (show_axis_b)
-            draw_axis();
+        draw_axis(true);
         
         // calls the rendering function
         (this ->*render3d)();
+
+        draw_axis(false);
 
         // handles mouse events
         handle_displacement();
@@ -272,6 +303,8 @@ void Renderer3d::mouse_clicked(){
 
     // saves the new cursor position
     glfwGetCursorPos(window, &mouse_init_x, &mouse_init_y);
+    init_x_theta = x_theta;
+    init_y_theta = y_theta;
 }
 
 /**
@@ -294,12 +327,13 @@ void Renderer3d::handle_displacement(){
         double mouse_x, mouse_y;
 
         // updates the mouse position and angles
-        glfwGetCursorPos(window, &mouse_x, &mouse_y);         
-        x_theta = atan2((mouse_init_x - mouse_x), distance);
-        y_theta = atan2(-(mouse_init_y - mouse_y), distance);
-    }else 
-        // otherwise it resets the mouse
-        reset_mouse();
+        glfwGetCursorPos(window, &mouse_x, &mouse_y);       
+        x_theta = init_x_theta - atan2((mouse_init_x - mouse_x) / current_width , 1) * 2.5;
+        y_theta = init_y_theta + atan2((mouse_init_y - mouse_y) / current_height, 1) * 2.5; 
+    } else
+    
+    // otherwise it resets the mouse
+    reset_mouse();
 
     // precomputes the cosines and sines of the associated angles 
     cos_x_theta = cos(x_theta);
@@ -375,28 +409,43 @@ void Renderer3d::draw_minimal3d(){
 void Renderer3d::draw_detailed3d() { 
     vec3 mapped_pos = {0, 0,0}; // only one instance
     float aspect_ratio = float(current_width) / float(current_height);
+    size_t N = _s -> bodies.positions.size();
 
-    for (int i = 0; i < _s -> bodies.positions.size(); ++i) {
-        mapped_pos = map_point(_s -> bodies.get_position_of(i)); //saves the position
+    std::vector<std::pair<vec3, int>> sorted_pos(N);
+
+    for (int i = 0; i< N; ++i){
+        vec3 v = _s -> bodies.positions[i];
+        v.x = (v.x + _s -> get_width()) / (2*_s -> get_width()) ;
+        v.y = (v.y + _s -> get_height())/ (2*_s -> get_height());
+        v.z = (v.z + _s -> get_depth()) / (2*_s -> get_depth()) ;
         
+        sorted_pos[i].first = map_point(v, false);
+        sorted_pos[i].second = i;
+    }
+
+    parallel_sort(sorted_pos.begin(), sorted_pos.end(), [](const std::pair<vec3, int>& a, const std::pair<vec3, int>& b){return a.first.z > b.first.z;});
+
+    for (int i = 0; i < N; ++i) {
+        vec3 v = sorted_pos[i].first;
+
         // fetches the color from rng colors array
-        glColor3f(rng_colors[i % 15][0], 
-                  rng_colors[i % 15][1], 
-                  rng_colors[i % 15][2]); 
+        glColor3f(rng_colors[sorted_pos[i].second % 15][0], 
+                  rng_colors[sorted_pos[i].second % 15][1], 
+                  rng_colors[sorted_pos[i].second % 15][2]); 
 
         // calculates the radius based on the log_{10} of the mass by some constant
-        REAL radius = std::log10(_s -> bodies.get_mass_of(i)) / 3000;
+        REAL radius = std::log10(_s -> bodies.get_mass_of(sorted_pos[i].second)) / 200 * gui_scale / (v.z+2)/2 ;
 
         // draws a circle around the body using a triangle fan
         glBegin(GL_TRIANGLE_FAN);
         // draws the center of the fan
-        glVertex2f(mapped_pos.x / aspect_ratio, mapped_pos.y / aspect_ratio);
+        //glVertex2f(v.x, v.y * aspect_ratio);
 
         for (int j = 0; j <= NUM_SEGMENTS; j++) {
             // calculates the points's position with polar coordinates where r = radius
             float angle = 2.0f * M_PI * j / NUM_SEGMENTS;
-            float vx = (mapped_pos.x + cos(angle) * radius) / aspect_ratio;
-            float vy = (mapped_pos.y + sin(angle) * radius) / aspect_ratio;
+            float vx = (v.x + cos(angle) * radius);
+            float vy = (v.y + sin(angle) * radius * aspect_ratio);
 
             // draws the vertex
             glVertex2f(vx, vy);
@@ -434,6 +483,12 @@ void Renderer3d::handle_keyboard_input(GLFWwindow* window, int key, int scancode
             case GLFW_KEY_SPACE:
                 renderer -> inputs["space"] = true;
                 renderer -> paused = !renderer -> paused;
+                break;
+            case GLFW_KEY_KP_ADD:
+                renderer -> gui_scale += .1;
+                break;
+            case GLFW_KEY_KP_SUBTRACT:
+                renderer -> gui_scale -= .1;
                 break;
             default:
                 break;

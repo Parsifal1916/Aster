@@ -42,7 +42,7 @@ namespace GPU{
     * @param source: source code of the kernel
     * @param k: kernel object onto which to write the kernel 
     */
-    void compile_kernel(std::string* name, std::string* source, cl_kernel& k);
+    cl_kernel compile_kernel(std::string* name, std::string* source);
     
     /**
     * @brief initializes opencl and finds the right device
@@ -52,27 +52,20 @@ namespace GPU{
     /**
     * @brief compiles the force program
     */
-    template <typename T>
-    func_ptr<T> compile_uf(force_type t);
+    
+    func_ptr compile_uf(force_type t);
     
     /**
     * @brief compiles the body update program
     */
-    template <typename T>
-    func_ptr<T> compile_ub(update_type t);
     
-    template <typename T> 
-    void upload_force_kernel(cl_kernel& k, Simulation<T>* _s);
+    func_ptr compile_ub_saba(int ord);
     
-    template <typename T> 
-    void upload_update_kernel(cl_kernel& k, Simulation<T>* _s, REAL c = 1, REAL d = 1);
+     
+    void upload_force_kernel(cl_kernel& k, Simulation* _s);
     
-    /**
-    * @brief: gets_the maximum amount of data we can put on the GPU (assuming everything is a uint32_t)
-    * @param device: device to scan
-    * @returns the amount of uint32_t to load
-    */
-    static size_t compute_max_chunk_size(cl_device_id device);
+     
+    void upload_update_kernel(cl_kernel& k, Simulation* _s, REAL c = 1, REAL d = 1);
     
     /**
     * @brief merges two already sorted arrays

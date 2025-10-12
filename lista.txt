@@ -1,0 +1,234 @@
+📦 Dipendenze in .
+
+📄 include/Aster.hpp
+├── 📄 Aster/building-api/builder.h
+├── 📄 Aster/building-api/logging.h
+├── 📄 Aster/building-api/presets.h
+├── 📄 Aster/graphics/2d_graphics.h
+├── 📄 Aster/graphics/3d_graphics.h
+├── 📄 Aster/graphics/text_rendering.h
+├── 📄 Aster/graphs/labeling.h
+├── 📄 Aster/physics/body.h
+├── 📄 Aster/physics/tool-chain.h
+├── 📄 Aster/physics/vectors.h
+├── 📄 Aster/simulations/barnes-hut.h
+├── 📄 Aster/simulations/barnes_hut_GPU.h
+├── 📄 Aster/simulations/full_GPU.h
+├── 📄 Aster/simulations/sim_helper.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 include/Aster/building-api/GPU_endpoint.h
+├── 📄 Aster/physics/body.h
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/building-api/builder.h
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/building-api/clusters.h
+├── 📄 Aster/impl/clusters_endpoint.tpp
+├── 📄 Aster/physics/body.h
+└── 📄 Aster/physics/vectors.h
+
+📄 include/Aster/building-api/presets.h
+└── 📄 Aster/physics/body.h
+
+📄 include/Aster/building-api/sim_meta.h
+├── 📄 Aster/physics/vectors.h
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/graphics/2d_graphics.h
+├── 📄 Aster/graphs/labeling.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 include/Aster/graphics/3d_graphics.h
+├── 📄 Aster/physics/vectors.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 include/Aster/graphics/animations.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 include/Aster/graphs/graph_collection.h
+├── 📄 Aster/impl/graph_collection.tpp
+├── 📄 Aster/physics/body.h
+└── 📄 Aster/physics/vectors.h
+
+📄 include/Aster/graphs/labeling.h
+├── 📄 Aster/impl/labeling.tpp
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 include/Aster/impl/SABA.tpp
+├── 📄 Aster/physics/vectors.h
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/impl/barnes_hut_GPU.tpp
+├── 📄 Aster/building-api/GPU_endpoint.h
+├── 📄 Aster/impl/kernels/PNs.cl.h
+├── 📄 Aster/impl/kernels/PNs3d.cl.h
+├── 📄 Aster/impl/kernels/barnes_tree_creation.cl.h
+├── 📄 Aster/impl/kernels/basic_barnes_force.cl.h
+├── 📄 Aster/impl/kernels/newton_update.cl.h
+└── 📄 Aster/impl/kernels/newton_update3d.cl.h
+
+📄 include/Aster/impl/builder_endpoint.tpp
+├── 📄 Aster/building-api/builder.h
+├── 📄 Aster/graphs/graph_collection.h
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/impl/clusters_endpoint.tpp
+├── 📄 Aster/building-api/clusters.h
+├── 📄 Aster/building-api/logging.h
+├── 📄 Aster/physics/body.h
+└── 📄 Aster/physics/vectors.h
+
+📄 include/Aster/impl/full_GPU.tpp
+├── 📄 Aster/building-api/GPU_endpoint.h
+├── 📄 Aster/impl/kernels/BHH_specific.cl.h
+├── 📄 Aster/impl/kernels/PNs.cl.h
+├── 📄 Aster/impl/kernels/PNs3d.cl.h
+├── 📄 Aster/impl/kernels/generalized_intgrt.cl.h
+├── 📄 Aster/impl/kernels/generalized_intgrt3d.cl.h
+├── 📄 Aster/impl/kernels/morton_writer.cl.h
+├── 📄 Aster/impl/kernels/newton_update.cl.h
+├── 📄 Aster/impl/kernels/newton_update3d.cl.h
+├── 📄 Aster/impl/kernels/radix.cl.h
+└── 📄 Aster/physics/coeffs.h
+
+📄 include/Aster/impl/graph_collection.tpp
+├── 📄 Aster/graphs/graph_collection.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 include/Aster/impl/kernel_uploaders.tpp
+├── 📄 Aster/building-api/GPU_endpoint.h
+├── 📄 Aster/building-api/logging.h
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/impl/labeling.tpp
+├── 📄 Aster/building-api/logging.h
+├── 📄 Aster/graphics/text_rendering.h
+└── 📄 Aster/graphs/labeling.h
+
+📄 include/Aster/impl/tc_impl_cl.tpp
+├── 📄 Aster/building-api/GPU_endpoint.h
+├── 📄 Aster/building-api/logging.h
+├── 📄 Aster/impl/kernels/PNs.cl.h
+├── 📄 Aster/impl/kernels/PNs3d.cl.h
+├── 📄 Aster/impl/kernels/eulerian_update.cl.h
+├── 📄 Aster/impl/kernels/generalized_intgrt.cl.h
+├── 📄 Aster/impl/kernels/generalized_intgrt3d.cl.h
+├── 📄 Aster/impl/kernels/newton_update.cl.h
+├── 📄 Aster/impl/kernels/newton_update3d.cl.h
+├── 📄 Aster/simulations/basic.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 include/Aster/impl/tool_chain_impl.tpp
+├── 📄 Aster/physics/vectors.h
+├── 📄 Aster/simulations/basic.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 include/Aster/impl/updater.tpp
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/physics/body.h
+└── 📄 Aster/physics/vectors.h
+
+📄 include/Aster/physics/tool-chain.h
+├── 📄 Aster/impl/SABA.tpp
+├── 📄 Aster/physics/body.h
+├── 📄 Aster/physics/coeffs.h
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/simulations/BHT_sim.h
+└── 📄 Aster/impl/BHT_impl.tpp
+
+📄 include/Aster/simulations/barnes-hut.h
+└── 📄 Aster/impl/barnes_hut.tpp
+
+📄 include/Aster/simulations/barnes_hut_GPU.h
+└── 📄 Aster/impl/barnes_hut_GPU.tpp
+
+📄 include/Aster/simulations/basic.h
+├── 📄 Aster/physics/body.h
+└── 📄 Aster/physics/vectors.h
+
+📄 include/Aster/simulations/full_GPU.h
+└── 📄 Aster/impl/full_GPU.tpp
+
+📄 include/Aster/simulations/pooling.h
+└── 📄 pooling_helper.h
+
+📄 include/Aster/simulations/sim_obj.h
+├── 📄 Aster/building-api/clusters.h
+├── 📄 Aster/building-api/sim_meta.h
+├── 📄 Aster/graphs/graph_collection.h
+├── 📄 Aster/impl/builder_endpoint.tpp
+├── 📄 Aster/impl/updater.tpp
+├── 📄 Aster/physics/tool-chain.h
+├── 📄 Aster/physics/vectors.h
+└── 📄 Aster/simulations/basic.h
+
+📄 include/Aster/thirdparty/fontstash.h
+└── 📄 stb_truetype.h
+
+📄 include/Aster/thirdparty/nanovg_gl.h
+└── 📄 nanovg.h
+
+📄 include/Aster/thirdparty/stb_image.h
+└── 📄 stb_image.h
+
+📄 include/Aster/thirdparty/stb_truetype.h
+└── 📄 stb_truetype.h
+
+📄 src/clusters/presets_impl.cpp
+├── 📄 Aster/building-api/logging.h
+├── 📄 Aster/building-api/presets.h
+├── 📄 Aster/simulations/sim_obj.h
+└── 📄 Aster/thirdparty/FastNoiseLite.h
+
+📄 src/graphics/color_scale.cpp
+└── 📄 Aster/graphics/color_scale.h
+
+📄 src/graphics/renderer2d_endpoint.cpp
+├── 📄 Aster/graphics/2d_graphics.h
+├── 📄 Aster/graphics/animations.h
+├── 📄 Aster/graphics/color_scale.h
+├── 📄 Aster/graphics/text_rendering.h
+└── 📄 Aster/simulations/barnes-hut.h
+
+📄 src/graphics/renderer3d_endpoint.cpp
+├── 📄 Aster/graphics/3d_graphics.h
+└── 📄 Aster/graphics/color_scale.h
+
+📄 src/labeling/animations.cpp
+├── 📄 Aster/building-api/logging.h
+├── 📄 Aster/graphics/animations.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 src/labeling/text_rendering.cpp
+├── 📄 Aster/building-api/logging.h
+├── 📄 Aster/graphics/text_rendering.h
+├── 📄 Aster/thirdparty/nanovg.h
+└── 📄 Aster/thirdparty/nanovg_gl.h
+
+📄 src/simulating/bh_specialization.cpp
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 src/simulating/collectors.cpp
+├── 📄 Aster/graphs/graph_collection.h
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 src/simulating/logging.cpp
+└── 📄 Aster/building-api/logging.h
+
+📄 src/simulating/physics_endpoint.cpp
+└── 📄 Aster/simulations/sim_obj.h
+
+📄 src/thirdparty/nanovg.cpp
+├── 📄 Aster/thirdparty/fontstash.h
+├── 📄 Aster/thirdparty/nanovg.h
+└── 📄 Aster/thirdparty/stb_image.h
+
+📄 tests/main_tests.cpp
+├── 📄 math_sanity_test.h
+├── 📄 sim_building.h
+└── 📄 sim_step_testing.h
+

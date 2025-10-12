@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Aster/simulations/basic.h"
+#include "Aster/physics/vectors.h"
+
 namespace Aster{
 namespace GPU {
     inline constexpr REAL SABA1_coeff[] = {1,1

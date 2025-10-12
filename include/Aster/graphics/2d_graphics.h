@@ -18,9 +18,9 @@ class Renderer2d{
 
     GLFWwindow* window;
     int current_height, current_width;
-    Text::LabelQueue<vec2> labels;
+    Text::LabelQueue labels;
 
-    Renderer2d(Simulation<vec2>* _s);
+    Renderer2d(Simulation* _s);
 
     /**
     * @brief tells the renderer to show the x and y axis
@@ -65,7 +65,7 @@ class Renderer2d{
     * @brief adds a label to the screen
     * @param gen: generator function for the label
     */
-    Renderer2d* add_label(Text::label_gen<vec2> gen);
+    Renderer2d* add_label(Text::label_gen gen);
 
     /**
     * @brief callback for when the window is resized
@@ -109,7 +109,7 @@ class Renderer2d{
 
 
     bool show_axis_b = false;    
-    Simulation<vec2>* _s = nullptr;
+    Simulation* _s = nullptr;
     render_func render = nullptr;
     REAL scale = 1;
 };
@@ -120,6 +120,6 @@ class Renderer2d{
 * @brief bakes a renderer for a specific simulation
 * @param s: simulation to render
 */ 
-Renderer::Renderer2d* render(Simulation<vec2>*);
+//Renderer::Renderer2d* render(Simulation*);
 
 }

@@ -1,29 +1,22 @@
-#pragma once
-
 #include <cmath>
 
 #include <tbb/parallel_for.h> 
 using namespace tbb;
 
-#include "Aster/physics/tool-chain.h"
 #include "Aster/physics/vectors.h"
-
-#include "Aster/simulations/sim_obj.h"
 #include "Aster/simulations/basic.h"
-
-#include "Aster/impl/config.h"
-
-// NOTE: i don't trust loop unrolling
+#include "Aster/physics/tool-chain.h"
+#include "Aster/simulations/sim_obj.h"
 
 namespace Aster{ 
 
-template <typename T> 
-void update_SABA1(Simulation<T>* _s){
+
+void update_SABA1(Simulation* _s){
     update_euler(_s);
 }
 
-template <typename T> 
-void update_SABA2(Simulation<T>* _s){
+
+void update_SABA2(Simulation* _s){
     constexpr REAL c1 = 0.21132486540518713447056597942719236;
     constexpr REAL c2 = 0.57735026918962573105886804114561528;
     constexpr REAL d1 = .5;
@@ -33,14 +26,14 @@ void update_SABA2(Simulation<T>* _s){
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;        
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c1, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
@@ -48,8 +41,8 @@ void update_SABA2(Simulation<T>* _s){
     });
 }
 
-template <typename T> 
-void update_SABA3(Simulation<T>* _s){
+
+void update_SABA3(Simulation* _s){
     constexpr REAL c1 = 0.112701665379258297861042592558078468;
     constexpr REAL c2 = 0.387298334620741702138957407441921532;
     constexpr REAL d1 = 5.0/18.0;
@@ -61,21 +54,21 @@ void update_SABA3(Simulation<T>* _s){
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;        
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c2, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c1, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
@@ -83,8 +76,8 @@ void update_SABA3(Simulation<T>* _s){
     });
 }
 
-template <typename T> 
-void update_SABA4(Simulation<T>* _s){
+
+void update_SABA4(Simulation* _s){
     constexpr REAL c1 = 0.069431844202973713731097404888714663;
     constexpr REAL c2 = 0.260577634004598102102079337782924995;
     constexpr REAL c3 = 0.339981043584856257311344052141066641;
@@ -98,28 +91,28 @@ void update_SABA4(Simulation<T>* _s){
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;        
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;        
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c2, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;        
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c1, dt, _s](size_t body){
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
@@ -127,8 +120,8 @@ void update_SABA4(Simulation<T>* _s){
     });
 }
 
-template <typename T>
-void update_SABA5(Simulation<T>* _s) {
+
+void update_SABA5(Simulation* _s) {
     constexpr REAL c1 = 0.046910077030668018149839326724759303;
     constexpr REAL c2 = 0.183855267916490455748501631205726881;
     constexpr REAL c3 = 0.269234655052841553857234657698427327;
@@ -143,35 +136,35 @@ void update_SABA5(Simulation<T>* _s) {
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c3, dt, _s](size_t body) { 
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c2, dt, _s](size_t body) { 
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c1, dt, _s](size_t body) { 
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
@@ -179,8 +172,8 @@ void update_SABA5(Simulation<T>* _s) {
     });
 }
 
-template <typename T>
-void update_SABA6(Simulation<T>* _s) {
+
+void update_SABA6(Simulation* _s) {
     constexpr REAL c1 = 0.033765242898423986093849222753002695; 
     constexpr REAL c2 = 0.135630063868443757075450979737044631; 
     constexpr REAL c3 = 0.211295100191533802515448936669596706; 
@@ -196,42 +189,42 @@ void update_SABA6(Simulation<T>* _s) {
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c4, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c1, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
@@ -240,8 +233,8 @@ void update_SABA6(Simulation<T>* _s) {
 
 }
 
-template <typename T>
-void update_SABA7(Simulation<T>* _s) {
+
+void update_SABA7(Simulation* _s) {
     constexpr REAL c1 = 0.025446043828620737736905157976074369; 
     constexpr REAL c2 = 0.103788363371682042331162455383531428; 
     constexpr REAL c3 = 0.167843017110998636478629180601913472; 
@@ -258,57 +251,57 @@ void update_SABA7(Simulation<T>* _s) {
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });    
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c4, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d4, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d4 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c1, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     }); 
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c1, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     }); 
 }
-template <typename T>
-void update_SABA8(Simulation<T>* _s) {
+
+void update_SABA8(Simulation* _s) {
     constexpr REAL c1 = 0.019855071751231884158219565715263505; 
     constexpr REAL c2 = 0.081811689541954746046003466046821277; 
     constexpr REAL c3 = 0.135567033748648876886907443643292044; 
@@ -326,56 +319,56 @@ void update_SABA8(Simulation<T>* _s) {
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });    
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c4, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d4, c5, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d4 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c5 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c4, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d4 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
@@ -383,8 +376,8 @@ void update_SABA8(Simulation<T>* _s) {
     });  
 }
 
-template <typename T>
-void update_SABA9(Simulation<T>* _s) {
+
+void update_SABA9(Simulation* _s) {
     constexpr REAL c1 = 0.015919880246186955082211898548163565; 
     constexpr REAL c2 = 0.066064566090495147768073207416968997; 
     constexpr REAL c3 = 0.111329837313022698495363874364130346; 
@@ -403,63 +396,63 @@ void update_SABA9(Simulation<T>* _s) {
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });    
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c4, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d4, c5, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d4 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c5 * dt;
     });   
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d5, c4, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d5 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c5 * dt;
     });   
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d4, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d4 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c1, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });  
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c1, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
@@ -468,8 +461,8 @@ void update_SABA9(Simulation<T>* _s) {
 }
 
 
-template <typename T>
-void update_SABA10(Simulation<T>* _s) {
+
+void update_SABA10(Simulation* _s) {
     constexpr REAL c1 = 0.013046735741414139961017993957773973; 
     constexpr REAL c2 = 0.054421580914093604672933661830479502; 
     constexpr REAL c3 = 0.092826899194980052248884661654309736; 
@@ -489,69 +482,69 @@ void update_SABA10(Simulation<T>* _s) {
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c1 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c4, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d4, c5, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d4 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c5 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d5, c6, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d5 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c6 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d4, c5, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d5 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c5 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d3, c4, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d4 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c4 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c2 * dt;
     });
 
-    _s -> update_forces(_s);
+    _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d1, c2, dt, _s](size_t body) {
         _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d1 * dt;

@@ -8,29 +8,29 @@
 #include "Aster/physics/vectors.h"
 
 namespace Aster{
-template <typename T> struct Simulation;
+struct Simulation;
 
 enum graph_type: int {ONCE, FOR_EACH, BETWEEN};
 
 namespace Graphs{
 
-template <typename T>
+
 struct Graph{
     // func pointer to a ONCE or FOR_EACH  
-    using listener_fptr = std::function<REAL(struct Graph<T>*, Simulation<T>*  ,size_t)>;
+    using listener_fptr = std::function<REAL(struct Graph*, Simulation*  ,size_t)>;
     
     // func pointer to a BETWEEN
-    using collector_fptr = std::function<REAL(struct Graph<T>*, Simulation<T>*  ,size_t, size_t)>;
+    using collector_fptr = std::function<REAL(struct Graph*, Simulation*  ,size_t, size_t)>;
 
-    Simulation<T>* _s = nullptr; 
+    Simulation* _s = nullptr; 
     
     listener_fptr listener;
     collector_fptr collector;
     std::vector<std::vector<REAL>> data;
     std::string name = "Graph";
 
-    Graph(Simulation<T>* _s, listener_fptr listener,  graph_type type = ONCE);
-    Graph(Simulation<T>* _s, collector_fptr listener,  graph_type type = ONCE);
+    Graph(Simulation* _s, listener_fptr listener,  graph_type type = ONCE);
+    Graph(Simulation* _s, collector_fptr listener,  graph_type type = ONCE);
 
     /**
     * @brief triggers the contained graph listener
@@ -79,18 +79,16 @@ struct Graph{
     void update_data();
 };
 
-template <typename T>
- REAL hamiltonian_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
 
-template <typename T>
- REAL get_total_energy(Simulation<T>* _s);
+ REAL hamiltonian_collector(Graph* g, Simulation* _s, size_t b);
 
-template <typename T>
- REAL error_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
 
-template <typename T>
- REAL distance_collector(Graph<T>* g, Simulation<T>* _s, size_t b);
+ REAL get_total_energy(Simulation* _s);
+
+
+ REAL error_collector(Graph* g, Simulation* _s, size_t b);
+
+
+ REAL distance_collector(Graph* g, Simulation* _s, size_t b);
 }
 }
-
-#include "Aster/impl/graph_collection.tpp"

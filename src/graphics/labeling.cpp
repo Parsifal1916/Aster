@@ -8,8 +8,8 @@ namespace Text{
 /**
 * @brief updates the label's content using the generator function
 */
-template <typename T>
-void Label<T>::update(Simulation<T>* _s){
+
+void Label::update(Simulation* _s){
     content = generator(_s); // executes the function onto the simualtion
     warn_if(content == "", "no text generated for label");
 }
@@ -18,8 +18,8 @@ void Label<T>::update(Simulation<T>* _s){
 * @brief returns the content
 * @returns the content as a string
 */
-template <typename T>
-std::string Label<T>::get_content() const{
+
+std::string Label::get_content() const{
     return content;
 }
 
@@ -27,18 +27,18 @@ std::string Label<T>::get_content() const{
 * @brief returns the lenght of the queue
 * @returns the lenght of the queue
 */
-template <typename T>
-size_t LabelQueue<T>::get_len() const{
+
+size_t LabelQueue::get_len() const{
     return this -> queue.size();
 };
 
 /**
 * @brief adds a label to the queue
-* @param gen: generator function for the labels (std::string(Simulation<T>*))
+* @param gen: generator function for the labels (std::string(Simulation*))
 * @returns a pointer to the queue
 */
-template <typename T>
-LabelQueue<T>* LabelQueue<T>::add_label(label_gen<T> gen){
+
+LabelQueue* LabelQueue::add_label(label_gen gen){
     if (warn_if(get_len() > 10, "cannot add label, maximum capacity of 10 reached"))
         return this;
 
@@ -50,12 +50,12 @@ LabelQueue<T>* LabelQueue<T>::add_label(label_gen<T> gen){
 * @brief clear the loading queue
 * @returns a pointer to the queue
 */
-template <typename T>
-LabelQueue<T>* LabelQueue<T>::empty_queue(){
+
+LabelQueue* LabelQueue::empty_queue(){
     if (warn_if(!get_len(), "cannot empty label queue, it already is empty!"))
         return this;
 
-    this -> queue.empty();
+    bool _ = this -> queue.empty();
     return this;
 }
 
@@ -63,8 +63,8 @@ LabelQueue<T>* LabelQueue<T>::empty_queue(){
 * @brief loads the labels onto the current window
 * @returns a pointer to the queue
 */
-template <typename T>
-void LabelQueue<T>::load(Simulation<T>* _s){
+
+void LabelQueue::load(Simulation* _s){
     constexpr int
         font_size = 15,
         spacing = 30,

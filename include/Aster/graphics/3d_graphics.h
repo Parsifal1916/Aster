@@ -23,8 +23,8 @@ extern float rng_colors[15][3];
 class Renderer3d{
     public: 
     using render_func3d = void(Renderer3d::*)();
-    Simulation<vec3>* _s = nullptr;
-    render_func3d render3d = nullptr;
+    Simulation* _s = nullptr;
+    render_func3d render3d = &Renderer3d::draw_detailed3d;
 
     GLFWwindow* window;
 
@@ -33,6 +33,8 @@ class Renderer3d{
     REAL 
         x_theta = 0, 
         y_theta = 0,
+        init_x_theta = 0, 
+        init_y_theta = 0,
         sin_x_theta = 0,
         cos_x_theta = 0,
         sin_y_theta = 0,
@@ -40,7 +42,7 @@ class Renderer3d{
         distance = 1
     ;   
 
-    Renderer3d(Simulation<vec3>* _s);
+    Renderer3d(Simulation* _s);
 
     /**
     * @brief wrapper function to step the simulation
@@ -78,14 +80,7 @@ class Renderer3d{
     */
     void show();
     
-    std::vector<render_func3d> render_modes3d = {
-        &Renderer3d::draw_detailed3d,    
-        &Renderer3d::draw_minimal3d, 
-        &Renderer3d::draw_minimal3d, 
-        &Renderer3d::draw_minimal3d, 
-        &Renderer3d::draw_termal3d,
-        &Renderer3d::draw_minimal3d
-    };
+    std::vector<render_func3d> render_modes3d;
     
     // keyboard to input mapping
     std::unordered_map<std::string,  bool> inputs = {
@@ -95,8 +90,11 @@ class Renderer3d{
         {"right", false},
         {"space", false}
     };
+    REAL gui_scale = .5;
 
     private:
+    
+    void setup();
     // should it show the axis on screen?
     bool show_axis_b = true;
 
@@ -109,7 +107,7 @@ class Renderer3d{
     /**
     * @brief draws the axis on screen
     */
-    void draw_axis();
+    void draw_axis(bool is_back);
 
     bool 
         paused = false ,  // has the simulation been paused?
@@ -168,6 +166,6 @@ class Renderer3d{
 //    void clear_graph3d(Simulation3d* _s);
 //    void draw_graph3d(Simulation3d* _s);
 }
-Renderer::Renderer3d* render(Simulation<vec3>*);
+Renderer::Renderer3d* render(Simulation*);
 
 }

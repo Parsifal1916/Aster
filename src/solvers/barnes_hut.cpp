@@ -1,4 +1,3 @@
-#pragma once
 
 #include <vector>
 #include <cassert>
@@ -7,63 +6,22 @@
 #include <algorithm>
 #include <bitset>
 #include <unordered_map>
+#include <bitset>
+
+#include "Aster/simulations/barnes-hut.h"
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_sort.h>
 
 using namespace tbb;
 
 
-#include "Aster/simulations/sim_obj.h"
-#include "Aster/building-api/builder.h"
 
-#include "Aster/graphics/2d_graphics.h"
-
-#include "Aster/physics/vectors.h"
-#include "Aster/physics/body.h" 
-
-#include "Aster/simulations/barnes-hut.h"
-
-#include <bitset>
 
 namespace Aster{   
 
-namespace GPU{
-    void sort(uint64_t* input, uint64_t* output, size_t N);
-}
-
-template <typename T> void get_new_temp(Simulation<T>* _s, size_t body, T pos, T vel, REAL temp, REAL mass);
+ void get_new_temp(Simulation* _s, size_t body, vec3 pos, vec3 vel, REAL temp, REAL mass);
 
 namespace Barnes{
-
-template <typename F>
-FORCE_INLINE void parallel(int cores, size_t num, F func) {
-
-    const size_t n_threads = std::min(num, static_cast<size_t>(cores));
-
-    if (num == 0) return;
-
-    std::vector<std::thread> threads;
-    threads.reserve(n_threads);
-
-    const size_t chunk_size = (num + n_threads - 1) / n_threads;
-
-    for (size_t i = 0; i < n_threads; ++i) {
-        const size_t start = i * chunk_size;
-        const size_t end = std::min(start + chunk_size, num);
-
-        if (start >= end) break;
-
-        threads.emplace_back([start, end, &func]() {
-            for (size_t b = start; b < end; ++b) {
-                func(b);
-            }
-        });
-    }
-
-    for (auto& t : threads) {
-        t.join();
-    }
-}
 
 
 
@@ -71,8 +29,8 @@ FORCE_INLINE void parallel(int cores, size_t num, F func) {
 .                    // NODE IMPLEMENTATION                                           //
 .                    //===---------------------------------------------------------===*/
 
-template <typename T>
-void NodesArray<T>::clear(){
+
+void NodesArray::clear(){
     centers_of_mass.clear();
     temps.clear();
     velocities.clear();
@@ -85,8 +43,8 @@ void NodesArray<T>::clear(){
 * @brief returns if the node is empty
 * @returns mass == 0 && is_leaf()
 */
-template <typename T>
-bool NodesArray<T>::is_empty(size_t i) const {
+
+bool NodesArray::is_empty(size_t i) const {
     return !masses[i] && is_leaf(i);
 }
 
@@ -94,16 +52,16 @@ bool NodesArray<T>::is_empty(size_t i) const {
 * @brief returns if the node is empty
 * @returns mass == 0 && is_leaf()
 */
-template <typename T>
-bool NodesArray<T>::is_leaf(size_t i) const {
+
+bool NodesArray::is_leaf(size_t i) const {
     return right_nodes[i] == -1 && left_nodes[i] == -1;
 }
 
  /**
  * @brief allocates the right amount of memory to the nodes
  */
-template <typename T>
-void NodesArray<T>::allocate(size_t n){
+
+void NodesArray::allocate(size_t n){
     centers_of_mass.reserve(n);
     temps.reserve(n);
     velocities.reserve(n);
@@ -115,8 +73,8 @@ void NodesArray<T>::allocate(size_t n){
 /**
 @brief resizes all arrays
 */
-template <typename T>
-void NodesArray<T>::resize(size_t n){
+
+void NodesArray::resize(size_t n){
     size_t prev_size =  left_nodes.size();
     centers_of_mass.resize(n);
     temps.resize(n);
@@ -130,8 +88,8 @@ void NodesArray<T>::resize(size_t n){
     }
 }
 
-template <typename T>
-size_t NodesArray<T>::size() const{
+
+size_t NodesArray::size() const{
     return masses.size();
 }
 
@@ -139,12 +97,14 @@ size_t NodesArray<T>::size() const{
 * @brief initializes the node with the given body
 * @param _b: ptr to the body to copy
 */
-template <typename T>
-void NodesArray<T>::init(Simulation<T>* _s,size_t  _b, size_t index){
-    masses[index]         = _s -> bodies.get_mass_of(_b);
-    centers_of_mass[index] = _s -> bodies.get_position_of(_b);
-    velocities[index]      = _s -> bodies.get_velocity_of(_b);
-    temps[index]           = _s -> bodies.get_temp_of(_b);
+
+void NodesArray::init(Simulation* _s,size_t  _b, size_t index){
+    auto& bodies = _s -> bodies;
+
+    masses[index]         =  bodies.get_mass_of(_b);
+    centers_of_mass[index] = bodies.get_position_of(_b);
+    velocities[index]      = bodies.get_velocity_of(_b);
+    temps[index]           = bodies.get_temp_of(_b);
     left_nodes[index] = -1;
     right_nodes[index] = -1;
 }
@@ -153,12 +113,14 @@ void NodesArray<T>::init(Simulation<T>* _s,size_t  _b, size_t index){
 * @brief pushes back a node with the given body
 * @param _b: ptr to the body to copy
 */
-template <typename T>
-void NodesArray<T>::push_back(Simulation<T>* _s,size_t  _b){
-    masses.push_back(_s -> bodies.get_mass_of(_b));
-    centers_of_mass.push_back(_s -> bodies.get_position_of(_b));
-    velocities.push_back(_s -> bodies.get_velocity_of(_b));
-    temps.push_back(_s -> bodies.get_temp_of(_b));
+
+void NodesArray::push_back(Simulation* _s,size_t  _b){
+    auto& bodies = _s -> bodies;
+    
+    masses.push_back(bodies.get_mass_of(_b));
+    centers_of_mass.push_back(bodies.get_position_of(_b));
+    velocities.push_back(bodies.get_velocity_of(_b));
+    temps.push_back(bodies.get_temp_of(_b));
     right_nodes.push_back(-1);
     left_nodes.push_back(-1);
 }
@@ -167,8 +129,8 @@ void NodesArray<T>::push_back(Simulation<T>* _s,size_t  _b){
 /**
 * @brief merges two nodes in one node
 */
-template <typename T>
-void NodesArray<T>::unite(size_t start){
+
+void NodesArray::unite(size_t start){
     if (left_nodes[start] == -1 || right_nodes[start] == -1) return;
     
     if (left_nodes[start] < 0 || left_nodes[start] >= size() || right_nodes[start] < 0 || right_nodes[start] >= size()) return;
@@ -189,91 +151,35 @@ void NodesArray<T>::unite(size_t start){
 * @brief merges two bodies in one node in case of conflict
 * @param body: index to the body to merge
 */
-template <typename T>
-void NodesArray<T>::merge(Simulation<T>* _s, size_t _b, size_t index){
+
+void NodesArray::merge(Simulation* _s, size_t _b, size_t index){
     // combines the key values
-    REAL body_mass = _s -> bodies.get_mass_of(_b);
+    auto& bodies = _s -> bodies;
+    REAL body_mass = bodies.get_mass_of(_b);
     REAL total_mass = masses[index] + body_mass;
     
     if (total_mass <= 0) return;
 
-    centers_of_mass[index] = (_s -> bodies.get_position_of(_b) * body_mass + centers_of_mass[index] * masses[index]) / total_mass; 
-    velocities[index] = (velocities[index] * masses[index] +  _s -> bodies.get_velocity_of(_b) * body_mass) / total_mass;
+    centers_of_mass[index] = (bodies.get_position_of(_b) * body_mass + centers_of_mass[index] * masses[index]) / total_mass; 
+    velocities[index] = (velocities[index] * masses[index] +  bodies.get_velocity_of(_b) * body_mass) / total_mass;
     masses[index] = total_mass;
     
     // for the temperature it uses the maximum
-    temps[index] = std::max(REAL(temps[index]), _s -> bodies.get_temp_of(_b));
-}
-
-template <typename T>
-void barnes_update_forces(Simulation<T>* _sim){
-    
-    auto _s = reinterpret_cast<Barnes_Hut<T>*>(_sim);
-    _s ->make_sections(); // for threading
-    _s -> make_tree(); // generates the quad-tree / oct-tree
-        
-    // calculates the forces
-    parallel_for(size_t(0), _s -> bodies.positions.size(), [&, _s](size_t i){
-        _s -> bodies.get_acc_of(i).reset();
-        _s -> get_node_body(_s -> compressed_mortons_size, i, _s -> bounding_box.magnitude());
-    });
-
-
+    temps[index] = std::max(REAL(temps[index]), bodies.get_temp_of(_b));
 }
 
 
 /*                   //===---------------------------------------------------------===//
-.                    // BARNES HUT IMPLEMENTATION                                     //
+.                    // BARNES HUvec3 IMPLEMENTATION                                     //
 .                    //===---------------------------------------------------------===*/
 
 
 
-template <typename T>
-Barnes_Hut<T>::Barnes_Hut(){
-    static_assert(std::is_same<T, vec2>::value || std::is_same<T, vec3>::value, "Invalid type for class construction");
 
-    num_childs = 4; // sets up the child number
-
-    if constexpr (std::is_same<T, vec3>::value) // if its 3d it sets  it up for an oct-tree
-        num_childs = 8;
+Barnes_Hut::Barnes_Hut(Simulation* _s){
+    num_childs = 4; 
     
-    // sets up the simulation
-    this -> data = sim_meta(); 
-    this -> data.type = BARNES_HUT;
-    this -> get_force = get_force_func<T>(NEWTON);
-    this -> update_bodies = get_update_func<T>(this -> data.selected_update, this -> uses_GPU());
-    this -> data.graph_height *= this -> data.size.y;
-    this -> update_forces =  static_cast<void(*)(Simulation<T>*)>(barnes_update_forces<T>);
-
-    this -> threads.reserve(this -> get_cores());
-    this -> obj = this -> bodies.positions.size(); 
-}
-
-/**
-* @brief steps the simulation forward
-*/
-template <typename T>
-void Barnes_Hut<T>::step(){
-    barnes_update_forces(this);
-    this -> update_bodies(this);
-
-    // triggers graph and steps the time
-    this -> trigger_all_graphs();
-    this -> time_passed++;
-}
-
-/**
-* @brief generates an array for the bodies slicing
-*/
-template <typename T> 
-void Barnes_Hut<T>::make_sections(){
-    sections.clear();
-    int mult = this -> bodies.positions.size() / this -> get_cores();
-
-    for (int i = 0; i < this -> get_cores()-1; ++i)
-        sections.emplace_back(i*mult);
-
-    sections.emplace_back(this -> bodies.positions.size());
+    this -> _s = _s;
 }
 
 
@@ -289,22 +195,24 @@ void Barnes_Hut<T>::make_sections(){
 * @param body: ptr to the body being acted upon
 * @returns nothing, everything is done internally
 */
-template <typename T>
-void Barnes_Hut<T>::get_node_body(signed long int node, size_t index, REAL size){
+
+void Barnes_Hut::get_node_body(signed long int node, size_t index, REAL size){
     if (node < 0 || node >= static_cast<signed long int>(nodes.size()))
         return;
 
-    REAL d_squared = (this -> bodies.get_position_of(index) - nodes.centers_of_mass[node]).sqr_magn();
+    auto& bodies = this -> _s -> bodies;
+
+    REAL d_squared = (bodies.get_position_of(index) - nodes.centers_of_mass[node]).sqr_magn();
     
     if (d_squared == 0) return; 
 
     if ( size * size < d_squared *theta * theta || nodes.is_leaf(node)){ // use the optmisation
-        this -> bodies.get_acc_of(index) += this -> get_force(
-            this -> bodies.get_mass_of(index), nodes.masses[node], 
-            this -> bodies.get_velocity_of(index), nodes.velocities[node], 
-            this -> bodies.get_position_of(index), nodes.centers_of_mass[node], 
-            this
-        ) / this -> bodies.get_mass_of(index);
+        bodies.get_acc_of(index) += this -> get_force(
+            bodies.get_mass_of(index), nodes.masses[node], 
+            bodies.get_velocity_of(index), nodes.velocities[node], 
+            bodies.get_position_of(index), nodes.centers_of_mass[node], 
+            this -> _s
+        ) / bodies.get_mass_of(index);
 
         return;
     } 
@@ -313,52 +221,17 @@ void Barnes_Hut<T>::get_node_body(signed long int node, size_t index, REAL size)
     get_node_body(nodes.right_nodes[node], index, size / 2);
 }
 
-/**
-* @brief internal function to update a batch of bodies
-* @param _s: ptr to the simulation
-* @param index: what chunck of the bodies array to scan
-*/
-template <typename T>
-void update_bundle(Barnes_Hut<T>* _s, unsigned short index){
-    if (_s -> nodes.size() <= 0) return;
-    size_t N = _s->obj;
-    size_t P = _s->get_cores();
-    size_t chunk = (N + P - 1) / P;
-    size_t start = index * chunk;
-    size_t stop  = std::min(start + chunk, N);
-    
-    // calculates the forces of those bodies
-    for (size_t i = start; i < stop; ++i){
-        _s -> bodies.get_acc_of(i).reset();
-        
-        _s -> get_node_body(_s -> compressed_mortons_size, i, _s -> bounding_box.magnitude());
-    }
-}
-
-template <typename T> 
-void compute_tidal_heating(Barnes_Hut<T>* _s, size_t index){
-    for (int i = _s -> nodes[0].child; i < _s -> num_childs + _s -> nodes[0].child; ++i){
-        if (i > _s -> bodies.positions.size()) return;
-        
-        get_new_temp<T>(_s,
-            index,_s ->  nodes.centers_of_mass[index], 
-            _s -> nodes.velocities[index], _s -> nodes.temps[index], 
-            _s -> nodes.masses[index]
-        );
-    }
-}
-
 inline signed int count_leading_zeros(uint32_t num){
     return num ? __builtin_clz(num) : 32;
 };
 
-template <typename T>
-uint32_t get_tbreaked_morton(Barnes_Hut<T>* _s, const T& pos, size_t body_index) {
-    return get_morton<T>(_s, pos);
+
+uint32_t get_tbreaked_morton(Barnes_Hut* _s, const vec3& pos, size_t body_index) {
+    return get_morton(_s, pos);
 }
 
-template <typename T>
-inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const std::vector<std::pair<uint32_t, unsigned int>>& mortons){
+
+inline void translate2nodes(Simulation* _s, NodesArray& base_layer, const std::vector<std::pair<uint32_t, unsigned int>>& mortons){
     base_layer.clear();
     base_layer.resize(mortons.size());
 
@@ -372,21 +245,8 @@ inline void translate2nodes(Simulation<T>* _s, NodesArray<T>& base_layer, const 
     base_layer.resize(last+1);
 }
 
-template <typename T>
-Barnes_Hut<T>* Barnes_Hut<T>::set_theta(REAL _t){
-    assert(_t > 0);
-    theta = _t;
-    return this;
-}
 
-template <typename T>
-Simulation<T>* Barnes_Hut<T>::use_GPU(){
-    this -> GPU_on = true;
-    return this;
-}
-
-template <typename T>
-void printTreeRecursive(const NodesArray<T>& nodes, int node, std::string prefix = "", bool isRight = false) {
+void printTreeRecursive(const NodesArray& nodes, int node, std::string prefix = "", bool isRight = false) {
     if (node == -1) return;
 
     // Stampa il nodo corrente con connettori
@@ -405,33 +265,33 @@ void printTreeRecursive(const NodesArray<T>& nodes, int node, std::string prefix
 }
 
 // Wrapper
-template <typename T>
-void print_nodes(const NodesArray<T>& nodes, int root = 0) {
+
+void print_nodes(const NodesArray& nodes, int root = 0) {
     std::cout << "Tree structure:\n";
     printTreeRecursive(nodes, root);
 }
 
-template <typename T>
-void Barnes_Hut<T>::make_tree(){
+
+void Barnes_Hut::make_tree(){
     this->threads.clear();
     this->nodes.clear();
     this->mortons.clear();
 
-    size_t N = this->bodies.positions.size();
+    size_t N = this->_s -> bodies.positions.size();
     if (N == 0) return; 
     
     std::vector<std::pair<uint32_t, unsigned int>> enhanced_mortons;
     enhanced_mortons.reserve(N);
-    this->bounding_box = this->get_center() * 2;
+    this->bounding_box = this->_s -> get_center() * 2;
 
     for (size_t i = 0; i < N; ++i) {
-        uint32_t morton_code = get_tbreaked_morton<T>(this, this->bodies.positions[i], i);
+        uint32_t morton_code = get_tbreaked_morton(this, this->_s -> bodies.positions[i], i);
         enhanced_mortons.emplace_back(morton_code, i);
     }
 
     std::sort(enhanced_mortons.begin(), enhanced_mortons.end(), [](const std::pair<uint32_t, size_t>& a, const std::pair<uint32_t, size_t>&b ){ return a.first < b.first;});
 
-    translate2nodes<T>(this, nodes, enhanced_mortons);
+    translate2nodes(this -> _s, nodes, enhanced_mortons);
     size_t num_leaves = nodes.size();
     
     if (num_leaves <= 1) return;
@@ -503,6 +363,15 @@ void Barnes_Hut<T>::make_tree(){
     nodes.unite(num_leaves);
     this->compressed_mortons_size = num_leaves;
 
-}}
-
 }
+void Barnes_Hut::compute_forces(){
+    const size_t N = this -> _s -> bodies.positions.size();
+    const REAL bd_size = (this -> _s -> get_center()*2).magnitude();
+    this -> make_tree();
+
+    parallel_for(size_t(0), N, [&, this, N](size_t idx){
+        this -> get_node_body(N, idx, bd_size);
+    });
+}
+
+}}

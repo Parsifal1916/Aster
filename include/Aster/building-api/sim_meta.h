@@ -5,9 +5,6 @@
 
 namespace Aster{
 
-// type of simulations
-enum simulation_types: int {LIGHT = 0, MEDIUM = 1, HEAVY = 2, BARNES_HUT = 3, BH_termal = 4, BH_cl = 5};
-
 struct sim_meta{
    int 
         NUM_THREADS = 16,
@@ -27,8 +24,8 @@ struct sim_meta{
         c = 299'792'458,
         c_squared = c*c,
         boltzmann = 1.380649e-23,
-        pi = 3.141592,
-        simulation_scale = 2, // meters / meters
+        pi = 3.1415926535,
+        simulation_scale = 1, //[ m ]/ [ m ]
         graph_height = 3/4
     ;
 
@@ -57,7 +54,6 @@ struct sim_meta{
         flrw_on = false,
         save = false
     ; 
-    simulation_types type = HEAVY;
 
     update_type selected_update;
     force_type selected_force; 

@@ -4,32 +4,41 @@
 
 #include "Aster/physics/body.h"
 #include "Aster/physics/vectors.h"
+#include "Aster/building-api/logging.h"
 
+#ifdef _MSC_VER
+    #define FORCE_INLINE __forceinline
+#else
+    #define FORCE_INLINE inline __attribute__((always_inline))
+#endif
+
+#if defined(_MSC_VER)
+    #define FORCE_UNROLL __pragma(loop(ivdep)) __pragma(unroll)
+#elif defined(__clang__) || defined(__GNUC__)
+    #define DO_PRAGMA(x) _Pragma(#x)
+    #define FORCE_UNROLL DO_PRAGMA(unroll)
+#else
+    #define FORCE_UNROLL
+#endif
 
 namespace Aster{
-template <typename T> class BodyArray;
-template <typename T> class Simulation;
+#define Check(a){                       \
+    if (critical_if(a != CL_SUCCESS, "error in calculating the force (GPU side)")){\
+        std::cout << "error " << a << " at " << __FILE__ << ":" << __LINE__ << "\n";exit(-1);\
+    }\
+}
 
-template <typename T>
-using func_ptr = std::function<void(Simulation<T>*)>;
+class BodyArray;
+class Simulation;
 
-template <typename T>
-using force_func = T(*)(REAL, REAL, T, T, T, T, Simulation<T>*);
+
+using func_ptr = std::function<void(Simulation*)>;
+
+
+using force_func = vec3(*)(REAL, REAL, vec3, vec3, vec3, vec3, Simulation*);
 
 enum force_type:  int {NEWTON = 0, PN1 = 1, PN2 = 2, PN25 = 3, CUSTOM_F = 4};
-enum update_type: int {EULER = 0, SABA2 = 1, SABA3 = 2, SABA4 = 3, SABA5 = 4, SABA6 = 5, SABA7 = 6, SABA8 = 7, SABA9 = 8, SABA10 = 9, CUSTOM_U};
+enum update_type: int {EULER = 0, SABA =1, LEAPFROG=2, CUSTOM_U=3};
+enum solver_type: int {SINGLE_THREAD = 0, PARALLEL = 1, BARNES_HUT = 2, MIXED_BARNES = 3, SIMPLE_GPU = 4, GPU_BARNES_HUT = 5};
 
-#define SABA1 EULER
-#define LEAPFROG SABA2 
-
-enum forces_update_type: int {SINGLE_CORE, PARALLEL, GPU_UF, CUSTOM_FU};
-
-template <typename T>
-force_func<T> get_force_func(force_type type);
-
-template <typename T>
-func_ptr<T> get_update_func(update_type type, bool gpu = false);
-
-template <typename T>
-func_ptr<T> get_uf(forces_update_type type, force_type f);
 }

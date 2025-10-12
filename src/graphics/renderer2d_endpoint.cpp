@@ -6,10 +6,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "Aster/graphics/3d_graphics.h"
 #include "Aster/graphics/2d_graphics.h"
 #include "Aster/graphics/color_scale.h"
 #include "Aster/graphics/animations.h"
+#include "Aster/building-api/logging.h"
 #include "Aster/simulations/barnes-hut.h"
 #include "Aster/graphics/text_rendering.h"
 
@@ -23,17 +23,11 @@ namespace Aster{
 * @brief bakes a renderer for a specific simulation
 * @param s: simulation to render
 */ 
-Renderer::Renderer2d* render(Simulation<vec2>* s){
+Renderer::Renderer2d* render(Simulation* s){
     return new Renderer::Renderer2d(s);
 }
 
-/**
-* @brief bakes a renderer for a specific simulation
-* @param s: simulation to render
-*/ 
-Renderer::Renderer3d* render(Simulation<vec3>* s){
-    return new Renderer::Renderer3d(s);
-}
+
 
 namespace Renderer{
 
@@ -70,7 +64,7 @@ void Renderer2d::handle_mouse_scroll(GLFWwindow* window, double xoffset, double 
 * @brief adds a label to the screen
 * @param gen: generator function for the label
 */
-Renderer2d* Renderer2d::add_label(Text::label_gen<vec2> gen){
+Renderer2d* Renderer2d::add_label(Text::label_gen gen){
     this -> labels.add_label(gen);
     return this;
 }
@@ -100,7 +94,7 @@ float rng_colors[15][3] = {
 //===---------------------------------------------------------===//
 
 
-using render_func = void(*)(Simulation<vec2>*);
+using render_func = void(*)(Simulation*);
 
 /**
 * @brief tells the renderer to show the x and y axis
@@ -119,12 +113,10 @@ bool Renderer2d::does_show_axis(){
 	return show_axis_b;
 }
 
-Renderer2d::Renderer2d(Simulation<vec2>* _s)  : _s(_s) {
+Renderer2d::Renderer2d(Simulation* _s)  : _s(_s) {
     if (critical_if(!_s, "simulation to render is a nullptr"))
         exit(-1);
-
-    // generates the rendering function
-    render = render_modes[_s -> get_type()];
+    render = render_modes[0];
 
     if (critical_if(!glfwInit(), "failed to load glfw")) 
         exit(-1);
@@ -350,34 +342,6 @@ void Renderer2d::draw_minimal(){
 }
 
 
-void write_boundary(Aster::Barnes::Barnes_Hut<vec2>* sim, size_t index, size_t level = 0) {
-    if (index >= sim->nodes.size()) return;
-
-    if (sim -> nodes.is_empty(index)) return;
-
-    vec2 com;
-    com.x = 2.f * (sim -> nodes.centers_of_mass[index].x)/ (sim -> get_width())  - 1; 
-    com.y = 2.f * (sim -> nodes.centers_of_mass[index].y)/ (sim -> get_height()) - 1; 
-
-    float half_size = 0.5f / std::pow(2.0f, level);
-
-    glColor3f(1.0f, 0.0f, 1.0f);
-    glLineWidth(3.0f);
-    glBegin(GL_LINE_LOOP);
-        glVertex2f(com.x - half_size, com.y - half_size);
-        glVertex2f(com.x + half_size, com.y - half_size);
-        glVertex2f(com.x + half_size, com.y + half_size);
-        glVertex2f(com.x - half_size, com.y + half_size);
-    glEnd();
-
-    if (sim -> nodes.left_nodes[index] != -1)
-        write_boundary(sim, sim -> nodes.left_nodes[index], level + 1);
-
-    if (sim -> nodes.right_nodes[index] != -1)
-        write_boundary(sim, sim -> nodes.right_nodes[index], level + 1);
-    
-};
-
 /**
 * @brief rendering function made for barnes-hut simulations
 */
@@ -387,7 +351,7 @@ inline void Renderer2d::draw_barnes(){
     glColor3f(1.0, 1.0, 1.0);
     glBegin(GL_POINTS);
 
-    auto* sim = reinterpret_cast<Barnes::Barnes_Hut<vec2>*>(_s);
+    auto* sim = reinterpret_cast<Barnes::Barnes_Hut*>(_s);
 
     // sets the point size to 10
     glPointSize(10);
@@ -404,9 +368,6 @@ inline void Renderer2d::draw_barnes(){
 
     glEnd();
 
-    write_boundary(sim, sim -> compressed_mortons_size); 
-
-    // ends the batch
 
 }
 

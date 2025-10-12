@@ -18,17 +18,15 @@
 namespace Aster{   
 namespace Barnes{
 
-template <typename T>
-class BH_hyper : public Barnes_Hut<T> {
+
+class BH_hyper : public Barnes_Hut {
     public: 
 
-    BH_hyper();
-    void step() override;
-    Simulation<T>* load() override;
-    BH_hyper<T>* always_read_positions();
-    BH_hyper<T>* read_positions();
-    Simulation<T>* integrate(size_t time) override; 
-    double get_total_energy();
+    BH_hyper(Simulation* _s);
+    void load() override;
+    void compute_forces() override;
+    BH_hyper* always_read_positions();
+    BH_hyper* read_positions();
 
     void upload_force_calc(int num_leaves);
 
@@ -38,9 +36,8 @@ class BH_hyper : public Barnes_Hut<T> {
     bool always_read_pos = false;
     cl_mem mortons;
     cl_mem sorted_mortons;
-    cl_mem positions, velocities, accs;
     cl_mem left_nodes_buff, right_nodes_buff;
-    cl_mem com_buffer, masses, node_masses; 
+    cl_mem com_buffer, node_masses; 
     cl_mem parents, counters;
     cl_mem bd_size_gpu;
 
@@ -58,11 +55,8 @@ class BH_hyper : public Barnes_Hut<T> {
     size_t actual_msize = 1;
     size_t N = 0;
 
-    void debug_step();
-    void compose_updater();
     void compose_sorter();
     void compose_force_kernel();
-    void compute_forces(int N);
 
     void build_bottom_up(int N);
     void load_buffers();
@@ -72,7 +66,7 @@ class BH_hyper : public Barnes_Hut<T> {
     void upload_update_kernel(cl_kernel& k, REAL c, REAL d);
 
 
-    void pull_down_tree(NodesArray<T>& arr);
+    void pull_down_tree(NodesArray& arr);
     void push_tree();
 
 };
@@ -80,5 +74,3 @@ class BH_hyper : public Barnes_Hut<T> {
 
 }
 }
-
-#include "Aster/impl/full_GPU.tpp"

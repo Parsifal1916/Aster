@@ -8,19 +8,17 @@
 #include "Aster/physics/vectors.h"
 #include "Aster/physics/body.h"
 
-
 namespace Aster{
-template <typename T> struct Cluster;
-template <typename T> struct Simulation;
 
-template <typename T> 
-using cluster_builder_fptr = std::function<void(Cluster<T>&, size_t)>;
+class Simulation;
+struct Cluster;
+using cluster_builder_fptr = std::function<void(Cluster&, size_t)>;
 
-template <typename T> 
+
 struct Cluster{
-    T position; // cluster position 
-    T size; // cluster sidelenghts
-    T rotation; // rotation over all axis
+    vec3 position; // cluster position 
+    vec3 size; // cluster sidelenghts
+    vec3 rotation; // rotation over all axis
     size_t number; // number of objects to load
     size_t loaded; // number of loaded objects
     REAL avr_mass; // average mass of the bodies
@@ -30,14 +28,14 @@ struct Cluster{
     std::string name = "Custom Cluster 3d";
 
     // function to invoke to generate the bodies
-    cluster_builder_fptr<T> builder = nullptr;
+    cluster_builder_fptr builder = nullptr;
 
     /**
     * @brief updates the number of loaded bodies by n
     * @param n: number of newly loaded bodies
     * @return a pointer to the cluster
     */
-    Cluster<T>* update(size_t n);
+    Cluster* update(size_t n);
 
 
     /**
@@ -60,14 +58,14 @@ struct Cluster{
     * @param z: rotation over z
     * @return a pointer to the cluster
     */
-    Cluster<T>* rotate(REAL x, REAL y, REAL z = 0);
+    Cluster* rotate(REAL x, REAL y, REAL z = 0);
 
     /**
     * @brief adds angles to the rotation parameter
     * @param rot: rotation vector to add
     * @return a pointer to the cluster
     */
-    Cluster<T>* rotate(T rot);
+    Cluster* rotate(vec3 rot);
 
 
     /**
@@ -77,14 +75,14 @@ struct Cluster{
     * @param z: traslation over z
     * @return a pointer to the cluster
     */
-    Cluster<T>* move(REAL x, REAL y, REAL z = 0);
+    Cluster* move(REAL x, REAL y, REAL z = 0);
 
     /**
     * @brief moves the cluster
     * @param dis: traslation vector
     * @return a pointer to the cluster
     */
-    Cluster<T>* move(T dis);
+    Cluster* move(vec3 dis);
 
 
     /**
@@ -94,14 +92,14 @@ struct Cluster{
     * @param z: z rotation
     * @return a pointer to the cluster
     */
-    Cluster<T>* set_rotation(REAL x, REAL y, REAL z = 0);
+    Cluster* set_rotation(REAL x, REAL y, REAL z = 0);
 
     /**
     * @brief rotates the cluester
     * @param rot: new rotation 
     * @return a pointer to the cluster
     */
-    Cluster<T>* set_rotation(T rot); 
+    Cluster* set_rotation(vec3 rot); 
 
     /**
     * @brief moves the cluster
@@ -110,24 +108,24 @@ struct Cluster{
     * @param z: new z position 
     * @return a pointer to the cluster
     */
-    Cluster<T>* set_position(REAL x, REAL y, REAL z = 0);
+    Cluster* set_position(REAL x, REAL y, REAL z = 0);
 
     /**
     * @brief moves the cluester
     * @param pos: new position 
     * @return a pointer to the cluster
     */
-    Cluster<T>* set_position(T pos);    
+    Cluster* set_position(vec3 pos);    
 };
 
 /** 
 * @brief queue of clusters
 * it is used to store unloaded clusters to then load them using built-in methods 
 */
-template <typename T>
+
 struct ClusterQueue{
     // the actual vector of clusters
-    std::vector<Cluster<T>> data = {};
+    std::vector<Cluster> data = {};
 
     public:
     std::mutex mtx;
@@ -137,22 +135,20 @@ struct ClusterQueue{
     * @param cl: cluster to add
     * @return returns a pointer to the queue
     */
-    ClusterQueue<T>* add_cluster(Cluster<T> cl);
+    ClusterQueue* add_cluster(Cluster cl);
 
     /**
     * @brief removes the last cluster
     * @return a pointer to the queue
     */
-    ClusterQueue<T>* pop_cluster();
+    ClusterQueue* pop_cluster();
 
     /**
     * @brief loads every cluster onto the given simulation
     * @param _s: simulation to load the bodies to
     * @return a pointer to the queue
     */
-    ClusterQueue<T>* load(Simulation<T>* _s);
+    ClusterQueue* load(Simulation* _s);
 
 }; 
 }
-
-#include "Aster/impl/clusters_endpoint.tpp"

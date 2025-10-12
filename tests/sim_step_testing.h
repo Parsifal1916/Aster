@@ -10,21 +10,9 @@ using namespace Aster;
 using namespace Catch;
 
 TEST_CASE("Simulation step benchmarking", "[building]") {
-    SECTION("2d Barnes"){
-        auto* simulation = bake(BARNES_HUT);
-
-        cosmic_web(simulation, 1e3, 1e4);
-        simulation -> load();
-
-        BENCHMARK("Steps 2d"){
-            return simulation -> step();
-        };
-
-        free(simulation);
-    }
 
     SECTION("3d Barnes"){
-        auto* simulation = bake3d(BARNES_HUT);
+        auto* simulation = new Simulation();
         
         cosmic_web(simulation, 1e3, 1e4);
         simulation -> load();
@@ -38,14 +26,14 @@ TEST_CASE("Simulation step benchmarking", "[building]") {
 }
 
 TEST_CASE("update methods testing", "[parametric]") {
-    static update_type values[] = {SABA1, SABA2, SABA3, SABA4, SABA5, SABA6, SABA7, SABA8, SABA9, SABA10};
 
-    for (auto v : values) {
+    for (int i = 0; i< 10; ++i) {
         SECTION("update methods testing") {
-            auto* simulation = bake(LIGHT);
+            auto* simulation = new Simulation();
 
             cosmic_web(simulation, 100, 10e6);
-            simulation -> update_with(v);
+            simulation -> integrator = SABA;
+            simulation-> integrator_order = i; 
             simulation -> load();
 
             simulation -> integrate(10);

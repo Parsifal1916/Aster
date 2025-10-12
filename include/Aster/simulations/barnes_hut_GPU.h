@@ -12,6 +12,7 @@
 #include <CL/opencl.h>
 #endif
 
+#include "Aster/simulations/sim_obj.h"
 #include "Aster/simulations/barnes-hut.h"
 
 namespace Aster{   
@@ -24,15 +25,13 @@ namespace Barnes{
 .                    //===---------------------------------------------------------===*/
 
 
-template <typename T>
-class BHG final : public Barnes_Hut<T> {
+
+class BHG final : public Barnes_Hut {
     public: 
 
-    BHG();
-    void step() override;
-    Simulation<T>* load() override;
-
-    ~BHG();
+    BHG(Simulation* _s);
+    void load() override;
+    void compute_forces() override;
 
     private:
     cl_kernel tree_builder; 
@@ -41,7 +40,6 @@ class BHG final : public Barnes_Hut<T> {
     void compose_force_kernel();
     void build_tree();
     void upload_force_calc(int num_leaves, int tree_size, int num_bodies);
-    void sort_mortons(std::vector<std::pair<uint32_t, uint32_t>>& mortons);
     void load_tree_kernel(int n, int num_leaves, void* mortons);
     
 };
@@ -49,5 +47,3 @@ class BHG final : public Barnes_Hut<T> {
 
 }
 }
-
-#include "Aster/impl/barnes_hut_GPU.tpp"

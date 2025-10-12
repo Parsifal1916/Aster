@@ -9,25 +9,25 @@ namespace Aster{
 namespace Text{
 
 
-template <typename T>
-using label_gen = std::function<std::string(Simulation<T>*)>;
+
+using label_gen = std::function<std::string(Simulation*)>;
     
 /**
 * @brief struct used to generalize on screen labels
 */
-template<typename T>
+
 struct Label{
     std::string content;
-    label_gen<T> generator;
+    label_gen generator;
 
     public:
-    Label(label_gen<T> gen) : generator(gen) {}
+    Label(label_gen gen) : generator(gen) {}
     
     /**
     * @brief updates the label's content using the generator function
     * @param _s: simulation to pass to the generator
     */
-    void update(Simulation<T>* _s);
+    void update(Simulation* _s);
 
     /**
     * @brief returns the content
@@ -36,10 +36,10 @@ struct Label{
     std::string get_content() const;
 };
 
-template <typename T>
+
 struct LabelQueue {
     // label queue
-    std::vector<Label<T>> queue;
+    std::vector<Label> queue;
     
     public:
     /**
@@ -50,25 +50,23 @@ struct LabelQueue {
 
     /**
     * @brief adds a label to the queue
-    * @param gen: generator function for the labels (std::string(Simulation<T>*))
+    * @param gen: generator function for the labels (std::string(Simulation*))
     * @returns a pointer to the queue
     */
-    LabelQueue<T>* add_label(label_gen<T> gen);
+    LabelQueue* add_label(label_gen gen);
 
     /**
     * @brief clear the loading queue
     * @returns a pointer to the queue
     */
-    LabelQueue<T>* empty_queue();
+    LabelQueue* empty_queue();
 
     /**
     * @brief loads the labels onto the current window
     * @returns a pointer to the queue
     */
-    void load(Simulation<T>* _s);
+    void load(Simulation* _s);
 };
 
 }
 }
-
-#include "Aster/impl/labeling.tpp"

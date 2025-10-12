@@ -7,8 +7,6 @@
 
 #include "Aster/graphs/graph_collection.h"
 #include "Aster/simulations/sim_obj.h"
-#include "Aster/physics/body.h"
-#include "Aster/building-api/logging.h"
 
 namespace Aster{
 
@@ -44,14 +42,14 @@ inline void parallel(int cores, size_t num, F func) {
 }
     
 
-template <typename T>
-Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::listener_fptr listener, graph_type type)
+
+Graph::Graph(Simulation* _s, typename Graph::listener_fptr listener, graph_type type)
 : _s(_s), listener(listener), type(type) {
     critical_if(!_s, "No simulation object specified! seams to be nullptr");
 }
 
-template <typename T>
-Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::collector_fptr listener, graph_type type)
+
+Graph::Graph(Simulation* _s, typename Graph::collector_fptr listener, graph_type type)
 : _s(_s), collector(listener), type(type) {
     critical_if(!_s, "No simulation object specified! seams to be nullptr");
 }
@@ -59,8 +57,8 @@ Graph<T>::Graph(Simulation<T>* _s, typename Graph<T>::collector_fptr listener, g
 /**
 * @brief initializes the graph
 */
-template <typename T>
-void Graph<T>::init(){
+
+void Graph::init(){
     if (warn_if(!_s -> bodies.positions.size(), "No bodies to listen to!"))
         return;
     if (warn_if(done, "already loaded the graph!")) 
@@ -111,8 +109,8 @@ void Graph<T>::init(){
 /**
 * @brief flushes the contents of data to file
 */
-template <typename T>
-void Graph<T>::flush_to_file(){
+
+void Graph::flush_to_file(){
     if (err_if(!data.size(), "empty graphing data! possible data corruption occurred"))
         return;
 
@@ -154,8 +152,8 @@ void Graph<T>::flush_to_file(){
 /**
 * @brief triggers the contained graph listener
 */
-template <typename T>
-void Graph<T>::trigger(){
+
+void Graph::trigger(){
     if (critical_if(this -> type == BETWEEN, "cannot trigger on graph with type BETWEEN. HINT: try using trigger_on(Body*, Body*)"))
         exit(-1);
 
@@ -179,8 +177,8 @@ void Graph<T>::trigger(){
 * @param b1: first body
 * @param b2: second body
 */
-template <typename T>
-void Graph<T>::trigger_on(size_t b1, size_t b2){
+
+void Graph::trigger_on(size_t b1, size_t b2){
     if (err_if(this -> type != BETWEEN, "invalid call to trigger_on: the graph is not of type BETWEEN"))
         return;
 
@@ -197,8 +195,8 @@ void Graph<T>::trigger_on(size_t b1, size_t b2){
 /**
 * @brief same as update_data but for BETWEEN graphs
 */
-template <typename T>
-void Graph<T>::end_batch(){
+
+void Graph::end_batch(){
     if (err_if(this -> type != BETWEEN, "invalid call to end_batch: the graph is not of type BETWEEN"))
         return;
 
@@ -215,8 +213,8 @@ void Graph<T>::end_batch(){
 /**
 * @brief updates the data for a FOR_EACH or for a BETWEEN
 */
-template <typename T>
-void Graph<T>::update_data(){
+
+void Graph::update_data(){
     if (err_if(this -> type == BETWEEN, "cannot call update data on graph with type BETWEEN"))
         return;
 
@@ -240,8 +238,8 @@ void Graph<T>::update_data(){
 * @brief returns the type of the graph
 * @returns the type of the graph
 */
-template <typename T> 
-graph_type Graph<T>::get_type() const{
+ 
+graph_type Graph::get_type() const{
     return this -> type;
 }
 

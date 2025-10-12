@@ -1,4 +1,3 @@
-#pragma once
 #define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
@@ -14,18 +13,17 @@
 
 #include "Aster/building-api/logging.h"
 #include "Aster/simulations/basic.h"
-#include "Aster/impl/config.h"
 #include "Aster/simulations/sim_obj.h"
 
-#include "Aster/impl/kernels/eulerian_update.cl.h"
-#include "Aster/impl/kernels/generalized_intgrt.cl.h"
-#include "Aster/impl/kernels/generalized_intgrt3d.cl.h"
-#include "Aster/impl/kernels/newton_update.cl.h"
-#include "Aster/impl/kernels/newton_update3d.cl.h"
-#include "Aster/impl/kernels/PNs.cl.h"
-#include "Aster/impl/kernels/PNs3d.cl.h"
+#include "Aster/kernels/eulerian_update.cl.h"
+#include "Aster/kernels/generalized_intgrt.cl.h"
+#include "Aster/kernels/generalized_intgrt3d.cl.h"
+#include "Aster/kernels/newton_update.cl.h"
+#include "Aster/kernels/newton_update3d.cl.h"
+#include "Aster/kernels/PNs.cl.h"
+#include "Aster/kernels/PNs3d.cl.h"
 
-#include "Aster/impl/kernel_uploaders.tpp"
+#include "Aster/building-api/GPU_endpoint.h"
 
 namespace Aster{
 namespace GPU{
@@ -110,7 +108,8 @@ void init_opencl(){
 * @param name: pointer to the name of the function
 * @param source: source code of the kernel
 * @param k: kernel object onto which to write the kernel 
-*/void compile_kernel(std::string* name, std::string* source, cl_kernel& k) {
+*/
+cl_kernel compile_kernel(std::string* name, std::string* source) {
     cl_int programResult;
     const char* c = source->c_str();
     size_t l = source->size();
@@ -144,8 +143,10 @@ void init_opencl(){
         log_info("Build log for kernel \"" + *name + "\":\n" + std::string(log.begin(), log.end()));
     }
 
-    if (critical_if(build_result != CL_SUCCESS, "Could not build kernel"))
-        exit(3);
+    if (critical_if(build_result != CL_SUCCESS, "Could not build kernel (error " + std::to_string(static_cast<int>(build_result)) + ")")){
+        
+        std::cout << build_result << " "  << *name;exit(3);
+    }
 
     cl_uint num_ks = 0;
     cl_int enumResult = clCreateKernelsInProgram(program, 0, nullptr, &num_ks);
@@ -155,12 +156,13 @@ void init_opencl(){
     log_info("Creating kernel \"" + *name + "\"");
 
     cl_int kernel_res;
-    k = clCreateKernel(program, name->c_str(), &kernel_res);
+    cl_kernel k = clCreateKernel(program, name->c_str(), &kernel_res);
     if (critical_if(kernel_res != CL_SUCCESS,
                    "Could not load kernel '" + *name + "', error code: " + std::to_string(kernel_res)))
         exit(4);
 
   clRetainProgram(program);
+  return k;
 }
 
 
@@ -169,46 +171,43 @@ void init_opencl(){
 //===---------------------------------------------------------===//
 
 
-template <typename T>
-struct uf_functor {
+
+struct uf_functor { 
     cl_kernel k;
-    void operator()(Simulation<T>* _s){
-        upload_force_kernel<T>(k, _s);
+    void operator()(Simulation* _s){
+        upload_force_kernel(k, _s);
     }
 };
 
-template <typename T>
+
 struct ub_functor {
     cl_kernel k;
     int order;
-    void operator()(Simulation<T>* _s){
+    void operator()(Simulation* _s){
         static const REAL* sequence = saba_coeffs[order];
         // fstep
         for (int i = 0; i < saba_coeff_lng[order]; i+=2){
             upload_update_kernel(k, _s, sequence[i+1], sequence[i]);
-            _s -> update_forces(_s);
+            _s -> solver -> compute_forces();
         }
     }
 };
 
-template <typename T>
-func_ptr<T> compile_ub(update_type t) {
+func_ptr compile_ub_saba(int ord) {
     log_info("compiling GPU scripts from source...");
     
-    static std::string* update_kernel = std::is_same<T, vec2>() ? &general_saba : &general_saba3d;
+    static std::string* update_kernel = &general_saba3d;
     static std::string kernel_name = "saba";
-    int index =  static_cast<int>(t);
 
     cl_kernel k;
 
-    if (critical_if(index < 0 || index > static_cast<int>(CUSTOM_U), 
-    "could not find a suitable GPU-accelerated function for kernel " + kernel_name))
+    if (critical_if(ord < 0 || ord > 9, 
+    "the GPU-accelerated function \"" + kernel_name + "\" only supports orders from 0 - 9"))
         exit(1);
     
-    compile_kernel(&kernel_name, update_kernel, k);
 
     log_info("done compiling updating scripts");
-    return ub_functor<T>{k, index};
+    return ub_functor{compile_kernel(&kernel_name, update_kernel), ord};
 }
 
 
@@ -216,30 +215,24 @@ func_ptr<T> compile_ub(update_type t) {
 // Force Updaters (UF) compiling                                 //
 //===---------------------------------------------------------===//
 
-template <typename T>
-func_ptr<T> compile_uf(force_type t) {
+
+func_ptr compile_uf(force_type t) {
     log_info("compiling GPU scripts from source...");
     size_t index = static_cast<size_t>(t);
 
     static std::string force_kernels2d[] = {newton_cl, cl_pn1, cl_pn2, cl_pn25};
     static std::string force_kernels3d[] = {newton_cl3d, cl3d_pn1, cl3d_pn2, cl3d_pn25};
 
-    std::string& force_kernel = std::is_same<T, vec2>::value 
-        ? force_kernels2d[index]
-        : force_kernels3d[index]
-    ;
+    std::string& force_kernel = force_kernels3d[index];
 
-    std::string kernel_names[] = {"newton", "pn1", "pn2", "pn25"};
-    cl_kernel k; 
+    std::string kernel_names[] = {"cl3d_newton", "pn1", "pn2", "pn25"};
 
     if (critical_if(index > 3 || index < 0, 
     "could not find a suitable GPU-accelerated function for kernel " + kernel_names[index]))
         exit(1);
-    
-    compile_kernel(&kernel_names[index], &force_kernel, k);
 
     log_info("done compiling force calculation scripts");
-    return uf_functor<T>{k};
+    return uf_functor{compile_kernel(&kernel_names[index], &force_kernel)};
 }
 
 }

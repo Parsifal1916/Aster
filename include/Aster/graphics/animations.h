@@ -21,7 +21,7 @@ void draw_quad(GLFWwindow* window, int loaded_bodies, int total_bodies);
 * @param window: window ptr to load in
 * @param _s: simulation to load
 */
-void show_loadingbar(GLFWwindow* window, Simulation<vec2>* _s );
+void show_loadingbar(GLFWwindow* window, Simulation* _s );
 
 }
 }

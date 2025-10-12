@@ -59,7 +59,7 @@ void draw_quad(GLFWwindow* window, REAL percent){
 * @param window: window ptr to load in
 * @param _s: simulation to load
 */
-void show_loadingbar(GLFWwindow* window, Simulation<vec2>* _s ){
+void show_loadingbar(GLFWwindow* window, Simulation* _s ){
     if (critical_if(!window, "invalid reference to window"))
         exit(-1);
     

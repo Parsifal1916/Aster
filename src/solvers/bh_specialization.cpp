@@ -1,7 +1,5 @@
-#include "Aster/impl/barnes_hut.tpp"
-#include "Aster/impl/BHT_impl.tpp"
-#include "Aster/impl/barnes_hut_GPU.tpp"
-//#include "Aster/impl/full_GPU.tpp"
+#include "Aster/simulations/sim_obj.h"
+#include "Aster/simulations/barnes-hut.h"
 
 namespace Aster{
 namespace Barnes{
@@ -10,27 +8,18 @@ REAL variation(){
     return ((std::rand() % 100) + 50)/150; 
 }
 
-template <>
-vec3 pick_newpos(Simulation<vec3>* _s){
+
+vec3 pick_newpos(Simulation* _s){
     return _s -> get_center() * variation();
 }
 
-template <>
-vec2 pick_newpos(Simulation<vec2>* _s){
-    return _s -> get_center() * variation();
-}
 
 /*                   //===---------------------------------------------------------===//
 .                    // MORTON IMPLEMENTATION                                         //
 .                    //===---------------------------------------------------------===*/
 
-template <> 
-void compare_bounding_vectors(const vec2& to_compare, vec2& res){
-    if (std::abs(to_compare.x) > std::abs(res.x)) res.x = std::abs(to_compare.x);
-    if (std::abs(to_compare.y) > std::abs(res.y)) res.y = std::abs(to_compare.y);
-}
-
-template <> 
+ 
+ 
 void compare_bounding_vectors(const vec3& to_compare, vec3& res){
     if (std::abs(to_compare.x) > res.x) res.x = std::abs(to_compare.x);
     if (std::abs(to_compare.y) > res.y) res.y = std::abs(to_compare.y);
@@ -45,8 +34,8 @@ static inline uint32_t part1by2(uint32_t n) {
     n = (n | (n <<  2)) & 0x09249249;
     return n;
 }
-template <>
-uint32_t get_morton<vec3>(Barnes_Hut<vec3>* _s, vec3 pt) { 
+
+uint32_t get_morton(Barnes_Hut* _s, vec3 pt) { 
     pt.x = (pt.x + _s -> bounding_box.x) / (2* _s -> bounding_box.x);
     pt.y = (pt.y + _s -> bounding_box.y) / (2* _s -> bounding_box.y);
     pt.z = (pt.z + _s -> bounding_box.z) / (2* _s -> bounding_box.z);
@@ -56,8 +45,8 @@ uint32_t get_morton<vec3>(Barnes_Hut<vec3>* _s, vec3 pt) {
     return (part1by2(iz) << 2) | (part1by2(iy) << 1) | part1by2(ix); 
 }
 
-template <> 
-uint32_t get_morton<vec2>(Barnes_Hut<vec2>* _s, vec2 point) {
+ 
+uint32_t get_morton2D(Barnes_Hut* _s, vec2 point) {
     point.x = (point.x + _s -> bounding_box.x) / (2* _s -> bounding_box.x);
     point.y = (point.y + _s -> bounding_box.y) / (2* _s -> bounding_box.y);
 
