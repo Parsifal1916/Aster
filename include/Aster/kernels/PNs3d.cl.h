@@ -71,10 +71,14 @@ __kernel void pn25(
     __global const double*  masses,
     __global const double*  positions,
     __global const double*  velocities,
-    __global       double*  acc_out
-){
-    const uint i = get_global_id(0);
-    if (i >= N) return;
+    __global       double*   acc_out,
+    const int start, const int stop)
+{
+    int i = get_global_id(0);
+    int stop_idx = (stop < 0) ? N : stop;
+    if (gid >= stop_idx) return;
+    if (gid < start) return;
+    
     double3 acc = (double3)(0.0,0.0,0.0);
     double3 pi = vload3(i, positions);
     double this_mass = masses[i];

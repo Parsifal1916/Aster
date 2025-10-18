@@ -33,10 +33,13 @@ __kernel void cl3d_newton(
     __global const double*   m,
     __global const double*   pos,
     __global const double*   vel,
-    __global       double*   acc_out)
+    __global       double*   acc_out,
+    const int start, const int stop)
 {
-    const uint i = get_global_id(0);
-    if (i >= N) return;
+    int i = get_global_id(0);
+    int stop_idx = (stop < 0) ? N : stop;
+    if (i >= stop_idx) return;
+    if (i < start) return;
 
     double3 pi = vload3(i, pos);
     double3 ai = (double3)(0.0, 0.0, 0.0);

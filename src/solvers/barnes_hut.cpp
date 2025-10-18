@@ -197,7 +197,7 @@ Barnes_Hut::Barnes_Hut(Simulation* _s){
 */
 
 void Barnes_Hut::get_node_body(signed long int node, size_t index, REAL size){
-    if (node < 0 || node >= static_cast<signed long int>(nodes.size()))
+    if (node < 0 || (node >= static_cast<signed long int>(nodes.size())))
         return;
 
     auto& bodies = this -> _s -> bodies;
@@ -281,10 +281,10 @@ void Barnes_Hut::make_tree(){
     if (N == 0) return; 
     
     std::vector<std::pair<uint32_t, unsigned int>> enhanced_mortons;
-    enhanced_mortons.reserve(N);
+    enhanced_mortons.reserve(this -> get_range());
     this->bounding_box = this->_s -> get_center() * 2;
 
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = this -> get_lower_bound(); i < this -> get_upper_bound(); ++i) {
         uint32_t morton_code = get_tbreaked_morton(this, this->_s -> bodies.positions[i], i);
         enhanced_mortons.emplace_back(morton_code, i);
     }
@@ -364,14 +364,23 @@ void Barnes_Hut::make_tree(){
     this->compressed_mortons_size = num_leaves;
 
 }
+ 
 void Barnes_Hut::compute_forces(){
-    const size_t N = this -> _s -> bodies.positions.size();
+    size_t N = this -> _s -> bodies.positions.size();
+    const size_t root = N;
     const REAL bd_size = (this -> _s -> get_center()*2).magnitude();
     this -> make_tree();
 
-    parallel_for(size_t(0), N, [&, this, N](size_t idx){
-        this -> get_node_body(N, idx, bd_size);
+    N = N - this -> lower_int_bound - ((this -> upper_int_bound < 0) ? 0 : N - this -> upper_int_bound);
+    
+    if (warn_if(N <= 0, "either upper or lower bound were set too high in the gravity solver, resulting in a negative amount of bodies to load")) 
+        return; 
+        
+
+    parallel_for(size_t(this -> lower_int_bound), size_t((this -> upper_int_bound < 0) ? root : this -> upper_int_bound), [&, this, root](size_t idx){
+        this -> _s -> bodies.accs[idx].reset();
+        this -> get_node_body(root, idx, bd_size);
     });
-}
+} 
 
 }}

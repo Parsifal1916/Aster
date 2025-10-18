@@ -108,7 +108,7 @@ vec2 vec2::direction(vec2 v2){
 }
 
 vec2 vec2::normalize(){
-    float magn = this -> magnitude();
+    double magn = this -> magnitude();
     return vec2(this -> x/magn, this -> y/magn);
 }
 
@@ -216,7 +216,7 @@ vec3 vec3::direction(vec3 v2){
 }
 
 vec3 vec3::normalize(){
-       float magn = this -> magnitude();
+       double magn = this -> magnitude();
        return vec3(this -> x/magn, this -> y/magn, this -> z/magn);
 }
 

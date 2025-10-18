@@ -33,6 +33,23 @@ Solver::Solver(Simulation* _s){
     this -> _s = _s;
 }
 
+int Solver::get_upper_bound() const{
+    return (upper_int_bound < 0) 
+        ? this -> _s -> bodies.positions.size()
+        : upper_int_bound; 
+}
+
+int Solver::get_lower_bound() const{
+    return lower_int_bound; 
+}
+
+int Solver::get_range() const{
+    size_t N = this -> _s -> bodies.positions.size();
+    N -= get_lower_bound() - N + get_upper_bound();
+    
+    return N; 
+}
+
 
 solver_type Solver::get_type(){
     return this -> type;
@@ -42,6 +59,12 @@ solver_type Solver::get_type(){
 void Solver::set_force(force_func _t){
     this -> get_force = _t;
     this -> _t = CUSTOM_F;  
+}
+
+
+void Solver::set_bounds(int lower, int upper){
+    this -> lower_int_bound = lower;
+    this -> upper_int_bound = upper;
 }
 
 //===---------------------------------------------------------===//
@@ -261,6 +284,7 @@ vec3 Simulation::get_center_of_mass(){
 
 
 void Simulation::step(){
+    this -> selected_N = this -> solver -> get_range();
     this -> updater -> update_bodies();
 
     this -> trigger_all_graphs();
@@ -615,11 +639,17 @@ void Parallelized::compute_forces(){
     static auto* s = this -> _s;
     auto&& get_force = this -> get_force;
 
+    N = N - this -> lower_int_bound - ((this -> upper_int_bound < 0) ? 0 : N - this -> upper_int_bound);
+    if (warn_if(N <= 0, "either upper or lower bound were set too high in the gravity solver, resulting in a negative amount of bodies to load")) 
+        return; 
+
+    N = this -> _s -> bodies.positions.size();
+
     parallel_for(size_t(0), size_t(N), [&](size_t i ){
         vec3 acc = vec3(0);
         double m1 = s -> bodies.masses[i];
         vec3 v1 = s -> bodies.velocities[i], p1 = s -> bodies.positions[i];
-        for (int j = 0; j < N; ++j) {
+        for (int j = this -> lower_int_bound; j < ((this -> upper_int_bound < 0) ? N : this -> upper_int_bound) ; ++j) {
             if (i == j) continue;
 
             acc +=  this -> get_force(

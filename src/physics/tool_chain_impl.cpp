@@ -176,6 +176,165 @@ void update_leapfrog(Simulation* _s){
     });
 }
 
+inline void update_kepler(vec3& r0, vec3& v0, REAL mu, REAL dt) {
+    constexpr REAL tol = 1e-16; 
+    constexpr int maxiter = 500;
+    constexpr REAL z_series_thresh = 1e-8;
+
+    auto stumpff_C = [&](REAL z) -> REAL {
+        if (std::abs(z) < z_series_thresh) {
+            REAL z2 = z*z;
+            REAL z3 = z2*z;
+            return 0.5 - z/24.0 + z2/720.0 - z3/40320.0;
+        } else if (z > 0.0) {
+            REAL s = std::sqrt(z);
+            return (1.0 - std::cos(s)) / z;
+        } else {
+            REAL s = std::sqrt(-z);
+            return (std::cosh(s) - 1.0) / (-z);
+        }
+    };
+
+    auto stumpff_S = [&](REAL z) -> REAL {
+        if (std::abs(z) < z_series_thresh) {
+            REAL z2 = z*z;
+            REAL z3 = z2*z;
+            return (1.0/6.0) - z/120.0 + z2/5040.0 - z3/362880.0;
+        } else if (z > 0.0) {
+            REAL s = std::sqrt(z);
+            return (s - std::sin(s)) / (s*s*s);
+        } else {
+            REAL s = std::sqrt(-z);
+            return (std::sinh(s) - s) / (s*s*s);
+        }
+    };
+    REAL r0n = r0.magnitude();
+    REAL v0n = v0.magnitude();
+    REAL vr0 = (r0.x * v0.x + r0.y * v0.y + r0.z * v0.z) / r0n;
+
+    REAL energy = v0n*v0n/2.0 - mu / r0n;
+    REAL alpha = -2.0 * energy / mu;
+
+    if (dt == (REAL)0.0) return;
+
+    REAL chi;
+    if (std::abs(alpha) < 1e-12) {
+        chi = std::sqrt(mu) * dt / r0n;
+    } else if (alpha > 0.0) {
+        chi = std::sqrt(mu) * dt * alpha;
+    } else {
+        REAL sign_dt = (dt >= 0.0 ? 1.0 : -1.0);
+        REAL a = 1.0 / alpha; 
+        REAL sqrtm = std::sqrt(-a);
+        REAL arg = -2.0 * mu * alpha * dt / (vr0 + sign_dt * std::sqrt(-mu / alpha) * (1.0 - r0n * alpha));
+        if (arg > 0.0)
+            chi = sign_dt * sqrtm * std::log(arg);
+        else
+            chi = sign_dt * std::sqrt(mu) * std::abs(alpha) * dt; // fallback
+    }
+
+    auto eval_F_and_Fprime = [&](REAL chi_in, REAL &F_out, REAL &Fp_out) {
+        REAL z = alpha * chi_in * chi_in;
+        REAL C = stumpff_C(z);
+        REAL S = stumpff_S(z);
+        REAL sqrtmu = std::sqrt(mu);
+        REAL p = r0n * vr0 / sqrtmu;
+        REAL q = 1.0 - alpha * r0n;
+
+        F_out = p * chi_in*chi_in * C + q * chi_in*chi_in*chi_in * S + r0n * chi_in - sqrtmu * dt;
+        Fp_out = p * chi_in * (1.0 - alpha * chi_in*chi_in * S) + q * chi_in*chi_in * C + r0n;
+    };
+
+    REAL correction = 1.0;
+    int iter = 0;
+    for (; iter < maxiter; ++iter) {
+        REAL F, Fp;
+        eval_F_and_Fprime(chi, F, Fp);
+
+        REAL h = std::max((REAL)1e-6, (REAL)1e-8 * std::max((REAL)1.0, std::abs(chi)));
+
+        REAL Fp_ph, Fp_mh, F_ph, F_mh;
+        eval_F_and_Fprime(chi + h, F_ph, Fp_ph);
+        eval_F_and_Fprime(chi - h, F_mh, Fp_mh);
+
+        REAL Fpp = (Fp_ph - Fp_mh) / (2.0 * h);
+        REAL Fppp = (Fp_ph - 2.0*Fp + Fp_mh) / (h*h);
+
+        if (std::abs(Fp) < 1e-20) { 
+            correction = -F * 1e20;
+            chi += correction;
+            break;
+        }
+
+        REAL delta1 = - F / Fp;
+        REAL denom2 = Fp + 0.5 * delta1 * Fpp;
+        REAL delta2 = (std::abs(denom2) < 1e-20) ? delta1 : - F / denom2;
+        REAL denom3 = Fp + 0.5 * delta1 * (Fpp + (delta1*delta1 * Fppp) / 3.0);
+        REAL delta3 = (std::abs(denom3) < 1e-20) ? delta2 : - F / denom3;
+
+        correction = delta3;
+        chi += correction;
+
+        if (std::abs(correction) < tol) break;
+    }
+
+    REAL z = alpha * chi * chi;
+    REAL C = stumpff_C(z);
+    REAL S = stumpff_S(z);
+    REAL sqrtmu = std::sqrt(mu);
+
+    REAL f_gauss = 1.0 - (chi*chi / r0n) * C;
+    REAL g_gauss = dt - (chi*chi*chi / sqrtmu) * S;
+
+    vec3 r = f_gauss * r0 + g_gauss * v0;
+    REAL rn = r.magnitude();
+
+    REAL fdot = (sqrtmu / (rn * r0n)) * (alpha * chi*chi*chi * S - chi);
+    REAL gdot = 1.0 - (chi*chi / rn) * C;
+
+    vec3 v = fdot * r0 + gdot * v0;
+
+    r0 = r;
+    v0 = v;
+}
+
+void update_WH_planetary(Simulation* _s) {
+    const size_t N = _s->bodies.positions.size();
+    if (N <= 1) return;
+
+    const REAL G = _s->get_G();
+    const REAL dt = _s->get_dt();
+    _s -> solver -> set_bounds(1, -1);
+    vec3 r_central = _s->bodies.positions[0];
+    vec3 v_central = _s->bodies.velocities[0];
+    REAL m_central = _s->bodies.masses[0];
+
+    parallel_for(size_t(1), N, [_s, r_central, v_central, m_central, G, dt](size_t i){
+        vec3 r_rel = _s->bodies.positions[i] - r_central;
+        vec3 v_rel = _s->bodies.velocities[i] - v_central;
+
+        REAL mu_i = G * (m_central + _s->bodies.masses[i]);
+        update_kepler(r_rel, v_rel, mu_i, dt*0.5);
+        _s->bodies.positions[i] = r_central + r_rel;
+        _s->bodies.velocities[i] = v_central + v_rel;
+    });
+
+    _s -> solver -> compute_forces();
+
+    parallel_for(size_t(1), N, [_s, r_central, v_central, m_central, G, dt](size_t i){
+        _s->bodies.velocities[i] += _s->bodies.accs[i] * dt;
+        vec3 r_rel = _s->bodies.positions[i] - r_central;
+        vec3 v_rel = _s->bodies.velocities[i] - v_central;
+
+        REAL mu_i = G * (m_central + _s->bodies.masses[i]);
+        update_kepler(r_rel, v_rel, mu_i, dt*0.5);
+
+        _s->bodies.positions[i] = r_central + r_rel;
+        _s->bodies.velocities[i] = v_central + v_rel;
+        _s->bodies.accs[i].reset(); 
+    });
+}
+
 
 void Solver::set_force(force_type _t){
     auto idx = static_cast<int>(_t);
@@ -197,13 +356,13 @@ void Solver::set_force(force_type _t){
 
 inline void get_new_temp(Simulation* _s, size_t body, vec3 pos, vec3 vel, REAL temp, REAL mass){ 
     /*
-    * we are trying to compute the delta vec3 so we use the formula 
+    * we are trying to compute the delta t so we use the formula 
     *  21 * G * M * m * n * e²
     *  ------------------------ = E_t
     *         2 * r^6
 
     * from here it is trival, we can just divide by the mass and a coeff and multiply 
-    * byt dt to get the delta vec3 
+    * byt dt to get the delta t 
     */
     // sketchy edge case...
     if (!_s -> bodies.get_acc_of(body).sqr_magn()) return;
@@ -278,7 +437,7 @@ vec3 newtonian(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation*
     vec3 n = (p2 - p1);
     REAL r = n.magnitude();
 
-    return n.normalize() * _s -> get_G() *m1*m2/(r*r+1);
+    return n.normalize() * _s -> get_G() *m1*m2/(r*r+1e-11);
 }
 
 //===---------------------------------------------------------===//

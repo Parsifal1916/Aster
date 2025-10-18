@@ -104,22 +104,18 @@ void upload_force_kernel(cl_kernel& k, Simulation* _s){
     size_t LW_size = 256;
     size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
 
-    operation_result = clSetKernelArg(k, 0, sizeof(unsigned int), &N);
-    Check(operation_result);
-    operation_result = clSetKernelArg(k, 1, sizeof(REAL), &G);
-    Check(operation_result);
-    operation_result = clSetKernelArg(k, 2, sizeof(REAL), &C);
-    Check(operation_result);
-    operation_result = clSetKernelArg(k, 3, sizeof(cl_mem), &temp_b);
-    Check(operation_result);
-    operation_result = clSetKernelArg(k, 4, sizeof(cl_mem), &masses_b);
-    Check(operation_result);
-    operation_result = clSetKernelArg(k, 5, sizeof(cl_mem), &pos_b);
-    Check(operation_result);
-    operation_result = clSetKernelArg(k, 6, sizeof(cl_mem), &vel_b);
-    Check(operation_result);
-    operation_result = clSetKernelArg(k, 7, sizeof(cl_mem), &acc_br);
-    Check(operation_result);
+    int lower = _s -> solver -> get_lower_bound(), upper = _s -> solver -> get_upper_bound();
+
+    Check(clSetKernelArg(k, 0, sizeof(unsigned int), &N));
+    Check(clSetKernelArg(k, 1, sizeof(REAL), &G));
+    Check(clSetKernelArg(k, 2, sizeof(REAL), &C));
+    Check(clSetKernelArg(k, 3, sizeof(cl_mem), &temp_b));
+    Check(clSetKernelArg(k, 4, sizeof(cl_mem), &masses_b)); 
+    Check(clSetKernelArg(k, 5, sizeof(cl_mem), &pos_b));
+    Check(clSetKernelArg(k, 6, sizeof(cl_mem), &vel_b));
+    Check(clSetKernelArg(k, 7, sizeof(cl_mem), &acc_br));
+    Check(clSetKernelArg(k, 8, sizeof(cl_mem), &lower));
+    Check(clSetKernelArg(k, 9, sizeof(cl_mem), &upper));
 
     operation_result = clEnqueueNDRangeKernel(queue, k, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr );
     Check(operation_result);

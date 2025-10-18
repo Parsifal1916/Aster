@@ -42,9 +42,17 @@ class Solver{
     void set_force(force_func _t);
     virtual void load() {};
     virtual void compute_forces() {};
+    void set_bounds(int lower, int higher = -1);
     Simulation* get_s() {return _s;};
+    int get_upper_bound() const;
+    int get_lower_bound() const;
+    int get_range() const;
+
 
     protected:
+    
+    int lower_int_bound = 0;
+    int upper_int_bound = -1;
     force_func get_force;
     force_type _t = NEWTON;
     solver_type type = SINGLE_THREAD;
@@ -153,6 +161,7 @@ class Simulation{
     Solver* solver = nullptr;
     Updater* updater = nullptr;
     cl_mem positions_cl, accs_cl, velocities_cl, masses_cl;
+    int N, selected_N;
 
     protected:
     REAL total_mass = 0;

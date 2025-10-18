@@ -1,0 +1,934 @@
+--------------------------------------------------------------------------------
+Profile data file 'callgrind.out.41508' (creator: callgrind-3.25.1)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 19146816607
+Trigger: Program termination
+Profiled target:  ./examples/demo (PID 41508, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                      
+--------------------------------------------------------------------------------
+72,281,930,927 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                       file:function
+--------------------------------------------------------------------------------
+41,606,782,834 (57.56%)  src/utils/collectors.cpp:tbb::detail::d1::start_for<tbb::detail::d1::blocked_range<unsigned long>, tbb::detail::d1::parallel_for_body_wrapper<Aster::Graphs::get_total_energy(Aster::Simulation*)::{lambda(unsigned long)#1}, unsigned long>, tbb::detail::d1::auto_partitioner const>::execute(tbb::detail::d1::execution_data&)
+ 8,668,969,530 (11.99%)  src/physics/physics_endpoint.cpp:Aster::vec3::magnitude() const [/usr/local/lib/libAster.so.1.2.2]
+ 6,067,578,671 ( 8.39%)  src/physics/physics_endpoint.cpp:Aster::vec3::operator-(Aster::vec3 const&) const [/usr/local/lib/libAster.so.1.2.2]
+ 5,200,781,724 ( 7.20%)  /usr/include/c++/15.2.1/bits/stl_vector.h:Aster::BodyArray::get_position_of(unsigned long) [/usr/local/lib/libAster.so.1.2.2]
+ 3,467,225,544 ( 4.80%)  /usr/include/c++/15.2.1/bits/stl_vector.h:Aster::BodyArray::get_mass_of(unsigned long) [/usr/local/lib/libAster.so.1.2.2]
+ 1,733,793,904 ( 2.40%)  src/utils/builder_endpoint.cpp:Aster::Simulation::get_G() const [/usr/local/lib/libAster.so.1.2.2]
+ 1,733,612,772 ( 2.40%)  src/physics/physics_endpoint.cpp:Aster::BodyArray::get_mass_of(unsigned long)
+ 1,733,593,908 ( 2.40%)  src/physics/physics_endpoint.cpp:Aster::BodyArray::get_position_of(unsigned long)
+ 1,733,593,906 ( 2.40%)  include/Aster/physics/vectors.h:Aster::vec3::operator-(Aster::vec3 const&) const
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: src/physics/physics_endpoint.cpp
+--------------------------------------------------------------------------------
+Ir                     
+
+-- line 4 ----------------------------------------
+            .           #include "Aster/physics/body.h"
+            .           #include "Aster/simulations/sim_obj.h"
+            .           
+            .           namespace Aster{
+            .           extern const REAL PI = 3.141592653589793238462643383279;
+            .           
+            .           vec3& BodyArray::get_position_of(size_t i){
+            .                  return positions[i];
+1,733,593,908 ( 2.40%)  }
+            .           
+            .           vec3& BodyArray::get_velocity_of(size_t i){
+            .                  return velocities[i];
+       18,870 ( 0.00%)  }
+            .           
+            .           
+            .           REAL& BodyArray::get_mass_of(size_t i){
+            .                  return masses[i];
+1,733,612,772 ( 2.40%)  }
+            .           
+            .           
+            .           REAL& BodyArray::get_temp_of(size_t i){
+            .                  return temps[i];
+            .           }
+            .           
+            .           
+            .           vec3& BodyArray::get_acc_of(size_t i){
+-- line 29 ----------------------------------------
+-- line 144 ----------------------------------------
+            .           REAL& vec3::operator[](size_t index){
+            .               assert(index < 3);
+            .               if (index == 0) return x;
+            .               if (index == 1) return y;
+            .               return z;
+            .           }
+            .           
+            .           
+      100,000 ( 0.00%)  vec3 vec3::operator*(double scalar) const {
+      500,000 ( 0.00%)      return vec3(x * scalar, y * scalar, z * scalar);
+      100,000 ( 0.00%)  }
+            .           
+            .           vec3 vec3::operator/(double scalar) const {
+            .               return vec3(x / scalar, y / scalar, z / scalar);
+            .           }
+            .           
+            .           vec3 vec3::operator/(float scalar) const {
+            .               return vec3(x / scalar, y / scalar, z / scalar);
+            .           }
+            .           
+      200,000 ( 0.00%)  vec3 vec3::operator+(const vec3& other) const {
+    1,000,000 ( 0.00%)      return vec3(x + other.x, y + other.y, z + other.z);
+      200,000 ( 0.00%)  }
+            .           
+  866,796,953 ( 1.20%)  vec3 vec3::operator-(const vec3& other) const {
+4,333,984,765 ( 6.00%)      return vec3(x - other.x, y - other.y, z - other.z);
+  866,796,953 ( 1.20%)  }
+            .           
+            .           vec3 vec3::operator-() const {
+            .               return vec3(-x, -y, -z);
+            .           }
+            .           
+            .           vec3& vec3::operator+=(const vec3& other) {
+            .               x += other.x;
+            .               y += other.y;
+-- line 178 ----------------------------------------
+-- line 179 ----------------------------------------
+            .               z += other.z;
+            .               return *this;
+            .           }
+            .           
+            .           bool vec3::operator==(const vec3& other) const {
+            .               return other.x == x && other.y == y && other.z == z;
+            .           }
+            .           
+            1 ( 0.00%)  vec3 vec3::operator*(const int& other) const{
+            7 ( 0.00%)      return vec3(x*other, y*other, z*other);
+            1 ( 0.00%)  }
+            .           
+            .           vec3 vec3::operator/(const int& other) const{
+            .               return vec3(x/other, y/other, z/other);
+            .           } 
+            .           
+            .           REAL vec3::operator*(const vec3& other) const{
+            .               return x * other.x + y * other.y + z*other.z;
+            .           }
+-- line 197 ----------------------------------------
+-- line 199 ----------------------------------------
+            .           vec3& vec3::operator/=(const REAL& other){
+            .               this -> x /= other;
+            .               this -> y /= other;
+            .               this -> z /= other;
+            .               return *this;
+            .           }
+            .           
+            .           REAL vec3::magnitude() const{
+1,733,793,906 ( 2.40%)      return std::sqrt(
+2,600,690,859 ( 3.60%)          this -> x * this -> x + 
+1,733,793,906 ( 2.40%)          this -> y * this -> y + 
+1,733,793,906 ( 2.40%)          this -> z * this -> z
+            .               );
+  866,896,953 ( 1.20%)  }
+            .           
+            .           vec3 vec3::direction(vec3 v2){
+            .               return (*this)*-1 + v2;
+            .           }
+            .           
+            .           vec3 vec3::normalize(){
+            .                  double magn = this -> magnitude();
+            .                  return vec3(this -> x/magn, this -> y/magn, this -> z/magn);
+            .           }
+            .           
+            .           REAL vec3::sqr_magn() const{
+      150,960 ( 0.00%)      return x*x + y*y + z*z;
+       18,870 ( 0.00%)  }
+            .           
+            .           vec3 vec3::update_by(vec3* v, REAL delta){
+            .               return {
+            .                   x + v -> x *delta,
+            .                   y + v -> y *delta,
+            .                   z + v -> z *delta
+            .               };
+            .           }
+-- line 233 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: src/utils/collectors.cpp
+--------------------------------------------------------------------------------
+Ir                      
+
+-- line 9 ----------------------------------------
+             .           #include <tbb/parallel_for.h>
+             .           using namespace tbb;
+             .           
+             .           namespace Aster{
+             .           
+             .           namespace Graphs{
+             .           
+             .           
+             6 ( 0.00%)  REAL get_total_energy(Simulation* _s){
+             1 ( 0.00%)      REAL retval = 0.0;
+             4 ( 0.00%)      std::mutex retval_mutex;
+             .               const int num_threads = 16;
+             .               int num_bodies = _s->bodies.positions.size();
+             .               
+            10 ( 0.00%)      parallel_for(size_t(0),  size_t(num_bodies), [&retval, &retval_mutex, _s, num_bodies](size_t i) {
+       339,672 ( 0.00%)          REAL partial_retval = 0.5 * _s -> bodies.get_velocity_of(i).sqr_magn() * _s -> bodies.get_mass_of(i);
+        56,610 ( 0.00%)  => /usr/include/c++/15.2.1/bits/stl_vector.h:Aster::BodyArray::get_mass_of(unsigned long) (18,870x)
+       169,830 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/physics/physics_endpoint.cpp:Aster::vec3::sqr_magn() const (18,870x)
+        75,480 ( 0.00%)  => /usr/include/c++/15.2.1/bits/stl_vector.h:Aster::BodyArray::get_velocity_of(unsigned long) (18,870x)
+         2,374 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (3x)
+ 2,600,504,850 ( 3.60%)          for (int j = i + 1; j < num_bodies; ++j) {
+18,202,736,038 (25.18%)              REAL r = (_s -> bodies.get_position_of(j) - _s -> bodies.get_position_of(i)).magnitude();
+ 8,667,969,530 (11.99%)  => /home/parsifal/Projects/backup+/Aster/src/physics/physics_endpoint.cpp:Aster::vec3::magnitude() const (866,796,953x)
+ 7,801,172,577 (10.79%)  => /home/parsifal/Projects/backup+/Aster/src/physics/physics_endpoint.cpp:Aster::vec3::operator-(Aster::vec3 const&) const (866,796,954x)
+ 6,934,375,632 ( 9.59%)  => /usr/include/c++/15.2.1/bits/stl_vector.h:Aster::BodyArray::get_position_of(unsigned long) (1,733,593,908x)
+         1,548 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (2x)
+20,803,126,822 (28.78%)              partial_retval -= _s->get_G() * _s -> bodies.get_mass_of(j) * _s -> bodies.get_mass_of(i) / (r+1e-11);
+ 5,200,781,706 ( 7.20%)  => /usr/include/c++/15.2.1/bits/stl_vector.h:Aster::BodyArray::get_mass_of(unsigned long) (1,733,593,904x)
+ 1,733,593,904 ( 2.40%)  => /home/parsifal/Projects/backup+/Aster/src/utils/builder_endpoint.cpp:Aster::Simulation::get_G() const (866,796,952x)
+             .                   }
+             .                   
+             .                   std::lock_guard<std::mutex> lock(retval_mutex);
+        75,452 ( 0.00%)          retval += partial_retval;
+             .               });
+             .           
+             .               return retval;
+             1 ( 0.00%)  }
+             .           
+             .           
+             .           REAL hamiltonian_collector(Graph* g, Simulation* _s, size_t b){
+             .               return get_total_energy(_s);
+             .           }
+             .           
+             .           
+             .           REAL error_collector(Graph* g, Simulation* _s, size_t b){
+-- line 43 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: /usr/include/c++/15.2.1/bits/stl_vector.h
+--------------------------------------------------------------------------------
+Ir                     
+
+-- line 98 ----------------------------------------
+            .                 struct _Vector_impl_data
+            .                 {
+            .           	pointer _M_start;
+            .           	pointer _M_finish;
+            .           	pointer _M_end_of_storage;
+            .           
+            .           	_GLIBCXX20_CONSTEXPR
+            .           	_Vector_impl_data() _GLIBCXX_NOEXCEPT
+           53 ( 0.00%)  	: _M_start(), _M_finish(), _M_end_of_storage()
+            .           	{ }
+            .           
+            .           #if __cplusplus >= 201103L
+            .           	_GLIBCXX20_CONSTEXPR
+            .           	_Vector_impl_data(_Vector_impl_data&& __x) noexcept
+            .           	: _M_start(__x._M_start), _M_finish(__x._M_finish),
+            .           	  _M_end_of_storage(__x._M_end_of_storage)
+            .           	{ __x._M_start = __x._M_finish = __x._M_end_of_storage = pointer(); }
+-- line 114 ----------------------------------------
+-- line 368 ----------------------------------------
+            .                 : _M_impl(_Tp_alloc_type(__a), std::move(__x._M_impl))
+            .                 { }
+            .           #endif
+            .           
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 ~_Vector_base() _GLIBCXX_NOEXCEPT
+            .                 {
+            .           	_M_deallocate(_M_impl._M_start,
+           24 ( 0.00%)  		      _M_impl._M_end_of_storage - _M_impl._M_start);
+            .                 }
+            .           
+            .               public:
+            .                 _Vector_impl _M_impl;
+            .           
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 pointer
+            .                 _M_allocate(size_t __n)
+            .                 {
+            .           	typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type> _Tr;
+           40 ( 0.00%)  	return __n != 0 ? _Tr::allocate(_M_impl, __n) : pointer();
+            .                 }
+            .           
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 void
+            .                 _M_deallocate(pointer __p, size_t __n)
+            .                 {
+            .           	typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type> _Tr;
+           18 ( 0.00%)  	if (__p)
+            .           	  _Tr::deallocate(_M_impl, __p, __n);
+            .                 }
+            .           
+            .               protected:
+            .           
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 void
+            .                 _M_create_storage(size_t __n)
+            .                 {
+           28 ( 0.00%)  	this->_M_impl._M_start = this->_M_allocate(__n);
+            .           	this->_M_impl._M_finish = this->_M_impl._M_start;
+           20 ( 0.00%)  	this->_M_impl._M_end_of_storage = this->_M_impl._M_start + __n;
+            .                 }
+            .           
+            .           #if __glibcxx_containers_ranges // C++ >= 23
+            .                 // Called by insert_range, and indirectly by assign_range, append_range.
+            .                 // Initializes new elements in storage at __ptr and updates __ptr to
+            .                 // point after the last new element.
+            .                 // Provides strong exception safety guarantee.
+            .                 // Requires [ptr, ptr+distance(rg)) is a valid range.
+-- line 415 ----------------------------------------
+-- line 623 ----------------------------------------
+            .                  *  All the elements of @a __x are copied, but any unused capacity in
+            .                  *  @a __x  will not be copied
+            .                  *  (i.e. capacity() == size() in the new %vector).
+            .                  *
+            .                  *  The newly-created %vector uses a copy of the allocator object used
+            .                  *  by @a __x (unless the allocator traits dictate a different object).
+            .                  */
+            .                 _GLIBCXX20_CONSTEXPR
+           28 ( 0.00%)        vector(const vector& __x)
+            .                 : _Base(__x.size(),
+            .           	_Alloc_traits::_S_select_on_copy(__x._M_get_Tp_allocator()))
+            .                 {
+            8 ( 0.00%)  	this->_M_impl._M_finish =
+            .           	  std::__uninitialized_copy_a(__x.begin(), __x.end(),
+            .           				      this->_M_impl._M_start,
+            .           				      _M_get_Tp_allocator());
+           24 ( 0.00%)        }
+            .           
+            .           #if __cplusplus >= 201103L
+            .                 /**
+            .                  *  @brief  %Vector move constructor.
+            .                  *
+            .                  *  The newly-created %vector contains the exact contents of the
+            .                  *  moved instance.
+            .                  *  The contents of the moved instance are a valid, but unspecified
+-- line 647 ----------------------------------------
+-- line 700 ----------------------------------------
+            .                  *
+            .                  *  Create a %vector consisting of copies of the elements in the
+            .                  *  initializer_list @a __l.
+            .                  *
+            .                  *  This will call the element type's copy constructor N times
+            .                  *  (where N is @a __l.size()) and do no memory reallocation.
+            .                  */
+            .                 _GLIBCXX20_CONSTEXPR
+           28 ( 0.00%)        vector(initializer_list<value_type> __l,
+            .           	     const allocator_type& __a = allocator_type())
+            .                 : _Base(__a)
+            .                 {
+            .           	_M_range_initialize_n(__l.begin(), __l.end(), __l.size());
+           28 ( 0.00%)        }
+            .           #endif
+            .           
+            .                 /**
+            .                  *  @brief  Builds a %vector from a range.
+            .                  *  @param  __first  An input iterator.
+            .                  *  @param  __last  An input iterator.
+            .                  *  @param  __a  An allocator.
+            .                  *
+-- line 721 ----------------------------------------
+-- line 792 ----------------------------------------
+            .           
+            .                 /**
+            .                  *  The dtor only erases the elements, and note that if the
+            .                  *  elements themselves are pointers, the pointed-to memory is
+            .                  *  not touched in any way.  Managing the pointer is the user's
+            .                  *  responsibility.
+            .                  */
+            .                 _GLIBCXX20_CONSTEXPR
+           32 ( 0.00%)        ~vector() _GLIBCXX_NOEXCEPT
+            .                 {
+           16 ( 0.00%)  	std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+            .           		      _M_get_Tp_allocator());
+            .           	_GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC;
+           24 ( 0.00%)        }
+            .           
+            .                 /**
+            .                  *  @brief  %Vector assignment operator.
+            .                  *  @param  __x  A %vector of identical element and allocator types.
+            .                  *
+            .                  *  All the elements of @a __x are copied, but any unused capacity in
+            .                  *  @a __x will not be copied.
+            .                  *
+-- line 813 ----------------------------------------
+-- line 1111 ----------------------------------------
+            .           #endif
+            .           
+            .                 // [23.2.4.2] capacity
+            .                 /**  Returns the number of elements in the %vector.  */
+            .                 _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+            .                 size_type
+            .                 size() const _GLIBCXX_NOEXCEPT
+            .                 {
+          651 ( 0.00%)  	ptrdiff_t __dif = this->_M_impl._M_finish - this->_M_impl._M_start;
+            .           	if (__dif < 0)
+            .           	   __builtin_unreachable ();
+            .           	return size_type(__dif);
+            .                 }
+            .           
+            .                 /**  Returns the size() of the largest possible %vector.  */
+            .                 _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+            .                 size_type
+-- line 1127 ----------------------------------------
+-- line 1256 ----------------------------------------
+            .                  *  out_of_range lookups are not defined. (For checked lookups
+            .                  *  see at().)
+            .                  */
+            .                 _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+            .                 reference
+            .                 operator[](size_type __n) _GLIBCXX_NOEXCEPT
+            .                 {
+            .           	__glibcxx_requires_subscript(__n);
+8,668,063,878 (11.99%)  	return *(this->_M_impl._M_start + __n);
+            .                 }
+            .           
+            .                 /**
+            .                  *  @brief  Subscript access to the data contained in the %vector.
+            .                  *  @param __n The index of the element for which data should be
+            .                  *  accessed.
+            .                  *  @return  Read-only (constant) reference to data.
+            .                  *
+-- line 1272 ----------------------------------------
+-- line 1410 ----------------------------------------
+            .                  *  to it.  Due to the nature of a %vector this operation can be
+            .                  *  done in constant time if the %vector has preallocated space
+            .                  *  available.
+            .                  */
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 void
+            .                 push_back(const value_type& __x)
+            .                 {
+    1,199,904 ( 0.00%)  	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+            .           	  {
+            .           	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+            .           	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+            .           				     __x);
+      799,792 ( 0.00%)  	    ++this->_M_impl._M_finish;
+            .           	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+            .           	  }
+            .           	else
+          296 ( 0.00%)  	  _M_realloc_append(__x);
+    2,113,467 ( 0.00%)  => /usr/include/c++/15.2.1/bits/stl_vector.h:void std::vector<Aster::vec3, std::allocator<Aster::vec3> >::_M_realloc_append<Aster::vec3 const&>(Aster::vec3 const&) (36x)
+    2,083,479 ( 0.00%)  => /usr/include/c++/15.2.1/bits/stl_vector.h:void std::vector<double, std::allocator<double> >::_M_realloc_append<double const&>(double const&) (36x)
+        1,918 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (2x)
+            .                 }
+            .           
+            .           #if __cplusplus >= 201103L
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 void
+            .                 push_back(value_type&& __x)
+            .                 { emplace_back(std::move(__x)); }
+            .           
+-- line 1435 ----------------------------------------
+-- line 1452 ----------------------------------------
+            .                  *  data is needed, it should be retrieved before pop_back() is
+            .                  *  called.
+            .                  */
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 void
+            .                 pop_back() _GLIBCXX_NOEXCEPT
+            .                 {
+            .           	__glibcxx_requires_nonempty();
+            4 ( 0.00%)  	--this->_M_impl._M_finish;
+            .           	_Alloc_traits::destroy(this->_M_impl, this->_M_impl._M_finish);
+            .           	_GLIBCXX_ASAN_ANNOTATE_SHRINK(1);
+            .                 }
+            .           
+            .           #if __cplusplus >= 201103L
+            .                 /**
+            .                  *  @brief  Inserts an object in %vector before specified iterator.
+            .                  *  @param  __position  A const_iterator into the %vector.
+-- line 1468 ----------------------------------------
+-- line 1874 ----------------------------------------
+            .           	_GLIBCXX20_CONSTEXPR
+            .           	_Guard_alloc(pointer __s, size_type __l, _Base& __vect)
+            .           	: _M_storage(__s), _M_len(__l), _M_vect(__vect)
+            .           	{ }
+            .           
+            .           	_GLIBCXX20_CONSTEXPR
+            .           	~_Guard_alloc()
+            .           	{
+          182 ( 0.00%)  	  if (_M_storage)
+            .           	    _M_vect._M_deallocate(_M_storage, _M_len);
+            .           	}
+            .           
+            .           	_GLIBCXX20_CONSTEXPR
+            .           	pointer
+            .           	_M_release()
+            .           	{
+            .           	  pointer __res = _M_storage;
+-- line 1890 ----------------------------------------
+-- line 1978 ----------------------------------------
+            .                 template<typename _Iterator, typename _Sentinel>
+            .           	_GLIBCXX20_CONSTEXPR
+            .           	void
+            .           	_M_range_initialize_n(_Iterator __first, _Sentinel __last,
+            .           			      size_type __n)
+            .           	{
+            .           	  pointer __start =
+            .           	    this->_M_allocate(_S_check_init_len(__n, _M_get_Tp_allocator()));
+           12 ( 0.00%)  	  this->_M_impl._M_start = this->_M_impl._M_finish = __start;
+            8 ( 0.00%)  	  this->_M_impl._M_end_of_storage = __start + __n;
+            .           	  this->_M_impl._M_finish
+            4 ( 0.00%)  	      = std::__uninitialized_copy_a(_GLIBCXX_MOVE(__first), __last,
+            .           					    __start, _M_get_Tp_allocator());
+            .           	}
+            .           
+            .                 // Called by the first initialize_dispatch above and by the
+            .                 // vector(n,value,a) constructor.
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 void
+            .                 _M_fill_initialize(size_type __n, const value_type& __value)
+-- line 1997 ----------------------------------------
+-- line 2191 ----------------------------------------
+            .                 { return _M_insert_rval(__position, std::move(__v)); }
+            .           #endif
+            .           
+            .                 // Called by _M_fill_insert, _M_insert_aux etc.
+            .                 _GLIBCXX20_CONSTEXPR
+            .                 size_type
+            .                 _M_check_len(size_type __n, const char* __s) const
+            .                 {
+          273 ( 0.00%)  	if (max_size() - size() < __n)
+            .           	  __throw_length_error(__N(__s));
+            .           
+           91 ( 0.00%)  	const size_type __len = size() + (std::max)(size(), __n);
+          273 ( 0.00%)  	return (__len < size() || __len > max_size()) ? max_size() : __len;
+            .                 }
+            .           
+            .                 // Called by constructors to check initial size.
+            .                 static _GLIBCXX20_CONSTEXPR size_type
+            .                 _S_check_init_len(size_type __n, const allocator_type& __a)
+            .                 {
+           16 ( 0.00%)  	if (__n > _S_max_size(_Tp_alloc_type(__a)))
+            .           	  __throw_length_error(
+            .           	      __N("cannot create std::vector larger than max_size()"));
+            .           	return __n;
+            .                 }
+            .           
+            .                 static _GLIBCXX20_CONSTEXPR size_type
+            .                 _S_max_size(const _Tp_alloc_type& __a) _GLIBCXX_NOEXCEPT
+            .                 {
+-- line 2218 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: include/Aster/physics/vectors.h
+--------------------------------------------------------------------------------
+Ir                     
+
+-- line 40 ----------------------------------------
+            .           
+            .           
+            .           
+            .           struct vec3 {
+            .               REAL x;
+            .               REAL y;
+            .               REAL z;
+            .           
+            9 ( 0.00%)      vec3() : x(0), y(0), z(0) {}
+            .           
+            .               vec3(REAL scalar) : x(scalar), y(scalar), z(scalar) {}
+1,734,993,934 ( 2.40%)      vec3(REAL x, REAL y, REAL z) : x(x), y(y), z(z) {}
+            .           
+            .               vec3 operator*(double scalar) const;
+            .               vec3 operator/(double scalar) const;
+            .               vec3 operator/(float scalar) const;
+            .               vec3 operator/(const int& other) const;
+            .               vec3 operator+(const vec3& other) const;
+            .               vec3 operator-(const vec3& other) const;
+            .               vec3 operator-() const;
+-- line 59 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: src/utils/builder_endpoint.cpp
+--------------------------------------------------------------------------------
+Ir                   
+
+-- line 82 ----------------------------------------
+          .           }
+          .           
+          .           
+          .           int Updater::get_order(){
+          .               return this -> order;
+          .           };
+          .           
+          .           
+          8 ( 0.00%)  Updater::Updater(Simulation* s, int _o, update_type _t)
+          7 ( 0.00%)      : type(_t), _s(s), order(_o){
+          .               
+         10 ( 0.00%)      if (s -> uses_GPU())
+        790 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          2 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::uses_GPU() const (1x)
+          9 ( 0.00%)          this -> update = resolve_gpu_updater(_t, _o);
+        910 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+         27 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/updater.cpp:Aster::resolve_gpu_updater(Aster::update_type, int) (1x)
+          .               else
+          .                   this -> update = bake_update_function(_t, _o);
+          8 ( 0.00%)  }
+          .           
+          .           //===---------------------------------------------------------===//
+          .           //                 SIM-UTILS IMPLEMENTATION                      //
+          .           //===---------------------------------------------------------===//
+          .           
+         10 ( 0.00%)  Simulation* Simulation::load_gpu_buffers(){
+          .               using namespace GPU;
+          3 ( 0.00%)      if (!has_initialized) {
+          6 ( 0.00%)          init_opencl();
+ 57,851,316 ( 0.08%)  => /home/parsifal/Projects/backup+/Aster/src/utils/tc_impl_cl.cpp:Aster::GPU::init_opencl() (1x)
+        768 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          2 ( 0.00%)          has_initialized = true;
+          .               }
+          .           
+          9 ( 0.00%)      if (warn_if(!this -> GPU_on, "Cannot load gpu buffers without this -> GPU_on = true")) return this;
+          4 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/logging.cpp:Aster::warn_if(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (1x)
+          .               size_t N = this -> bodies.positions.size();
+          4 ( 0.00%)      log_info("Loading internal AOB buffers... ");
+      5,485 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/logging.cpp:Aster::log_info(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (1x)
+          .           
+          1 ( 0.00%)      cl_int err =0;
+          .           
+         15 ( 0.00%)      positions_cl       = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(vec3) * N, NULL, &err);
+      3,086 ( 0.00%)  => ???:clCreateBuffer (1x)
+        987 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          9 ( 0.00%)      Check(err);
+          4 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/logging.cpp:Aster::critical_if(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (1x)
+          8 ( 0.00%)      velocities_cl      = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(vec3) * N, NULL, &err);
+      3,242 ( 0.00%)  => ???:clCreateBuffer (1x)
+          9 ( 0.00%)      Check(err);
+          4 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/logging.cpp:Aster::critical_if(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (1x)
+          8 ( 0.00%)      accs_cl            = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(vec3) * N, NULL, &err);
+      3,435 ( 0.00%)  => ???:clCreateBuffer (1x)
+          9 ( 0.00%)      Check(err);
+          4 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/logging.cpp:Aster::critical_if(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (1x)
+          9 ( 0.00%)      masses_cl          = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(REAL) * N, NULL, &err);
+      3,628 ( 0.00%)  => ???:clCreateBuffer (1x)
+         10 ( 0.00%)      Check(err);
+          4 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/logging.cpp:Aster::critical_if(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (1x)
+          .           
+         17 ( 0.00%)      clEnqueueWriteBuffer(queue, positions_cl,  CL_TRUE, 0, sizeof(vec3) * N, this -> bodies.positions.data(), 0, NULL, NULL);
+    510,282 ( 0.00%)  => ???:clEnqueueWriteBuffer (1x)
+      1,133 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+         12 ( 0.00%)      clEnqueueWriteBuffer(queue, velocities_cl, CL_TRUE, 0, sizeof(vec3) * N, this -> bodies.velocities.data(), 0, NULL, NULL);
+    509,180 ( 0.00%)  => ???:clEnqueueWriteBuffer (1x)
+         12 ( 0.00%)      clEnqueueWriteBuffer(queue, accs_cl,       CL_TRUE, 0, sizeof(vec3) * N, this -> bodies.accs.data(), 0, NULL, NULL);
+    510,352 ( 0.00%)  => ???:clEnqueueWriteBuffer (1x)
+         13 ( 0.00%)      clEnqueueWriteBuffer(queue, masses_cl,     CL_TRUE, 0, sizeof(REAL) * N, this -> bodies.masses.data(), 0, NULL, NULL);
+    203,267 ( 0.00%)  => ???:clEnqueueWriteBuffer (1x)
+          .           
+          .               return this;
+         12 ( 0.00%)  }
+          .           
+         13 ( 0.00%)  Simulation::Simulation(){
+          .           
+          1 ( 0.00%)  }
+          .           
+          .           bool Simulation::is_fine(){
+          .               bool retval = true;
+          .           
+          .               for (int i = 0; i < this -> bodies.positions.size(); ++i){
+          .                   if (this -> bodies.positions[i].is_fine() && 
+          .                       this -> bodies.velocities[i].is_fine() &&
+          .                       this -> bodies.accs[i].is_fine())
+-- line 143 ----------------------------------------
+-- line 152 ----------------------------------------
+          .               return retval;
+          .           }
+          .           
+          .           //===---------------------------------------------------------===//
+          .           //                 SIM-SETTERS IMPLEMENTATION                    //
+          .           //===---------------------------------------------------------===//
+          .           
+          .           Simulation* Simulation::set_dt(float dt_){
+          3 ( 0.00%)      assert(dt_ >= 0);
+          3 ( 0.00%)      data.dt = dt_;
+          .               return this;
+          1 ( 0.00%)  }
+          .           
+          .           
+          .           Simulation* Simulation::set_omega_m(float om_){
+          .               assert(om_ > 0);
+          .               data.omega_m = om_;
+          .               return this;
+          .           }
+          .           
+-- line 171 ----------------------------------------
+-- line 215 ----------------------------------------
+          .           }
+          .           
+          .           Simulation* Simulation::set_heat_capacity(REAL c_){
+          .               assert(c_ && "heat capacity cannot be 0");
+          .               data.avr_heat_capacity = c_;
+          .               return this;
+          .           }
+          .           
+          1 ( 0.00%)  Simulation* Simulation::set_scale(REAL s){
+          1 ( 0.00%)      data.simulation_scale = s;
+          .               return this;
+          1 ( 0.00%)  }
+          .           
+          .           
+          .           //===---------------------------------------------------------===//
+          .           //                 SIM-GETTERS IMPLEMENTATION                    //
+          .           //===---------------------------------------------------------===//
+          .           
+          .           struct CoMReducer {
+          .               const std::vector<REAL>& m;                 
+-- line 234 ----------------------------------------
+-- line 258 ----------------------------------------
+          .               }
+          .           
+          .               void join(const CoMReducer& rhs) {
+          .                   m_sum   += rhs.m_sum;
+          .                   mp_sum += rhs.mp_sum;
+          .               }
+          .           };
+          .           
+          6 ( 0.00%)  vec3 Simulation::get_center() const{
+          .               return {
+          8 ( 0.00%)          this -> get_width()/2,
+        802 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+         10 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::get_width() const (1x)
+          7 ( 0.00%)          this -> get_height()/2,
+        869 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+         10 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::get_height() const (1x)
+          7 ( 0.00%)          this -> get_depth()/2
+        794 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+         10 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::get_depth() const (1x)
+          7 ( 0.00%)      };
+          6 ( 0.00%)  }
+          .           
+          .           vec3 Simulation::get_center_of_mass(){
+          .               CoMReducer reducer{this -> bodies.masses, this -> bodies.positions};
+          .               tbb::parallel_reduce(tbb::blocked_range<std::size_t>(0, this -> bodies.positions.size()),
+          .                                    reducer);
+          .           
+          .               const double invTotalMass = 1.0 / reducer.m_sum;
+          .               return reducer.mp_sum[0] * invTotalMass;
+-- line 280 ----------------------------------------
+-- line 289 ----------------------------------------
+          .           
+          .               this -> trigger_all_graphs();
+          .               if (always_read_pos && uses_GPU())
+          .                   read_bodies_gpu();
+          .           }
+          .           
+          .           
+          .           
+         12 ( 0.00%)  Simulation* Simulation::integrate(size_t times, bool precision_test){
+          .               using namespace Graphs;
+          2 ( 0.00%)      if (times == 0) return this;
+          .               std::ostringstream aft, bef, prec;
+          .           
+          .               REAL e_before, e_after;
+          .           
+          2 ( 0.00%)      if (precision_test){
+          5 ( 0.00%)          if (uses_GPU())
+          2 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::uses_GPU() const (1x)
+          8 ( 0.00%)              read_bodies_gpu();
+     84,689 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::read_bodies_gpu() (1x)
+        838 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          7 ( 0.00%)          e_before = get_total_energy(this);
+6,074,132,505 ( 8.40%)  => /usr/include/c++/15.2.1/bits/stl_vector.h:Aster::Graphs::get_total_energy(Aster::Simulation*) (1x)
+        910 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          .               }
+          .           
+          .               auto start = std::chrono::high_resolution_clock::now();
+          .           
+          .               for (size_t i = 0; i < times; ++i)
+          .                   this -> step();
+          .           
+          .               auto end = std::chrono::high_resolution_clock::now();
+-- line 315 ----------------------------------------
+-- line 340 ----------------------------------------
+          .                            + std::string("\n[ + ] Integrator Precision: ") + std::string(prec.str());
+          .               }
+          .           
+          .               log_info(msg + add);
+          .           
+          .               return this;
+          .           }
+          .           
+         11 ( 0.00%)  Simulation* Simulation::read_bodies_gpu(){
+          4 ( 0.00%)      if (!this -> uses_GPU()) return this;
+          2 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::uses_GPU() const (1x)
+          .           
+          .               using namespace GPU;
+          .               size_t N = this -> bodies.positions.size();
+          8 ( 0.00%)      clFinish(queue);
+      5,022 ( 0.00%)  => ???:clFinish (1x)
+      1,062 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+         25 ( 0.00%)      Check(clEnqueueReadBuffer(queue, this -> positions_cl, CL_FALSE, 0, sizeof(vec3) * N, this -> bodies.positions.data(), 0, nullptr, nullptr));
+     36,631 ( 0.00%)  => ???:clEnqueueReadBuffer (1x)
+      1,257 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          4 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/logging.cpp:Aster::critical_if(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (1x)
+         22 ( 0.00%)      Check(clEnqueueReadBuffer(queue, this -> velocities_cl, CL_FALSE, 0, sizeof(vec3) * N, this ->bodies.velocities.data(), 0, nullptr, nullptr));
+     40,366 ( 0.00%)  => ???:clEnqueueReadBuffer (1x)
+          4 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/logging.cpp:Aster::critical_if(bool, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (1x)
+          .           
+          .               return this;
+         12 ( 0.00%)  }
+          .           
+          4 ( 0.00%)  Simulation* Simulation::load(){
+          2 ( 0.00%)      if (has_loaded) return this;
+          8 ( 0.00%)      loading_queue.load(this);
+218,180,320 ( 0.30%)  => /home/parsifal/Projects/backup+/Aster/src/clusters/clusters_endpoint.cpp:Aster::ClusterQueue::load(Aster::Simulation*) (1x)
+        884 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          1 ( 0.00%)      has_loaded = true;
+          7 ( 0.00%)      this -> calculate_total_mass();
+    499,969 ( 0.00%)  => /usr/include/c++/15.2.1/bits/stl_iterator.h:Aster::Simulation::calculate_total_mass() (1x)
+        880 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          .           
+          4 ( 0.00%)      this -> GPU_on = (gravity_solver == GPU_BARNES_HUT || gravity_solver == SIMPLE_GPU);
+          9 ( 0.00%)      if (this -> GPU_on) this -> load_gpu_buffers();
+ 59,607,140 ( 0.08%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::load_gpu_buffers() (1x)
+        840 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+          .           
+         15 ( 0.00%)      this -> updater = new Updater(this, integrator_order, integrator);
+        938 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+      1,797 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Updater::Updater(Aster::Simulation*, int, Aster::update_type) (1x)
+         49 ( 0.00%)  => /usr/src/debug/gcc/gcc/libstdc++-v3/libsupc++/new_op.cc:operator new(unsigned long) (1x)
+          .               
+          9 ( 0.00%)      this -> solver = bake_solver(this, gravity_solver);
+        950 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+      2,292 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/utils/updater.cpp:Aster::bake_solver(Aster::Simulation*, Aster::solver_type) (1x)
+          8 ( 0.00%)      this -> solver -> set_force(this -> force_used);
+        858 ( 0.00%)  => /usr/src/debug/glibc/glibc/elf/../sysdeps/x86_64/dl-trampoline.h:_dl_runtime_resolve_xsave (1x)
+        161 ( 0.00%)  => /home/parsifal/Projects/backup+/Aster/src/physics/tool_chain_impl.cpp:Aster::Solver::set_force(Aster::force_type) (1x)
+          .           
+          3 ( 0.00%)      this -> solver -> load();
+ 41,031,654 ( 0.06%)  => /home/parsifal/Projects/backup+/Aster/src/solvers/full_GPU.cpp:Aster::Barnes::BH_hyper::load() (1x)
+          .           
+          .               return this;
+          5 ( 0.00%)  }
+          .           
+          .           
+          .           Simulation* Simulation::get_force_with(force_func p){
+          .               this -> solver -> set_force(p);
+          .               this -> force_used = CUSTOM_F;
+          .           
+          .               return this;
+          .           }
+-- line 385 ----------------------------------------
+-- line 404 ----------------------------------------
+          .               this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
+          .               return this;
+          .           }
+          .           
+          .           
+          .           
+          .           
+          .           
+          1 ( 0.00%)  REAL Simulation::get_height() const{
+          5 ( 0.00%)      return this -> data.size.y * get_scale();
+          2 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::get_scale() const (1x)
+          2 ( 0.00%)  }
+          .           
+          .           
+          .           bool Simulation::uses_GPU() const{
+          3 ( 0.00%)      return this -> GPU_on;
+          3 ( 0.00%)  }
+          .           
+          .           
+          1 ( 0.00%)  REAL Simulation::get_width() const{
+          5 ( 0.00%)      return this -> data.size.x * get_scale();
+          2 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::get_scale() const (1x)
+          2 ( 0.00%)  }
+          .           
+          .           
+          1 ( 0.00%)  REAL Simulation::get_depth() const{
+          5 ( 0.00%)      return this -> data.size.z * get_scale();
+          2 ( 0.00%)  => src/utils/builder_endpoint.cpp:Aster::Simulation::get_scale() const (1x)
+          2 ( 0.00%)  }
+          .           
+          .           
+          .           
+          .           REAL Simulation::get_render_height() const{
+          .               return this -> data.size.y;
+          .           }
+          .           
+          .           
+-- line 437 ----------------------------------------
+-- line 446 ----------------------------------------
+          .           
+          .           
+          .           int Simulation::get_cores() const{
+          .               return this -> data.NUM_THREADS;
+          .           };
+          .           
+          .           
+          .           REAL Simulation::get_G() const{
+866,896,952 ( 1.20%)      return this -> data.G;
+866,896,952 ( 1.20%)  };
+          .           
+          .           
+          .           
+          .           REAL Simulation::get_c() const{
+          .               return this -> data.c;
+          .           }
+          .           
+          .           
+-- line 463 ----------------------------------------
+-- line 477 ----------------------------------------
+          .           
+          .           
+          .           REAL Simulation::get_takeover() const{
+          .               return this -> data.takeover;
+          .           }
+          .           
+          .           
+          .           REAL Simulation::get_scale() const{
+    100,003 ( 0.00%)      return this -> data.simulation_scale;
+    100,003 ( 0.00%)  }
+          .           
+          .           
+          .           
+          .           
+          .           REAL Simulation::get_heat_capacity() const{
+          .               return this -> data.avr_heat_capacity;
+          .           }
+          .           
+-- line 494 ----------------------------------------
+-- line 521 ----------------------------------------
+          .           Simulation* Simulation::set_adaptive_coeff(REAL s){
+          .               data.adaptive_coeff = s;
+          .               return this;
+          .           }
+          .           
+          .           
+          .           
+          .           Simulation* Simulation::calculate_total_mass(){
+          2 ( 0.00%)      total_mass = 0;
+          .           
+    599,960 ( 0.00%)      for (const auto& num : this -> bodies.masses)
+    399,968 ( 0.00%)          total_mass += num;
+          .               
+          .               return this;
+          4 ( 0.00%)  }
+          .           
+          .           inline vec3 Simulation::get_corner(int n) const{
+          .               assert(n >= 0 && n < 9);
+          .           
+          .               return {
+          .                   data.size.x * (n % 2),
+          .                   data.size.y * (n==2 || n==3 || n==6 || n==7),
+          .                   data.size.z * (n > 3)
+-- line 543 ----------------------------------------
+
+--------------------------------------------------------------------------------
+Ir                      
+--------------------------------------------------------------------------------
+71,952,880,496 (99.54%)  events annotated
+

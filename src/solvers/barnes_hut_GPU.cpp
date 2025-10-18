@@ -50,7 +50,12 @@ void BHG::upload_force_calc(int num_leaves, int tree_size, int num_bodies){
     cl_int operation_result = 0 ;
     int mult = 3;
     if (num_leaves == 0) return;
-    
+
+    num_bodies = num_bodies - this -> lower_int_bound - ((this -> upper_int_bound < 0) ? 0 : (num_bodies - this -> upper_int_bound));
+
+    if (warn_if(num_bodies <= 0, "either upper or lower bound were set too high in the gravity solver, resulting in a negative amount of bodies to load")) 
+        return; 
+
     size_t double2_size_tree = sizeof(REAL) * mult * tree_size;
     size_t int_size_tree = sizeof(int) * tree_size;
     size_t double_size_tree = sizeof(REAL) * tree_size;
@@ -60,10 +65,10 @@ void BHG::upload_force_calc(int num_leaves, int tree_size, int num_bodies){
     
     cl_mem com_buff, rights_buff, lefts_buff, nmasses_buff, pos_buff, bmasses_buff;
 
-    load_const_buff(double2_size_tree,   this ->nodes.centers_of_mass.data(), com_buff);       
-    load_const_buff(int_size_tree,       this ->nodes.left_nodes.data(),      lefts_buff);     
-    load_const_buff(int_size_tree,       this ->nodes.right_nodes.data(),     rights_buff);    
-    load_const_buff(double_size_tree,    this ->nodes.masses.data(),          nmasses_buff);   
+    load_const_buff(double2_size_tree,   this ->nodes.centers_of_mass.data() + this -> upper_int_bound, com_buff);       
+    load_const_buff(int_size_tree,       this ->nodes.left_nodes.data()      + this -> upper_int_bound, lefts_buff);     
+    load_const_buff(int_size_tree,       this ->nodes.right_nodes.data()     + this -> upper_int_bound, rights_buff);    
+    load_const_buff(double_size_tree,    this ->nodes.masses.data()          + this -> upper_int_bound, nmasses_buff);   
     
     load_const_buff(double2_size_bodies, this -> _s -> bodies.positions.data(),      pos_buff);       
     load_const_buff(double_size_bodies,  this -> _s -> bodies.masses.data(),         bmasses_buff);   
@@ -86,34 +91,20 @@ void BHG::upload_force_calc(int num_leaves, int tree_size, int num_bodies){
     REAL G = this -> _s -> get_G();
     REAL c = this -> _s -> get_c();
 
-    operation_result = clSetKernelArg(force_calculator, 0, sizeof(int), &num_bodies);
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 1, sizeof(REAL), &G);
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 2, sizeof(REAL), &c);
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 3, sizeof(REAL), &this ->theta);
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 4, sizeof(REAL), &tree_bound_size);  
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 5, sizeof(int), &root_node);      
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 6, sizeof(int), &tree_size);
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 7, sizeof(cl_mem), &nmasses_buff);
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 8, sizeof(cl_mem), &pos_buff); 
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 9, sizeof(cl_mem), &com_buff); 
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 10, sizeof(cl_mem), &lefts_buff);
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &rights_buff); 
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 12, sizeof(cl_mem), &bmasses_buff);
-    Check(operation_result);
-    operation_result = clSetKernelArg(force_calculator, 13, sizeof(cl_mem), &accs_buff);  
-    Check(operation_result);
+    Check(clSetKernelArg(force_calculator, 0, sizeof(int), &num_bodies));
+    Check(clSetKernelArg(force_calculator, 1, sizeof(REAL), &G));
+    Check(clSetKernelArg(force_calculator, 2, sizeof(REAL), &c));
+    Check(clSetKernelArg(force_calculator, 3, sizeof(REAL), &this ->theta));
+    Check(clSetKernelArg(force_calculator, 4, sizeof(REAL), &tree_bound_size));
+    Check(clSetKernelArg(force_calculator, 5, sizeof(int), &root_node));      
+    Check(clSetKernelArg(force_calculator, 6, sizeof(int), &tree_size));
+    Check(clSetKernelArg(force_calculator, 7, sizeof(cl_mem), &nmasses_buff));
+    Check(clSetKernelArg(force_calculator, 8, sizeof(cl_mem), &pos_buff)); 
+    Check(clSetKernelArg(force_calculator, 9, sizeof(cl_mem), &com_buff)); 
+    Check(clSetKernelArg(force_calculator, 10, sizeof(cl_mem), &lefts_buff));
+    Check(clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &rights_buff)); 
+    Check(clSetKernelArg(force_calculator, 12, sizeof(cl_mem), &bmasses_buff));
+    Check(clSetKernelArg(force_calculator, 13, sizeof(cl_mem), &accs_buff));  
 
 
     operation_result = clEnqueueNDRangeKernel(queue, force_calculator, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr);
@@ -320,7 +311,7 @@ void BHG::load(){
 
 
 void BHG::compute_forces(){
-    this -> build_tree(); 
+    this -> make_tree(); 
     upload_force_calc(this -> compressed_mortons_size, this ->nodes.size(), this -> _s -> bodies.positions.size());
 }
 

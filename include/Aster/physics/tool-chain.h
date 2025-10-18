@@ -36,36 +36,17 @@ void update_euler(Simulation* _s);
 
 void update_leapfrog(Simulation* _s);
 
+void update_WH_planetary(Simulation* _s);
+
 void update_SABA1(Simulation* _s);
-
-
 void update_SABA2(Simulation* _s);
-
-
 void update_SABA3(Simulation* _s);
-
-
 void update_SABA4(Simulation* _s);
-
-
-void update_SABA4(Simulation* _s);
-
-
 void update_SABA5(Simulation* _s);
-
-
 void update_SABA6(Simulation* _s);
-
-
 void update_SABA7(Simulation* _s);
-
-
 void update_SABA8(Simulation* _s);
-
-
 void update_SABA9(Simulation* _s);
-
-
 void update_SABA10(Simulation* _s);
 
 

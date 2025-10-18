@@ -12,14 +12,14 @@ using namespace Aster;
 #define AU 150e9
 
 void load_solar_system(Simulation* sim){
-    add_body(sim, 3.3011e23, sim -> get_center() - vec3(0.31 * AU, 0, 0), {0, 38700, 0}); //mercury 
-    add_body(sim, 1.989e30, sim -> get_center(), {0,0, 0}); //sun
-    add_body(sim, 4.8675e24, sim -> get_center() - vec3(0.71 * AU, 0, 0), {0, 34790, 0}); //venus 
-    add_body(sim, 5.9721e24, sim -> get_center() - vec3(1.00 * AU, 0, 0), {0, 29782, 0}); //earth 
-    add_body(sim, 6.4171e23, sim -> get_center() - vec3(1.67 * AU, 0, 0), {0, 23130, 0}); //mars
-    add_body(sim, 1.8982e27, sim -> get_center() - vec3(4.95 * AU, 0, 0), {0, 16060, 0}); //jupiter
-    add_body(sim, 8.6810e25, sim -> get_center() - vec3(18.3 * AU, 0, 0), {0,  6800, 0}); //uranus
-    add_body(sim, 1.0240e26, sim -> get_center() - vec3(29.8 * AU, 0, 0), {0,  5430, 0}); //neptune
+    add_body(sim, 1.989e30, {0,0,0}, {0,0, 0}); //sun
+    add_body(sim, 3.3011e23, -vec3(0.31 * AU, 0, 0), {0, 38700, 0}); //mercury 
+    add_body(sim, 4.8675e24, -vec3(0.71 * AU, 0, 0), {0, 34790, 0}); //venus 
+    add_body(sim, 5.9721e24, -vec3(1.00 * AU, 0, 0), {0, 29782, 0}); //earth 
+    add_body(sim, 6.4171e23, -vec3(1.67 * AU, 0, 0), {0, 23130, 0}); //mars
+    add_body(sim, 1.8982e27, -vec3(4.95 * AU, 0, 0), {0, 16060, 0}); //jupiter
+    add_body(sim, 8.6810e25, -vec3(18.3 * AU, 0, 0), {0,  6800, 0}); //uranus
+    add_body(sim, 1.0240e26, -vec3(29.8 * AU, 0, 0), {0,  5430, 0}); //neptune
 }
 /*
 void spinny(Simulation<vec2>* _s, int n, vec2 v, vec2 p){
@@ -89,16 +89,17 @@ void spinny(Simulation<vec3>* _s, int n, vec3 v, vec3 p){
 int main(){
     Simulation* _s = new Simulation();
     //load_solar_system(_s);
-    add_disk(_s, 1e5, vec3(0), 200, 1, {0,0,0}, 1e20, 1e30);
+    add_disk(_s, 1e5, vec3(0), 200, 1, {0,0,0}, 1e-2, 1e30);
     _s -> gravity_solver = GPU_BARNES_HUT;
-    _s -> integrator = EULER;
+    _s -> integrator = WH_PLANETARY;
+    _s -> integrator_order = 0;
     _s 
     -> set_scale(200e7)
-    -> set_dt(1e4)
+    -> set_dt(1e3)
     -> load();
 
-    _s -> integrate(100, true);
+     _s -> integrate(1, true);
     
-    //auto a = Renderer::Renderer3d(_s);
-    //a.show();
+    auto a = Renderer::Renderer3d(_s);
+    a.show();
 }

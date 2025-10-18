@@ -49,7 +49,26 @@ BH_hyper::BH_hyper(Simulation* _s) {
     this -> _s = _s;
 }
 
+void BH_hyper::make_mortons(){
+    using namespace GPU;
 
+    int N = this  -> get_range();
+    static int prec_bits = PRECISION_BITS;
+
+    const int upper = this -> get_upper_bound(), lower = this -> get_lower_bound();
+
+    size_t localSize  = 128;
+    size_t globalSize = ((N + localSize - 1) / localSize) * localSize;
+    Check(clSetKernelArg(morton_writer_kernel, 0, sizeof(uint), &N));
+    Check(clSetKernelArg(morton_writer_kernel, 1, sizeof(cl_mem), &this -> _s -> positions_cl));
+    Check(clSetKernelArg(morton_writer_kernel, 2, sizeof(cl_mem), &mortons));
+    Check(clSetKernelArg(morton_writer_kernel, 3, sizeof(cl_mem), &bd_size_gpu));
+    Check(clSetKernelArg(morton_writer_kernel, 4, sizeof(uint), &upper));
+    Check(clSetKernelArg(morton_writer_kernel, 5, sizeof(uint), &lower));
+    
+    Check(clEnqueueNDRangeKernel(queue, morton_writer_kernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL));
+    Check(clFinish(queue));
+}
 
 void BH_hyper::sort_mortons(){
     using namespace GPU;
@@ -91,22 +110,7 @@ BH_hyper::~BH_hyper(){
 }
 
  
-void BH_hyper::make_mortons(){
-    using namespace GPU;
 
-    int N = this  -> _s -> bodies.positions.size();
-    static int prec_bits = PRECISION_BITS;
-
-    size_t localSize  = 128;
-    size_t globalSize = ((N + localSize - 1) / localSize) * localSize;
-    Check(clSetKernelArg(morton_writer_kernel, 0, sizeof(uint), &N));
-    Check(clSetKernelArg(morton_writer_kernel, 1, sizeof(cl_mem), &this -> _s -> positions_cl));
-    Check(clSetKernelArg(morton_writer_kernel, 2, sizeof(cl_mem), &mortons));
-    Check(clSetKernelArg(morton_writer_kernel, 3, sizeof(cl_mem), &bd_size_gpu));
-    
-    Check(clEnqueueNDRangeKernel(queue, morton_writer_kernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL));
-    Check(clFinish(queue));
-}
 
  
 void BH_hyper::upload_update_kernel(cl_kernel& k, REAL c, REAL d){
@@ -218,6 +222,8 @@ void BH_hyper::build_bottom_up(int N){
     using namespace GPU;
     size_t LW_size = 64;
     size_t leaf_only_GW = ((N + LW_size - 1) / LW_size) * LW_size;
+
+    const int lower = get_lower_bound(), upper = get_upper_bound();
     
     size_t num = N;
     Check(clSetKernelArg(first_pass_kernel, 0, sizeof(int),    &num));  
@@ -227,7 +233,8 @@ void BH_hyper::build_bottom_up(int N){
     Check(clSetKernelArg(first_pass_kernel, 4, sizeof(cl_mem), &node_masses));
     Check(clSetKernelArg(first_pass_kernel, 5, sizeof(cl_mem), &counters));
     Check(clSetKernelArg(first_pass_kernel, 6, sizeof(cl_mem), &parents));
-
+    Check(clSetKernelArg(first_pass_kernel, 7, sizeof(int),    &lower));  
+    Check(clSetKernelArg(first_pass_kernel, 8, sizeof(int),    &upper));  
 
     Check(clEnqueueNDRangeKernel(queue, first_pass_kernel, 1, 0, &leaf_only_GW, &LW_size, 0, nullptr, nullptr));
     Check(clFinish(queue));
@@ -321,9 +328,6 @@ void BH_hyper::load(){
 
     GPU::init_opencl();
     
-    this -> N = this  -> _s -> bodies.positions.size();
-    this -> nodes.resize(N*2 - 1);
-    
     actual_msize = 128;
     while (actual_msize < N) actual_msize *=2;
 
@@ -363,10 +367,11 @@ void BH_hyper::upload_force_calc(int num_leaves){
     Check(clSetKernelArg(force_calculator, 9,  sizeof(cl_mem), &this -> _s -> positions_cl)); 
     Check(clSetKernelArg(force_calculator, 10, sizeof(cl_mem), &this -> _s -> masses_cl ));
     Check(clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &this -> _s -> accs_cl  ));   
+    Check(clSetKernelArg(force_calculator, 12, sizeof(int), &this -> lower_int_bound));   
+    Check(clSetKernelArg(force_calculator, 13, sizeof(int), &this -> upper_int_bound));   
 
     Check(clEnqueueNDRangeKernel(queue, force_calculator, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr));
     Check(clFinish(queue));
-    //Check(clFinish(queue));
 }
 
  
@@ -376,21 +381,24 @@ void BH_hyper::load_tree_kernel(int N){
     int num_leaves = N;
     if (!num_leaves) return;
 
+    const int lower = this -> get_lower_bound(), upper = this -> get_upper_bound();
 
     size_t LW_size = 64;
     uint num_internal = num_leaves - 1;
     size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
 
-    Check(clSetKernelArg(tree_builder, 0, sizeof(cl_int), &num_leaves));
-    Check(clSetKernelArg(tree_builder, 1, sizeof(cl_mem), &sorted_mortons));
-    Check(clSetKernelArg(tree_builder, 2, sizeof(cl_mem), &left_nodes_buff));
-    Check(clSetKernelArg(tree_builder, 3, sizeof(cl_mem), &right_nodes_buff));
-    Check(clSetKernelArg(tree_builder, 4, sizeof(cl_mem),  &com_buffer));
-    Check(clSetKernelArg(tree_builder, 5, sizeof(cl_mem),  &node_masses));
-    Check(clSetKernelArg(tree_builder, 6, sizeof(cl_mem),  &this -> _s -> positions_cl));
-    Check(clSetKernelArg(tree_builder, 7, sizeof(cl_mem),  &this -> _s -> masses_cl));
-    Check(clSetKernelArg(tree_builder, 8, sizeof(cl_mem),  &parents));
-    Check(clSetKernelArg(tree_builder, 9, sizeof(cl_mem),  &counters));
+    Check(clSetKernelArg(tree_builder,  0, sizeof(cl_int), &num_leaves));
+    Check(clSetKernelArg(tree_builder,  1, sizeof(cl_mem), &sorted_mortons));
+    Check(clSetKernelArg(tree_builder,  2, sizeof(cl_mem), &left_nodes_buff));
+    Check(clSetKernelArg(tree_builder,  3, sizeof(cl_mem), &right_nodes_buff));
+    Check(clSetKernelArg(tree_builder,  4, sizeof(cl_mem), &com_buffer));
+    Check(clSetKernelArg(tree_builder,  5, sizeof(cl_mem), &node_masses));
+    Check(clSetKernelArg(tree_builder,  6, sizeof(cl_mem), &this -> _s -> positions_cl));
+    Check(clSetKernelArg(tree_builder,  7, sizeof(cl_mem), &this -> _s -> masses_cl));
+    Check(clSetKernelArg(tree_builder,  8, sizeof(cl_mem), &parents));
+    Check(clSetKernelArg(tree_builder,  9, sizeof(cl_mem), &counters));
+    Check(clSetKernelArg(tree_builder, 10, sizeof(cl_int), &lower));
+    Check(clSetKernelArg(tree_builder, 11, sizeof(cl_int), &lower));
 
     operation_result = clEnqueueNDRangeKernel(queue, tree_builder, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr );
     Check(operation_result)
@@ -488,11 +496,6 @@ inline void print_tree(NodesArray& tree,NodesArray& tree2, std::string label){
     std::cout << "+++++++++++++ end of " << label << " +++++++++++++++\n";
 }
 
-//
-//uint32_t get_tbreaked_morton(Barnes_Hut* _s, const T& pos, size_t body_index) {
-//    return get_morton(_s, pos);
-//}
-
 
 inline void t2nodes(Simulation* _s, NodesArray& base_layer, const std::vector<std::pair<uint32_t, unsigned int>>& mortons){
     base_layer.clear();
@@ -578,7 +581,7 @@ inline void cpu_tree(std::vector<std::pair<uint32_t, unsigned int>>& enhanced_mo
 
 void BH_hyper::compute_forces() {
     using namespace GPU;
-    int N = this  -> _s -> bodies.positions.size();
+    int N = this -> _s -> N;
     
     make_mortons();
     sort_mortons();

@@ -18,7 +18,12 @@ error_type error_level = WARNING_t;
 
 double get_time(){
     using namespace std::chrono;
-    return duration<double>(steady_clock::now().time_since_epoch()).count() / 1000000;
+    using clock = std::chrono::high_resolution_clock;
+    using ms = std::chrono::duration<double, std::milli>;
+
+    static auto start = clock::now();
+    auto end = clock::now();
+    return ms(end - start).count() / 1000;
 }
 
 bool critical_if(bool cond, std::string msg){
@@ -59,14 +64,14 @@ bool err_if(bool cond, std::string msg){
 }
 
 
-void log_info(std::string msg){
+void log_info(std::string msg, std::string EOL){
 
     std::cout << "("
               << std::fixed
               << std::setprecision(3)
               << std::setw(time_characters) 
               << get_time() << "s" 
-              << ")" << "[" << DEBUG << "INFO" << RESET << "] " <<  msg << "\n";
+              << ")" << "[" << DEBUG << "INFO" << RESET << "] " <<  msg << EOL;
 }
 
 }

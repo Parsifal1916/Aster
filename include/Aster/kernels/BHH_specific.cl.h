@@ -61,12 +61,16 @@ __kernel void first_pass(
     __global double* node_pos,
     __global double* n_masses,
     __global int* counters,
-    __global const int* parents
-) {
-    int leaf_id = get_global_id(0);
-    if (leaf_id >= N) return;
+    __global const int* parents,
+    const int start, 
+    const int stop
+){
+    int i = get_global_id(0);
+    int stop_idx = (stop < 0) ? N : stop;
+    if (i >= stop_idx) return;
+    if (i < start) return;
 
-    int current = leaf_id;
+    int current = i;
     while (1) {
         int parent = parents[current];
         if (parent < 0) break; 
@@ -246,10 +250,16 @@ __kernel void build_tree(
     __global const double* positions,    
     __global const double* masses,
     __global int* parents,
-    __global int* counters
-) {
+    __global int* counters,
+    const int start, 
+    const int stop
+){
     int i = get_global_id(0);
-    int num_internal = N - 1;
+    int stop_idx = (stop < 0) ? N : stop;
+    if (i >= stop_idx) return;
+    if (i < start) return;
+
+    int num_internal = stop - start - 1;
     if (i >= num_internal) return;
     counters[i] = 0;
     counters[i + N] = 0;
@@ -403,10 +413,14 @@ __kernel void barnes_force(
     __global const double*   com,
     __global const double*   pos,
     __global const double*   body_masses,
-    __global       double*   acc_out)
-{
+    __global       double*   acc_out,
+    const int start, 
+    const int stop
+){
     int gid = get_global_id(0);
-    if (gid >= N) return;
+    int stop_idx = (stop < 0) ? N : stop;
+    if (gid >= stop_idx) return;
+    if (gid < start) return;
 
     int max_nodes = 2*N-1;
 

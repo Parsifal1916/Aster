@@ -12,6 +12,7 @@
 
 #include "Aster/kernels/leapfrog.cl.h"
 #include "Aster/kernels/eulerian_update.cl.h"
+#include "Aster/kernels/WH_planetary.cl.h"
 
 namespace Aster{
 
@@ -19,6 +20,7 @@ namespace Aster{
 inline std::unordered_map<update_type, std::vector<func_ptr>> integrator_mapper = {
     {EULER, {update_euler}},
     {LEAPFROG, {update_leapfrog}},
+    {WH_PLANETARY, {update_WH_planetary}},
     {SABA, {update_SABA1, update_SABA2, update_SABA3, update_SABA4, update_SABA5, update_SABA6, update_SABA7, update_SABA8, update_SABA9, update_SABA10}}
 };
 
@@ -84,18 +86,60 @@ inline void update_leapfrog_gpu_3d(Simulation* _s){
     Check(clEnqueueNDRangeKernel(queue, kernel, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
 }
 
+inline void update_WH_planetary_gpu(Simulation* _s){
+    using namespace GPU;
+    std::string k_name = "wh_planetary";
+    static auto kernel = compile_kernel(&k_name, &wh_cl_3d);
+
+    const size_t N = _s -> solver -> get_range();
+
+    size_t LW_size = 64;
+    size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
+
+    const REAL G = _s -> get_G(), dt = _s -> get_dt();
+    const int first = 0, second = 1, lower = _s -> solver -> get_lower_bound(), upper = _s -> solver -> get_upper_bound();
+
+    Check(clSetKernelArg(kernel, 0, sizeof(cl_mem), &_s -> positions_cl));
+    Check(clSetKernelArg(kernel, 1, sizeof(cl_mem), &_s -> velocities_cl));
+    Check(clSetKernelArg(kernel, 2, sizeof(cl_mem), &_s -> accs_cl));
+    Check(clSetKernelArg(kernel, 3, sizeof(cl_mem), &_s -> masses_cl));
+    Check(clSetKernelArg(kernel, 4, sizeof(REAL), &dt));
+    Check(clSetKernelArg(kernel, 5, sizeof(REAL), &G));
+    Check(clSetKernelArg(kernel, 6, sizeof(unsigned int), &lower));
+    Check(clSetKernelArg(kernel, 7, sizeof(unsigned int), &upper));
+    Check(clSetKernelArg(kernel, 8, sizeof(unsigned int), &first));
+
+    Check(clEnqueueNDRangeKernel(queue, kernel, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
+
+    _s -> solver -> compute_forces();
+
+    Check(clSetKernelArg(kernel, 0, sizeof(cl_mem), &_s -> positions_cl));
+    Check(clSetKernelArg(kernel, 1, sizeof(cl_mem), &_s -> velocities_cl));
+    Check(clSetKernelArg(kernel, 2, sizeof(cl_mem), &_s -> accs_cl));
+    Check(clSetKernelArg(kernel, 3, sizeof(cl_mem), &_s -> masses_cl));
+    Check(clSetKernelArg(kernel, 4, sizeof(REAL), &dt));
+    Check(clSetKernelArg(kernel, 5, sizeof(REAL), &G));
+    Check(clSetKernelArg(kernel, 6, sizeof(unsigned int), &lower));
+    Check(clSetKernelArg(kernel, 7, sizeof(unsigned int), &upper));
+    Check(clSetKernelArg(kernel, 8, sizeof(unsigned int), &second));
+
+    Check(clEnqueueNDRangeKernel(queue, kernel, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
+}
+
 func_ptr resolve_gpu_updater(update_type t, int ord){
     using namespace GPU;
     
     switch (t){
-    case EULER:     return update_euler_gpu_3d;
-    case LEAPFROG:  return update_leapfrog_gpu_3d;
-    case SABA:      return compile_ub_saba(ord);
+    case EULER:        return update_euler_gpu_3d;
+    case LEAPFROG:     return update_leapfrog_gpu_3d;
+    case WH_PLANETARY: return update_WH_planetary_gpu;
+    case SABA:         return compile_ub_saba(ord);
     default:
         critical_if(true, "The given integrator type cannot be compiled to GPU");
         return update_euler_gpu_3d;
     }
 }
+
 
 func_ptr bake_update_function(update_type _t, int ord){
     int idx = static_cast<int>(_t);

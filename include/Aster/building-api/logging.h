@@ -19,7 +19,7 @@ double get_time();
 bool critical_if(bool cond, std::string msg);
 bool warn_if(bool cond, std::string msg);
 bool err_if(bool cond, std::string msg);
-void log_info(std::string msg);
+void log_info(std::string msg, std::string EOL = "\n");
 
 extern const std::string ERROR;
 extern const std::string DEBUG;

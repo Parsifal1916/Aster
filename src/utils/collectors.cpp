@@ -6,6 +6,9 @@
 #include "Aster/graphs/graph_collection.h"
 #include "Aster/simulations/sim_obj.h"
 
+
+#include <tbb/parallel_reduce.h>
+#include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 using namespace tbb;
 
@@ -13,27 +16,41 @@ namespace Aster{
 
 namespace Graphs{
 
+REAL get_total_energy(Simulation* _s) {
+    const int num_bodies = _s->bodies.positions.size();
+    const REAL G = _s->get_G();
 
-REAL get_total_energy(Simulation* _s){
-    REAL retval = 0.0;
-    std::mutex retval_mutex;
-    const int num_threads = 16;
-    int num_bodies = _s->bodies.positions.size();
-    
-    parallel_for(size_t(0),  size_t(num_bodies), [&retval, &retval_mutex, _s, num_bodies](size_t i) {
-        REAL partial_retval = 0.5 * _s -> bodies.get_velocity_of(i).sqr_magn() * _s -> bodies.get_mass_of(i);
-        for (int j = i + 1; j < num_bodies; ++j) {
-            REAL r = (_s -> bodies.get_position_of(j) - _s -> bodies.get_position_of(i)).magnitude();
-            partial_retval -= _s->get_G() * _s -> bodies.get_mass_of(j) * _s -> bodies.get_mass_of(i) / (r+.1);
-        }
-        
-        std::lock_guard<std::mutex> lock(retval_mutex);
-        retval += partial_retval;
-    });
+    std::vector<vec3> positions(num_bodies);
+    std::vector<vec3> velocities(num_bodies);
+    std::vector<REAL> masses(num_bodies);
 
-    return retval;
+    for (int i = 0; i < num_bodies; ++i) {
+        positions[i] = _s->bodies.get_position_of(i);
+        velocities[i] = _s->bodies.get_velocity_of(i);
+        masses[i]     = _s->bodies.get_mass_of(i);
+    }
+
+    REAL total_energy = tbb::parallel_reduce(
+        tbb::blocked_range<size_t>(0, num_bodies),
+        (REAL)0.0,
+        [&](const tbb::blocked_range<size_t>& range, REAL local_sum) -> REAL {
+            for (size_t i = range.begin(); i < range.end(); ++i) {
+                local_sum += 0.5 * masses[i] * velocities[i].sqr_magn();
+
+                for (size_t j = i + 1; j < num_bodies; ++j) {
+                    vec3 dr = positions[j] - positions[i];
+                    REAL r2 = dr.sqr_magn();
+                    REAL inv_r = 1.0 / (sqrt(r2) + (REAL)1e-11);
+                    local_sum -= G * masses[i] * masses[j] * inv_r;
+                }
+            }
+            return local_sum;
+        },
+        std::plus<REAL>()
+    );
+
+    return total_energy;
 }
-
 
 REAL hamiltonian_collector(Graph* g, Simulation* _s, size_t b){
     return get_total_energy(_s);

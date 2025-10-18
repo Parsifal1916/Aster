@@ -38,7 +38,7 @@ using func_ptr = std::function<void(Simulation*)>;
 using force_func = vec3(*)(REAL, REAL, vec3, vec3, vec3, vec3, Simulation*);
 
 enum force_type:  int {NEWTON = 0, PN1 = 1, PN2 = 2, PN25 = 3, CUSTOM_F = 4};
-enum update_type: int {EULER = 0, SABA =1, LEAPFROG=2, CUSTOM_U=3};
+enum update_type: int {EULER = 0, SABA =1, LEAPFROG=2, WH_PLANETARY = 3, CUSTOM_U=4};
 enum solver_type: int {SINGLE_THREAD = 0, PARALLEL = 1, BARNES_HUT = 2, MIXED_BARNES = 3, SIMPLE_GPU = 4, GPU_BARNES_HUT = 5};
 
 }

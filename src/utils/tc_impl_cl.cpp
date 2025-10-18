@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <cstring>
+#include <iomanip>
 
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -114,6 +115,11 @@ cl_kernel compile_kernel(std::string* name, std::string* source) {
     const char* c = source->c_str();
     size_t l = source->size();
 
+    using clock = std::chrono::high_resolution_clock;
+    using ms = std::chrono::duration<double, std::milli>;
+
+    auto start = clock::now();
+
     // Create the OpenCL program
     cl_program program = clCreateProgramWithSource(context, 1, &c, &l, &programResult);
     if (critical_if(programResult != CL_SUCCESS,
@@ -137,7 +143,7 @@ cl_kernel compile_kernel(std::string* name, std::string* source) {
 
     size_t log_size = 0;
     clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
-    if (log_size > 1) {
+    if (log_size > 2) {
         std::vector<char> log(log_size);
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
         log_info("Build log for kernel \"" + *name + "\":\n" + std::string(log.begin(), log.end()));
@@ -153,7 +159,7 @@ cl_kernel compile_kernel(std::string* name, std::string* source) {
     if (critical_if(num_ks == 0, "No kernels found in program"))
         exit(-1);
 
-    log_info("Creating kernel \"" + *name + "\"");
+    log_info("Creating kernel \"" + *name + "\"... ", "");
 
     cl_int kernel_res;
     cl_kernel k = clCreateKernel(program, name->c_str(), &kernel_res);
@@ -161,8 +167,14 @@ cl_kernel compile_kernel(std::string* name, std::string* source) {
                    "Could not load kernel '" + *name + "', error code: " + std::to_string(kernel_res)))
         exit(4);
 
-  clRetainProgram(program);
-  return k;
+    clRetainProgram(program);
+        
+    auto end = clock::now();
+    
+    std::cout << std::setfill(' ') << std::setw(37 - name -> size() ) << "done (" << std::fixed
+                << std::setprecision(3)
+                << std::setw(time_characters) << ms(end - start).count() / 1000 << " s)\n";
+    return k;
 }
 
 
