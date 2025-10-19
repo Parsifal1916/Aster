@@ -1,6 +1,7 @@
 #define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <cstring>
