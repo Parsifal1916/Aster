@@ -42,7 +42,7 @@ namespace GPU{
     * @param source: source code of the kernel
     * @param k: kernel object onto which to write the kernel 
     */
-    cl_kernel compile_kernel(std::string* name, std::string* source);
+    cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening);
     
     /**
     * @brief initializes opencl and finds the right device
@@ -53,7 +53,7 @@ namespace GPU{
     * @brief compiles the force program
     */
     
-    func_ptr compile_uf(force_type t);
+    func_ptr compile_uf(force_type t, REAL softening);
     
     /**
     * @brief compiles the body update program

@@ -44,10 +44,7 @@ int Solver::get_lower_bound() const{
 }
 
 int Solver::get_range() const{
-    size_t N = this -> _s -> bodies.positions.size();
-    N -= get_lower_bound() - N + get_upper_bound();
-    
-    return N; 
+    return get_upper_bound() - get_lower_bound(); 
 }
 
 
@@ -111,7 +108,7 @@ Simulation* Simulation::load_gpu_buffers(){
     size_t N = this -> bodies.positions.size();
     log_info("Loading internal AOB buffers... ");
 
-    cl_int err =0;
+    cl_int err = 0;
 
     positions_cl       = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(vec3) * N, NULL, &err);
     Check(err);
@@ -285,6 +282,7 @@ vec3 Simulation::get_center_of_mass(){
 
 void Simulation::step(){
     this -> selected_N = this -> solver -> get_range();
+    this -> N = this -> bodies.positions.size();
     this -> updater -> update_bodies();
 
     this -> trigger_all_graphs();

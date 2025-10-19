@@ -33,7 +33,7 @@ inline void update_euler_gpu_3d(Simulation* _s){
     }
 
     std::string k_name = "euler";
-    static auto kernel = compile_kernel(&k_name, &eulerian_update_cl_3d);
+    static auto kernel = compile_kernel(&k_name, &eulerian_update_cl_3d, _s->softening);
 
     const size_t N = _s -> bodies.positions.size();
 
@@ -45,7 +45,7 @@ inline void update_euler_gpu_3d(Simulation* _s){
     Check(clSetKernelArg(kernel, 1, sizeof(REAL), &dt));
     Check(clSetKernelArg(kernel, 2, sizeof(cl_mem), &_s -> positions_cl));
     Check(clSetKernelArg(kernel, 3, sizeof(cl_mem), &_s -> velocities_cl));
-    Check(clSetKernelArg(kernel, 4, sizeof(cl_mem), &_s -> accs_cl));
+    Check(clSetKernelArg(kernel, 4, sizeof(cl_mem), &_s -> accs_cl)); 
 
     Check(clEnqueueNDRangeKernel(queue, kernel, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
 }
@@ -55,7 +55,7 @@ inline void update_leapfrog_gpu_3d(Simulation* _s){
     using namespace GPU;
 
     std::string k_name = "leapfrog";
-    static auto kernel = compile_kernel(&k_name, &leapfrog_cl_3d);
+    static auto kernel = compile_kernel(&k_name, &leapfrog_cl_3d, _s->softening);
 
     const size_t N = _s -> bodies.positions.size();
 
@@ -89,7 +89,7 @@ inline void update_leapfrog_gpu_3d(Simulation* _s){
 inline void update_WH_planetary_gpu(Simulation* _s){
     using namespace GPU;
     std::string k_name = "wh_planetary";
-    static auto kernel = compile_kernel(&k_name, &wh_cl_3d);
+    static auto kernel = compile_kernel(&k_name, &wh_cl_3d, _s -> softening);
 
     const size_t N = _s -> solver -> get_range();
 

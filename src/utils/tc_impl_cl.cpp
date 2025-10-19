@@ -110,7 +110,7 @@ void init_opencl(){
 * @param source: source code of the kernel
 * @param k: kernel object onto which to write the kernel 
 */
-cl_kernel compile_kernel(std::string* name, std::string* source) {
+cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening) {
     cl_int programResult;
     const char* c = source->c_str();
     size_t l = source->size();
@@ -127,11 +127,14 @@ cl_kernel compile_kernel(std::string* name, std::string* source) {
         exit(1);
 
     // Compiler optimization flags
-    std::string build_options = 
-        "-cl-fast-relaxed-math "
-        "-cl-mad-enable "
-        "-cl-no-signed-zeros " 
-        "-cl-denorms-are-zero";
+    std::ostringstream opts;
+    opts << "-cl-fast-relaxed-math "
+        << "-cl-mad-enable "
+        << "-cl-no-signed-zeros "
+        << "-cl-denorms-are-zero "
+        << "-DSOFTENING=" << std::scientific << softening;
+
+    std::string build_options = opts.str();
 
     cl_device_fp_config fp_config;
     if (clGetDeviceInfo(device, CL_DEVICE_DOUBLE_FP_CONFIG, sizeof(fp_config), &fp_config, nullptr) == CL_SUCCESS) {
@@ -219,7 +222,7 @@ func_ptr compile_ub_saba(int ord) {
     
 
     log_info("done compiling updating scripts");
-    return ub_functor{compile_kernel(&kernel_name, update_kernel), ord};
+    return ub_functor{compile_kernel(&kernel_name, update_kernel, 0), ord};
 }
 
 
@@ -228,7 +231,7 @@ func_ptr compile_ub_saba(int ord) {
 //===---------------------------------------------------------===//
 
 
-func_ptr compile_uf(force_type t) {
+func_ptr compile_uf(force_type t, REAL softening) {
     log_info("compiling GPU scripts from source...");
     size_t index = static_cast<size_t>(t);
 
@@ -244,7 +247,7 @@ func_ptr compile_uf(force_type t) {
         exit(1);
 
     log_info("done compiling force calculation scripts");
-    return uf_functor{compile_kernel(&kernel_names[index], &force_kernel)};
+    return uf_functor{compile_kernel(&kernel_names[index], &force_kernel, softening)};
 }
 
 }

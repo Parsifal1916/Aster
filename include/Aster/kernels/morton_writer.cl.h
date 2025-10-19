@@ -104,8 +104,8 @@ __kernel void gen_mortons(
     __global const double *positions,  
     __global ulong *mortons,
     __global const double* bd_arr,
-    const int upper,
-    const int lower             
+    const int lower,
+    const int upper             
 ) {
     size_t gid = get_global_id(0);
     if (gid >= upper || gid < lower) return; 
@@ -118,7 +118,7 @@ __kernel void gen_mortons(
     bd.z = bd_arr[2];
 
     ulong code = get_morton3(bd, p);
-    mortons[gid] = ((ulong)gid << 32) | (code);
+    mortons[gid - lower] = ((ulong)gid << 32) | (code);
 }
 )CLC";
 

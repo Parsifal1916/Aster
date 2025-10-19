@@ -45,9 +45,9 @@ double3 get_force(
 ){
        double3 acc = (double3)(0.0,0.0,0.0);
        double3 x = p2 - p1;
-       double d2 = dot(x,x) + 10e-11;
+       double d2 = dot(x,x) + SOFTENING;
        double invDist = native_rsqrt(d2);
-       double r = sqrt(dot(x,x)) + 1e-11;
+       double r = sqrt(dot(x,x)) + SOFTENING;
        double m = m1 + m2;
        double eta = m1 * m2 / (m*m);
        double3 v = v1 - v2;
@@ -158,9 +158,9 @@ double3 get_force(
 ){
        double3 acc = (double3)(0.0,0.0,0.0);
        double3 x = p2 - p1;
-       double d2 = dot(x,x) + 10e-11;
+       double d2 = dot(x,x) + SOFTENING;
        double invDist = native_rsqrt(d2);
-       double r = sqrt(dot(x,x)) + 1e-11;
+       double r = sqrt(dot(x,x)) + SOFTENING;
        double m = m1 + m2;
        double eta = m1 * m2 / (m*m);
        
@@ -271,9 +271,9 @@ double3 get_force(
 ){
        double3 acc = (double3)(0.0,0.0,0.0);
        double3 x = p2 - p1;
-       double d2 = dot(x,x) + 10e-11;
+       double d2 = dot(x,x) + SOFTENING;
        double invDist = native_rsqrt(d2);
-       double r = sqrt(dot(x,x)) + 1e-11;
+       double r = sqrt(dot(x,x)) + SOFTENING;
        double m = m1 + m2;
        double eta = m1 * m2 / (m*m);
        

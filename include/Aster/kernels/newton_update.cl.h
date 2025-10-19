@@ -19,7 +19,7 @@ double2 get_force(
 ){
    double2 a = (double2)(0.0,0.0);
    double2 r = p2 - p1;
-   double d2 = dot(r,r) + 10e-11;
+   double d2 = dot(r,r) + SOFTENING;
    double invDist = native_rsqrt(d2);
    double invDist3 = invDist * invDist * invDist * G; 
    a += m2 * r * invDist3;

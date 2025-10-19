@@ -65,10 +65,10 @@ void BHG::upload_force_calc(int num_leaves, int tree_size, int num_bodies){
     
     cl_mem com_buff, rights_buff, lefts_buff, nmasses_buff, pos_buff, bmasses_buff;
 
-    load_const_buff(double2_size_tree,   this ->nodes.centers_of_mass.data() + this -> upper_int_bound, com_buff);       
-    load_const_buff(int_size_tree,       this ->nodes.left_nodes.data()      + this -> upper_int_bound, lefts_buff);     
-    load_const_buff(int_size_tree,       this ->nodes.right_nodes.data()     + this -> upper_int_bound, rights_buff);    
-    load_const_buff(double_size_tree,    this ->nodes.masses.data()          + this -> upper_int_bound, nmasses_buff);   
+    load_const_buff(double2_size_tree,   this ->nodes.centers_of_mass.data(), com_buff);       
+    load_const_buff(int_size_tree,       this ->nodes.left_nodes.data()     , lefts_buff);     
+    load_const_buff(int_size_tree,       this ->nodes.right_nodes.data()    , rights_buff);    
+    load_const_buff(double_size_tree,    this ->nodes.masses.data()         , nmasses_buff);   
     
     load_const_buff(double2_size_bodies, this -> _s -> bodies.positions.data(),      pos_buff);       
     load_const_buff(double_size_bodies,  this -> _s -> bodies.masses.data(),         bmasses_buff);   
@@ -87,6 +87,8 @@ void BHG::upload_force_calc(int num_leaves, int tree_size, int num_bodies){
 
     int root_node = num_leaves;  
     REAL tree_bound_size = this ->bounding_box.magnitude(); 
+
+    const int upper = this -> get_upper_bound(), lower = this -> get_lower_bound();
     
     REAL G = this -> _s -> get_G();
     REAL c = this -> _s -> get_c();
@@ -105,6 +107,8 @@ void BHG::upload_force_calc(int num_leaves, int tree_size, int num_bodies){
     Check(clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &rights_buff)); 
     Check(clSetKernelArg(force_calculator, 12, sizeof(cl_mem), &bmasses_buff));
     Check(clSetKernelArg(force_calculator, 13, sizeof(cl_mem), &accs_buff));  
+    Check(clSetKernelArg(force_calculator, 14, sizeof(int), &lower));
+    Check(clSetKernelArg(force_calculator, 15, sizeof(int), &upper)); 
 
 
     operation_result = clEnqueueNDRangeKernel(queue, force_calculator, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr);
@@ -291,7 +295,7 @@ void BHG::compose_force_kernel(){
 
     static std::string kernel_name = "barnes_force";
 
-    force_calculator = GPU::compile_kernel(&kernel_name, &kernel_code);
+    force_calculator = GPU::compile_kernel(&kernel_name, &kernel_code, this->_s->softening);
 }
 
 
@@ -304,14 +308,14 @@ void BHG::load(){
     std::string tree_kernel_name = "build_tree";
     std::string force_kernel_name = "barnes_force"; 
 
-    tree_builder = GPU::compile_kernel(&tree_kernel_name, &GPU::barnes_tree_cl);
+    tree_builder = GPU::compile_kernel(&tree_kernel_name, &GPU::barnes_tree_cl, this->_s->softening);
     
     this -> compose_force_kernel();
 }
 
 
 void BHG::compute_forces(){
-    this -> make_tree(); 
+    this -> build_tree(); 
     upload_force_calc(this -> compressed_mortons_size, this ->nodes.size(), this -> _s -> bodies.positions.size());
 }
 

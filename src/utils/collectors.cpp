@@ -40,7 +40,7 @@ REAL get_total_energy(Simulation* _s) {
                 for (size_t j = i + 1; j < num_bodies; ++j) {
                     vec3 dr = positions[j] - positions[i];
                     REAL r2 = dr.sqr_magn();
-                    REAL inv_r = 1.0 / (sqrt(r2) + (REAL)1e-11);
+                    REAL inv_r = 1.0 / (sqrt(r2) + _s -> softening);
                     local_sum -= G * masses[i] * masses[j] * inv_r;
                 }
             }

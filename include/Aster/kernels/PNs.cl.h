@@ -59,9 +59,9 @@ double2 get_force(
 ){
        double2 acc = (double2)(0.0,0.0);
        double2 x = p2 - p1;
-       double d2 = dot(x,x) + 10e-11;
+       double d2 = dot(x,x) +SOFTENING;
        double invDist = native_rsqrt(d2);
-       double r = sqrt(dot(x,x)) + 1e-11;
+       double r = sqrt(dot(x,x)) + SOFTENING;
        double m = m1 + m2;
        double eta = m1 * m2 / (m*m);
        
@@ -75,9 +75,9 @@ double2 get_force(
        double half_a = get_A25(eta, v, r_dot, m, r);
        double half_b = get_B25(eta, v, r_dot, m, r);
         
-       acc += n * m2 / (r*r) * G; 
-       acc += -((n * a_components + v *r_dot * b_components) * m / (r*r)) / (C*C*C) * G / m2; 
-       acc += -( 8.0/5.0 * eta * (m*m) / (r*r*r) * (n * r_dot * half_a - v * half_b)) / (C*C*C*C*C*m2) * G;
+       acc += n * m2 / (r*r + SOFTENING) * G; 
+       acc += -((n * a_components + v *r_dot * b_components) * m / (r*r + SOFTENING)) / (C*C*C) * G / m2; 
+       acc += -( 8.0/5.0 * eta * (m*m) / (r*r*r + SOFTENING) * (n * r_dot * half_a - v * half_b)) / (C*C*C*C*C*m2) * G;
        return acc;
 }
 __kernel void pn25(
@@ -188,9 +188,9 @@ double2 get_force(
 ){
        double2 acc = (double2)(0.0,0.0);
        double2 x = p2 - p1;
-       double d2 = dot(x,x) + 10e-11;
+       double d2 = dot(x,x) + SOFTENING;
        double invDist = native_rsqrt(d2);
-       double r = sqrt(dot(x,x)) + 1e-11;
+       double r = sqrt(dot(x,x)) + SOFTENING;
        double m = m1 + m2;
        double eta = m1 * m2 / (m*m);
        
@@ -201,7 +201,7 @@ double2 get_force(
        double a_components = get_A1(eta, v, r_dot, m, r) + get_A2(eta, v, r_dot, m, r);
        double b_components = get_B1(eta                ) + get_B2(eta, v, r_dot, m, r);
        acc += m2 * x * invDist3;
-       acc += -((n * a_components + v *r_dot * b_components) * m / (r*r)) / (C*C*C*m1) * G;
+       acc += -((n * a_components + v *r_dot * b_components) * m / (r*r + SOFTENING)) / (C*C*C*m1) * G;
        return acc;
 }
 
@@ -313,9 +313,9 @@ double2 get_force(
 ){
        double2 acc = (double2)(0.0,0.0);
        double2 x = p2 - p1;
-       double d2 = dot(x,x) + 10e-11;
+       double d2 = dot(x,x) + SOFTENING;
        double invDist = native_rsqrt(d2);
-       double r = sqrt(dot(x,x)) + 1e-11;
+       double r = sqrt(dot(x,x)) + SOFTENING;
        double m = m1 + m2;
        double eta = m1 * m2 / (m*m);
        

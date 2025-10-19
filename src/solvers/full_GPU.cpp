@@ -52,7 +52,7 @@ BH_hyper::BH_hyper(Simulation* _s) {
 void BH_hyper::make_mortons(){
     using namespace GPU;
 
-    int N = this  -> get_range();
+    int N = this  -> N;
     static int prec_bits = PRECISION_BITS;
 
     const int upper = this -> get_upper_bound(), lower = this -> get_lower_bound();
@@ -63,8 +63,8 @@ void BH_hyper::make_mortons(){
     Check(clSetKernelArg(morton_writer_kernel, 1, sizeof(cl_mem), &this -> _s -> positions_cl));
     Check(clSetKernelArg(morton_writer_kernel, 2, sizeof(cl_mem), &mortons));
     Check(clSetKernelArg(morton_writer_kernel, 3, sizeof(cl_mem), &bd_size_gpu));
-    Check(clSetKernelArg(morton_writer_kernel, 4, sizeof(uint), &upper));
-    Check(clSetKernelArg(morton_writer_kernel, 5, sizeof(uint), &lower));
+    Check(clSetKernelArg(morton_writer_kernel, 4, sizeof(uint), &lower));
+    Check(clSetKernelArg(morton_writer_kernel, 5, sizeof(uint), &upper));
     
     Check(clEnqueueNDRangeKernel(queue, morton_writer_kernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL));
     Check(clFinish(queue));
@@ -142,25 +142,6 @@ void BH_hyper::upload_update_kernel(cl_kernel& k, REAL c, REAL d){
 }
 
 
-/*
-* @brief puts together the force calculation kernel
-
-void BH_hyper<vec2>::compose_force_kernel(){
-    static std::string* force_kernels[4] = {&GPU::newton_cl, &GPU::cl_pn1, &GPU::cl_pn2, &GPU::cl_pn25};
-
-    int index = static_cast<int>(this -> _t);
-    if (critical_if(index > 3, "Cannot find suitable kernel for custom force calculating function")) exit(-1);
-
-    std::string kernel_code = *force_kernels[index];
-    
-    kernel_code += GPU::BHH_force_basic;
-
-    static std::string kernel_names  = "barnes_force";
-
-    GPU::compile_kernel(&kernel_names, &kernel_code, force_calculator);
-}
-*/
-
 
 void BH_hyper::compose_force_kernel(){
     static std::string* force_kernels[4] = {&GPU::newton_cl3d, &GPU::cl3d_pn1, &GPU::cl3d_pn2, &GPU::cl3d_pn25};
@@ -174,7 +155,7 @@ void BH_hyper::compose_force_kernel(){
 
     static std::string kernel_name = "barnes_force";
 
-    force_calculator = GPU::compile_kernel(&kernel_name, &kernel_code);
+    force_calculator = GPU::compile_kernel(&kernel_name, &kernel_code, this->_s->softening);
 }
 
 
@@ -182,40 +163,20 @@ void BH_hyper::compose_sorter(){
     using namespace GPU;
 
     static std::string m = "gen_mortons";
-    morton_writer_kernel = compile_kernel(&m, &morton_writer3d);
+    morton_writer_kernel = compile_kernel(&m, &morton_writer3d, this->_s->softening);
 
     static std::string fpk = "first_pass";
-    first_pass_kernel = compile_kernel(&fpk, &bottom_up3d);
+    first_pass_kernel = compile_kernel(&fpk, &bottom_up3d, this->_s->softening);
  
     static std::string bs = "Sort_BitonicMergesortStart";
-    sort_start = compile_kernel(&bs, &radix_cl);
+    sort_start = compile_kernel(&bs, &radix_cl, this->_s->softening);
 
     static std::string bg = "Sort_BitonicMergesortGlobal";
-    sort_global = compile_kernel(&bg, &radix_cl);
+    sort_global = compile_kernel(&bg, &radix_cl, this->_s->softening);
 
     std::string tree_kernel_name = "build_tree";
-    tree_builder = compile_kernel(&tree_kernel_name, &GPU::BHH_tree_cl3d);
+    tree_builder = compile_kernel(&tree_kernel_name, &GPU::BHH_tree_cl3d, this->_s->softening);
 }
-
-/*
-void BH_hyper<vec2>::compose_sorter(){
-    using namespace GPU;
-
-    static std::string m = "gen_mortons";
-    compile_kernel(&m, &morton_writer, morton_writer_kernel);
-
-    static std::string fpk = "first_pass";
-    compile_kernel(&fpk, &bottom_up, first_pass_kernel);
- 
-    static std::string bs = "Sort_BitonicMergesortStart";
-    compile_kernel(&bs, &radix_cl, sort_start);
-
-    static std::string bg = "Sort_BitonicMergesortGlobal";
-    compile_kernel(&bg, &radix_cl, sort_global);
-
-    std::string tree_kernel_name = "build_tree";
-    compile_kernel(&tree_kernel_name, &GPU::BHH_tree_cl, tree_builder);
-}*/
 
 
 void BH_hyper::build_bottom_up(int N){
@@ -239,37 +200,6 @@ void BH_hyper::build_bottom_up(int N){
     Check(clEnqueueNDRangeKernel(queue, first_pass_kernel, 1, 0, &leaf_only_GW, &LW_size, 0, nullptr, nullptr));
     Check(clFinish(queue));
 }
-
-void compose_updater(){
-    using namespace GPU;
-    static std::string update_kernel_src = general_saba;
-
-    static std::string kernel_name = "saba";
-    int index =  static_cast<int>(1);
-
-
-    if (critical_if(index < 0 || index >= static_cast<int>(CUSTOM_U), 
-    "could not find a suitable GPU-accelerated function for kernel " + kernel_name))
-        exit(1);
-
-    //compile_kernel(&kernel_name, &update_kernel_src, update_kernel);
-}
-/*
-void compose_updater3(){
-    using namespace GPU;
-    static std::string update_kernel_src = general_saba3d;
-
-    static std::string kernel_name = "saba";
-    int index =  static_cast<int>(1);
-
-
-    if (critical_if(index < 0 || index >= static_cast<int>(CUSTOM_U), 
-    "could not find a suitable GPU-accelerated function for kernel " + kernel_name))
-        exit(1);
-
-    //compile_kernel(&kernel_name, &update_kernel_src, update_kernel);
-}*/
-
 
 void BH_hyper::load_buffers(){
     using namespace GPU;
@@ -354,6 +284,8 @@ void BH_hyper::upload_force_calc(int num_leaves){
     REAL theta = this -> theta;
     REAL G = this -> _s -> get_G();
     REAL c = this -> _s -> get_c();
+
+    const int lower = this -> get_lower_bound(), upper = this -> get_upper_bound();
     
     Check(clSetKernelArg(force_calculator, 0,  sizeof(int),    &N                ));
     Check(clSetKernelArg(force_calculator, 1,  sizeof(REAL),   &init_size        ));  
@@ -367,8 +299,8 @@ void BH_hyper::upload_force_calc(int num_leaves){
     Check(clSetKernelArg(force_calculator, 9,  sizeof(cl_mem), &this -> _s -> positions_cl)); 
     Check(clSetKernelArg(force_calculator, 10, sizeof(cl_mem), &this -> _s -> masses_cl ));
     Check(clSetKernelArg(force_calculator, 11, sizeof(cl_mem), &this -> _s -> accs_cl  ));   
-    Check(clSetKernelArg(force_calculator, 12, sizeof(int), &this -> lower_int_bound));   
-    Check(clSetKernelArg(force_calculator, 13, sizeof(int), &this -> upper_int_bound));   
+    Check(clSetKernelArg(force_calculator, 12, sizeof(int), &lower));   
+    Check(clSetKernelArg(force_calculator, 13, sizeof(int), &upper));   
 
     Check(clEnqueueNDRangeKernel(queue, force_calculator, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr));
     Check(clFinish(queue));
@@ -386,8 +318,7 @@ void BH_hyper::load_tree_kernel(int N){
     size_t LW_size = 64;
     uint num_internal = num_leaves - 1;
     size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
-
-    Check(clSetKernelArg(tree_builder,  0, sizeof(cl_int), &num_leaves));
+    Check(clSetKernelArg(tree_builder,  0, sizeof(cl_int), &N));
     Check(clSetKernelArg(tree_builder,  1, sizeof(cl_mem), &sorted_mortons));
     Check(clSetKernelArg(tree_builder,  2, sizeof(cl_mem), &left_nodes_buff));
     Check(clSetKernelArg(tree_builder,  3, sizeof(cl_mem), &right_nodes_buff));
@@ -397,13 +328,10 @@ void BH_hyper::load_tree_kernel(int N){
     Check(clSetKernelArg(tree_builder,  7, sizeof(cl_mem), &this -> _s -> masses_cl));
     Check(clSetKernelArg(tree_builder,  8, sizeof(cl_mem), &parents));
     Check(clSetKernelArg(tree_builder,  9, sizeof(cl_mem), &counters));
-    Check(clSetKernelArg(tree_builder, 10, sizeof(cl_int), &lower));
-    Check(clSetKernelArg(tree_builder, 11, sizeof(cl_int), &lower));
 
     operation_result = clEnqueueNDRangeKernel(queue, tree_builder, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr );
     Check(operation_result)
     Check(clFinish(queue));
-    //clFinish(queue);
 }
 
 
@@ -415,7 +343,7 @@ BH_hyper* BH_hyper::read_positions(){
 }
 
 
-BH_hyper* BH_hyper::always_read_positions(){
+BH_hyper* BH_hyper::always_read_positions(){                        
     always_read_pos = true;
     return this;
 }
@@ -478,7 +406,7 @@ void BH_hyper::pull_down_tree(NodesArray& arr){
 
 
 void BH_hyper::push_tree(){
-    this ->nodes.resize(2*N-1);
+    this ->nodes.resize(2* this -> _s -> N-1);
     push_up(left_nodes_buff,    this -> nodes.left_nodes.data(),     (2*N-1) * sizeof(cl_int));
     push_up(right_nodes_buff,   this -> nodes.right_nodes.data(),    (2*N-1) * sizeof(cl_int));
     push_up(node_masses,        this -> nodes.masses.data(),         (2*N-1) * sizeof(REAL));
@@ -581,14 +509,14 @@ inline void cpu_tree(std::vector<std::pair<uint32_t, unsigned int>>& enhanced_mo
 
 void BH_hyper::compute_forces() {
     using namespace GPU;
-    int N = this -> _s -> N;
+    this -> N = this -> _s -> N;
     
     make_mortons();
     sort_mortons();
-    load_tree_kernel(N);
-    build_bottom_up(N);
+    load_tree_kernel(this -> get_range());
 
-    upload_force_calc(N);
+    build_bottom_up(this -> N);
+    upload_force_calc(this -> N); 
 }
 }   
 }

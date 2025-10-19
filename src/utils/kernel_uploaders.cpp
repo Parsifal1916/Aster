@@ -63,7 +63,7 @@ void upload_force_kernel(cl_kernel& k, Simulation* _s){
     const cl_uint N = _s -> bodies.positions.size();
     const REAL G = _s -> get_G();
     const REAL C = _s -> get_c();
-    const size_t vec_size = 2 * num_bytes;
+    const size_t vec_size = 3 * num_bytes;
 
     // creates buffer for mass
     cl_mem masses_b = clCreateBuffer(context, CL_MEM_READ_ONLY, num_bytes, nullptr, &operation_result);
@@ -114,8 +114,8 @@ void upload_force_kernel(cl_kernel& k, Simulation* _s){
     Check(clSetKernelArg(k, 5, sizeof(cl_mem), &pos_b));
     Check(clSetKernelArg(k, 6, sizeof(cl_mem), &vel_b));
     Check(clSetKernelArg(k, 7, sizeof(cl_mem), &acc_br));
-    Check(clSetKernelArg(k, 8, sizeof(cl_mem), &lower));
-    Check(clSetKernelArg(k, 9, sizeof(cl_mem), &upper));
+    Check(clSetKernelArg(k, 8, sizeof(cl_int), &lower));
+    Check(clSetKernelArg(k, 9, sizeof(cl_int), &upper));
 
     operation_result = clEnqueueNDRangeKernel(queue, k, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr );
     Check(operation_result);

@@ -136,9 +136,9 @@ vec3 Renderer3d::map_point(vec3 v, bool fixed) {
     float z2 = -v.y * sin_y_theta + z1 * cos_y_theta;
 
     // calculates the parallax strenght
-    float scale_z = 1 / (distance + z2/ _s -> get_depth()  + 1e-10); 
-    float scale_x = 1 / (distance + x1/ _s -> get_width()  + 1e-10);
-    float scale_y = 1 / (distance + y1/ _s -> get_height() + 1e-10);
+    float scale_z = 1 / (distance + z2/ _s -> get_depth()  + _s -> softening); 
+    float scale_x = 1 / (distance + x1/ _s -> get_width()  + _s -> softening);
+    float scale_y = 1 / (distance + y1/ _s -> get_height() + _s -> softening);
 
     v = {x1, y1, z2};
     

@@ -80,9 +80,9 @@ vec3 pn25(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
     REAL half_a = get_A25(eta, v, r_dot, m, r);
     REAL half_b = get_B25(eta, v, r_dot, m, r);
 
-    vec3 acc = n * m1*m2 / (r*r); 
-    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3); 
-    acc += -( 8.0/5.0 * eta * (m*m) / (r*r*r) * (n * r_dot * half_a - v * half_b)) / (std::pow(_s -> get_c(), 5));
+    vec3 acc = n * m1*m2 / (r*r+ _s->softening); 
+    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r+ _s->softening)) / std::pow(_s -> get_c(), 3); 
+    acc += -( 8.0/5.0 * eta * (m*m) / (r*r*r  + _s->softening) * (n * r_dot * half_a - v * half_b)) / (std::pow(_s -> get_c(), 5));
 
     return acc * _s -> get_G();
 }
@@ -102,8 +102,8 @@ vec3 pn2(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
     REAL b_components = get_B1(eta                ) + get_B2(eta, v, r_dot, m, r);
 
 
-    vec3 acc = n * m1*m2 / (r*r); 
-    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
+    vec3 acc = n * m1*m2 / (r*r + _s->softening); 
+    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r + _s->softening)) / std::pow(_s -> get_c(), 3);  
     return acc* _s -> get_G();
 }
 
@@ -122,8 +122,8 @@ vec3 pn1(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
     REAL b_components = get_B1(eta                );
 
 
-    vec3 acc = n * m1*m2 / (r*r); 
-    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r)) / std::pow(_s -> get_c(), 3);  
+    vec3 acc = n * m1*m2 / (r*r+ _s->softening); 
+    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r+ _s->softening)) / std::pow(_s -> get_c(), 3);  
     return acc* _s -> get_G();
 }
 
@@ -384,7 +384,7 @@ inline void get_new_temp(Simulation* _s, size_t body, vec3 pos, vec3 vel, REAL t
 
     REAL eccentricity = get_eccentricity(_s, body, relv_sq, w_squared, r, mass);
 
-    REAL delta_temperature = 1;//21.0 / 2.0 * _s -> get_G() * mass * body -> mass * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r);
+    REAL delta_temperature = 21.0 / 2.0 * _s -> get_G() * mass * _s -> bodies.masses[body] * eccentricity * eccentricity * w_squared / (r*r*r*r*r*r + _s->softening);
     delta_temperature *= _s -> get_dt(); // we want it to be per unit of time
     delta_temperature /= _s -> bodies.get_mass_of(body) * _s -> get_heat_capacity(); // then we get how many K the body got in dt 
 
@@ -437,7 +437,7 @@ vec3 newtonian(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation*
     vec3 n = (p2 - p1);
     REAL r = n.magnitude();
 
-    return n.normalize() * _s -> get_G() *m1*m2/(r*r+1e-11);
+    return n.normalize() * _s -> get_G() *m1*m2/(r*r+_s -> softening);
 }
 
 //===---------------------------------------------------------===//

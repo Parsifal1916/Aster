@@ -162,6 +162,7 @@ class Simulation{
     Updater* updater = nullptr;
     cl_mem positions_cl, accs_cl, velocities_cl, masses_cl;
     int N, selected_N;
+    double softening = 1e-14, theta = .2;
 
     protected:
     REAL total_mass = 0;
