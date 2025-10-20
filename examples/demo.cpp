@@ -90,11 +90,11 @@ int main(){
     Simulation* _s = new Simulation();
     load_solar_system(_s);
     //add_disk(_s, 1e5, vec3(0), 200, 1, {0,0,0}, 1e-2, 1e30);
-    _s -> gravity_solver = GPU_BARNES_HUT;
+    _s -> gravity_solver = BARNES_HUT;
     _s -> integrator = WH_PLANETARY;
     _s -> integrator_order = 0;
     _s -> force_used = PN2;
-    _s -> softening = -10e30;
+    _s -> softening = 1;
     _s 
     -> set_scale(200e7)
     -> set_dt(1e4)

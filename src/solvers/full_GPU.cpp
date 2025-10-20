@@ -281,7 +281,7 @@ void BH_hyper::upload_force_calc(int num_leaves){
     size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
 
     REAL init_size = this->bounding_box.magnitude(); 
-    REAL theta = this -> theta;
+    REAL theta = this -> _s -> theta;
     REAL G = this -> _s -> get_G();
     REAL c = this -> _s -> get_c();
 

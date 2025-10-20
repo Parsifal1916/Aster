@@ -76,6 +76,15 @@ class Updater{
 };
 
 
+struct IntegrationReport{
+    REAL total_time = 0;
+    REAL time_per_step = 0;
+    REAL initial_energy = 0;
+    REAL final_energy = 0;
+    REAL precision = 0;
+    bool tested_precision;
+};
+
 class Simulation{
     public:
     float current_a = 0;
@@ -112,7 +121,7 @@ class Simulation{
     Simulation* collect_error();
     Simulation* collect_distance();
 
-    virtual Simulation* integrate(size_t time, bool precision_test = false);
+    virtual IntegrationReport integrate(size_t time, bool precision_test = false);
     Simulation* calculate_total_mass();
     
     REAL get_total_mass() const;

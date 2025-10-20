@@ -96,7 +96,7 @@ void BHG::upload_force_calc(int num_leaves, int tree_size, int num_bodies){
     Check(clSetKernelArg(force_calculator, 0, sizeof(int), &num_bodies));
     Check(clSetKernelArg(force_calculator, 1, sizeof(REAL), &G));
     Check(clSetKernelArg(force_calculator, 2, sizeof(REAL), &c));
-    Check(clSetKernelArg(force_calculator, 3, sizeof(REAL), &this ->theta));
+    Check(clSetKernelArg(force_calculator, 3, sizeof(REAL), &this ->_s ->theta));
     Check(clSetKernelArg(force_calculator, 4, sizeof(REAL), &tree_bound_size));
     Check(clSetKernelArg(force_calculator, 5, sizeof(int), &root_node));      
     Check(clSetKernelArg(force_calculator, 6, sizeof(int), &tree_size));

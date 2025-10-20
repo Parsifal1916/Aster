@@ -292,9 +292,9 @@ void Simulation::step(){
 
 
 
-Simulation* Simulation::integrate(size_t times, bool precision_test){
+IntegrationReport Simulation::integrate(size_t times, bool precision_test){
     using namespace Graphs;
-    if (times == 0) return this;
+    if (times == 0) return {};
     std::ostringstream aft, bef, prec;
 
     REAL e_before, e_after;
@@ -328,19 +328,30 @@ Simulation* Simulation::integrate(size_t times, bool precision_test){
         + std::string("[ + ] Total time:        ") + total.str() + std::string("ms\n")
         + std::string("[ + ] Time for one step: ") + per_step.str()  + std::string("ms\n");
 
+    REAL acc = std::abs(e_before - e_after);
+    if (!e_before) acc = 0;
+    else acc /= std::abs(e_before);
+
     std::string add = "";
     if (precision_test){
-        aft << std::scientific << std::setprecision(2) << e_after;
-        bef << std::scientific << std::setprecision(2) << e_before;
-        prec  << std::scientific << std::setprecision(2) << std::abs(e_before - e_after) / std::abs(e_before);
-        add = std::string("[ + ] Total Energy Before:  ") + std::string(bef.str() + std::string("J")) 
-                 + std::string("\n[ + ] Total Energy After:   ") + std::string(aft.str()) + std::string("J")
-                 + std::string("\n[ + ] Integrator Precision: ") + std::string(prec.str());
+        aft << std::scientific << std::setprecision(3) << e_after;
+        bef << std::scientific << std::setprecision(3) << e_before;
+        prec  << std::scientific << std::setprecision(3) << acc;
+        add = std::string("[ + ] Total Energy Before:  ") + std::string(bef.str()  + std::string("J")) 
+          + std::string("\n[ + ] Total Energy After:   ") + std::string(aft.str()) + std::string("J")
+          + std::string("\n[ + ] Integrator Precision: ") + std::string(prec.str());
     }
 
     log_info(msg + add);
 
-    return this;
+    return {
+        lasted_for.count(), 
+        lasted_for.count() / times, 
+        e_before, 
+        e_after,  
+        acc,
+        precision_test
+    };
 }
 
 Simulation* Simulation::read_bodies_gpu(){

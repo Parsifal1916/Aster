@@ -206,7 +206,7 @@ void Barnes_Hut::get_node_body(signed long int node, size_t index, REAL size){
     
     if (d_squared == 0) return; 
 
-    if ( size * size < d_squared *theta * theta || nodes.is_leaf(node)){ // use the optmisation
+    if ( size * size < d_squared * this -> _s -> theta * this -> _s -> theta || nodes.is_leaf(node)){ // use the optmisation
         bodies.get_acc_of(index) += this -> get_force(
             bodies.get_mass_of(index), nodes.masses[node], 
             bodies.get_velocity_of(index), nodes.velocities[node], 

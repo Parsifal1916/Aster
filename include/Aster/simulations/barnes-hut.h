@@ -84,7 +84,6 @@ struct NodesArray{
 
 class Barnes_Hut: public Solver{
     public:
-    REAL theta = .2;
     long int compressed_mortons_size  = 0;
     vec3 bounding_box;
     std::vector<std::thread> threads;
