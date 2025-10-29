@@ -21,7 +21,7 @@
 namespace Aster{
 
 namespace Renderer{
-enum layout_type:  int {NORMAL = 0, SIDEBAR = 1, PANEL = 2};
+enum layout_type:  int {NORMAL = 2, SIDEBAR = 1, PANEL = 0};
 extern float rng_colors[15][3];
 struct Renderer3d;
 using label_gen = std::function<std::string(Simulation*)>;
@@ -148,7 +148,7 @@ class Renderer3d{
     Sidebar sidebar;
     vec3 cube_offset = {0,0, 0};
     std::pair<vec2, vec2> cube_size = {{-1,-1}, {1,1}};
-    layout_type layout = NORMAL;
+    layout_type layout = PANEL;
 
 
     void setup();
@@ -166,7 +166,7 @@ class Renderer3d{
     */
     void draw_axis(bool is_back);
 
- 
+    void draw_scale();
 
     /**
     *  @brief resets the mouse position

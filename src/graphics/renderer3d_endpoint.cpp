@@ -481,6 +481,81 @@ Renderer3d::Renderer3d(Simulation* _s) : _s(_s){
     this -> setup();
 }
 
+void Renderer3d::draw_scale(){
+    int w = current_width, h = current_height;
+    glColor3f(.4, .4, .4);
+
+    glBegin(GL_LINES);
+    switch(this -> layout){
+        case PANEL:
+            glVertex2f(-.5, -.75);
+            glVertex2f( .5, -.75);
+
+            glVertex2f(-.5, -.73);
+            glVertex2f(-.5, -.77);
+
+            glVertex2f( .5, -.73);
+            glVertex2f( .5, -.77);
+            break;
+        case SIDEBAR:
+            glVertex2f(-.75, -.75);
+            glVertex2f(-.25, -.75);
+
+            glVertex2f(-.75, -.73);
+            glVertex2f(-.75, -.77);
+
+            glVertex2f(-.25, -.73);
+            glVertex2f(-.25, -.77);
+            break;
+    }
+
+    glEnd();
+
+    auto to_scien = [](float in, bool scien, bool is_int) -> std::string {
+        std::ostringstream oss;
+        if (scien) oss << std::scientific << std::setprecision(2);
+        if (is_int) oss << int(in);
+        else oss << in;
+        return oss.str();
+    };
+
+    std::string txt = to_scien(this -> _s -> get_width() / this -> distance, true, false) + std::string(" m");
+    std::string n_text = "";
+
+    for (const auto& l : txt){
+        if (l == 'e') n_text += std::string("  ·  10^");
+        else if (l == '+') continue;
+        else n_text.push_back(l);
+    }
+
+    int size = n_text.size();
+    int font_size = std::max(15 * w/1366, 13);
+
+    glColor3f(0.0,0.0,0.0);
+
+    switch (this -> layout){
+    case PANEL:
+        draw_rect(
+            float(size * font_size) / w, 
+            .025, 
+            - ((float)size * font_size / 4.0)*2 / w,
+            -.76
+        );
+        Text::write2screen(w * .5 - ((float)size * font_size / 4.0) + font_size/2, h * 1.75/2, font_size, n_text.c_str());
+        break;
+    case SIDEBAR:
+        draw_rect(
+            float(size * font_size) / w, 
+            .025, 
+            - ((float)size * font_size / 4.0)*2 / w - .5,
+            -.76
+        );
+        Text::write2screen(w * .25 - ((float)size * font_size / 4.0) + font_size/2, h * 1.75/2, font_size, n_text.c_str());
+        break;
+    }
+
+}
+
 /**
 * @brief tells the renderer to shwo the window and render the simulation
 */
@@ -527,6 +602,8 @@ void Renderer3d::show(){
         
         // calls the rendering function
         (this ->*render3d)();
+
+        draw_scale();
 
         draw_axis(false);
 

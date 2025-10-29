@@ -130,11 +130,7 @@ cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening)
 
     // Compiler optimization flags
     std::ostringstream opts;
-    opts << "-cl-fast-relaxed-math "
-        << "-cl-mad-enable "
-        << "-cl-no-signed-zeros "
-        << "-cl-denorms-are-zero "
-        << "-DSOFTENING=" << std::scientific << softening;
+    opts << "-DSOFTENING=" << std::scientific << softening;
 
     std::string build_options = opts.str();
 

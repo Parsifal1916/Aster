@@ -55,16 +55,13 @@ inline void eval_F(double chi_in, double *F, double *Fp,
 
 
 inline double3 kepler_update(double3 r0, double3 v0, double mu, double dt, __private double3* v_out) {
-    const double tol_base = 2.21e-14;
+    const double tol_base = 1e-16;
     const int maxiter = 500;
-    const double small = 2.21e-16;
-    const double eps = 2.21e-16; 
 
-    double r0n_raw = length(r0);
-    double r0n = fmax(r0n_raw, small);
+    double r0n = length(r0);
     double v0n = length(v0);
 
-    double vr0 = (r0n_raw > small) ? dot(r0, v0) / r0n_raw : 0.0;
+    double vr0 = dot(r0, v0) / r0n;
 
     double energy = 0.5 * v0n * v0n - mu / r0n;
     double alpha = -2.0 * energy / mu;
@@ -78,25 +75,16 @@ inline double3 kepler_update(double3 r0, double3 v0, double mu, double dt, __pri
     if (fabs(alpha) < 1e-12) {
         chi = sqrt(mu) * dt / r0n;
     } else if (alpha > 0.0) {
-        double a = 1.0 / alpha;
-        double tmp = sqrt(mu) * dt * alpha;
-        if (fabs(tmp) > 1e6) tmp = copysign(1e6, tmp);
-        chi = tmp;
-        if (r0n < 1e-3 * fabs(a)) chi *= 0.5;
+        chi = sqrt(mu) * dt * alpha;
     } else {
         double sign_dt = (dt >= 0.0 ? 1.0 : -1.0);
-        double a = 1.0 / alpha; // negative
+        double a = 1.0 / alpha; 
         double sqrtm = sqrt(-a);
-        double denom = vr0 + sign_dt * sqrt(-mu / alpha) * (1.0 - r0n * alpha);
-        double arg = (fabs(denom) > small) ? -2.0 * mu * alpha * dt / denom : -1.0;
-        if (arg > 0.0) {
-            double lg = log(arg);
-            if (lg > 700.0) lg = 700.0;
-            if (lg < -700.0) lg = -700.0;
-            chi = sign_dt * sqrtm * lg;
-        } else {
+        double arg = -2.0 * mu * alpha * dt / (vr0 + sign_dt * sqrt(-mu / alpha) * (1.0 - r0n * alpha));
+        if (arg > 0.0)
+            chi = sign_dt * sqrtm * log(arg);
+        else
             chi = sign_dt * sqrt(mu) * fabs(alpha) * dt;
-        }
     }
 
     double tol = tol_base;
@@ -106,7 +94,7 @@ inline double3 kepler_update(double3 r0, double3 v0, double mu, double dt, __pri
         double F, Fp;
         eval_F(chi, &F, &Fp, r0n, vr0, alpha, mu, dt);
 
-        double h = fmax(1e-8, sqrt(eps));
+       double h = fmax((double)1e-6, (double)1e-8 * fmax((double)1.0, fabs(chi)));
 
         double F_ph, F_mh, Fp_ph, Fp_mh;
         eval_F(chi + h, &F_ph, &Fp_ph, r0n, vr0, alpha, mu, dt);
@@ -127,11 +115,7 @@ inline double3 kepler_update(double3 r0, double3 v0, double mu, double dt, __pri
         double denom3 = Fp + 0.5 * delta1 * (Fpp + (delta1*delta1 * Fppp) / 3.0);
         double delta3 = (fabs(denom3) < 1e-20) ? delta2 : - F / denom3;
 
-        double correction = delta3;
-
-        double max_step = fmax(1e-6, 1.0 + fabs(chi)) * 1e3;
-        if (fabs(correction) > max_step) correction = copysign(max_step, correction);
-
+        correction = delta3;
         chi += correction;
 
         if (fabs(correction) < tol) break;
@@ -150,7 +134,6 @@ inline double3 kepler_update(double3 r0, double3 v0, double mu, double dt, __pri
 
     double3 r = f_gauss * r0 + g_gauss * v0;
     double rn = length(r);
-    rn = fmax(rn, small); 
 
     double fdot = (sqrtmu / (rn * r0n)) * (alpha * chi3 * S - chi);
     double gdot = 1.0 - (chi2 / rn) * C;
@@ -169,9 +152,9 @@ __kernel void wh_first(
     __global double* positions,
     __global double* velocities
 ){
-    const uint gid = get_global_id(0);
-    const uint i = gid;
-    if (i >= N || i == 0) return;
+    uint i = get_global_id(0);
+    i++;
+    if (i >= N) return;
 
     double3 r_central = vload3(0, positions);
     double3 v_central = vload3(0, velocities); 
@@ -197,9 +180,9 @@ __kernel void wh_second(
     __global double* velocities,
     __global double* accs
 ){
-    const uint gid = get_global_id(0);
-    const uint i = gid;
-    if (i >= N || i == 0) return;
+    uint i = get_global_id(0);
+    i++;
+    if (i >= N) return;
 
     double3 r_central = vload3(0, positions);
     double3 v_central = vload3(0, velocities); 
