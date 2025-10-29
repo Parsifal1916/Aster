@@ -288,6 +288,7 @@ void Simulation::step(){
     this -> trigger_all_graphs();
     if (always_read_pos && uses_GPU())
         read_bodies_gpu();
+    this -> time_passed++;
 }
 
 
@@ -372,7 +373,7 @@ Simulation* Simulation::load(){
     has_loaded = true;
     this -> calculate_total_mass();
 
-    this -> GPU_on = (gravity_solver == GPU_BARNES_HUT || gravity_solver == SIMPLE_GPU);
+    this -> GPU_on = (gravity_solver == SIMPLE_GPU || gravity_solver == GPU_BARNES_HUT);
     if (this -> GPU_on) this -> load_gpu_buffers();
 
     this -> updater = new Updater(this, integrator_order, integrator);
@@ -606,13 +607,13 @@ SingleThread::SingleThread(Simulation* _s){
 
 void SingleThread::compute_forces(){
     size_t N = this -> _s -> bodies.positions.size();
-    for (int i = 0; i < N; ++i){ 
+    for (int i = this->get_lower_bound(); i < this->get_upper_bound(); ++i){ 
         // saves a reference to mass, velocity and position
         double m1 = this -> _s -> bodies.masses[i];
         vec3 v1 = this -> _s -> bodies.velocities[i]; 
         vec3 p1 = this -> _s -> bodies.positions[i];
 
-        for (int j = i+1; j < N; ++j) {
+        for (int j = i+1; j < this->get_upper_bound(); ++j) {
             if (i == j) continue;
 
             vec3 a = this -> get_force(

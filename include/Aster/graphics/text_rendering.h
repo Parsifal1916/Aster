@@ -12,6 +12,7 @@ namespace Text{
     */
     void nvg_resize(int w, int h);
 
+    void begin_vg_frame(int w, int h);
     /**
     * @brief ends nvg frame
     */

@@ -56,7 +56,7 @@ struct Graph{
     // file to write to
     std::ofstream file;
     // maximum buffer size
-    int buffer_size = 50;
+    int buffer_size = 500;
     // internal cumulative counter
     REAL internal_counter = 0;
 

@@ -88,42 +88,39 @@ inline void update_leapfrog_gpu_3d(Simulation* _s){
 
 inline void update_WH_planetary_gpu(Simulation* _s){
     using namespace GPU;
-    std::string k_name = "wh_planetary";
-    static auto kernel = compile_kernel(&k_name, &wh_cl_3d, _s -> softening);
+    std::string k_name1 = "wh_first";
+    static auto kernel1 = compile_kernel(&k_name1, &wh_cl_3d, _s -> softening);
+    std::string k_name2 = "wh_second";
+    static auto kernel2 = compile_kernel(&k_name2, &wh_cl_3d, _s -> softening);
 
-    const size_t N = _s -> solver -> get_range();
+    const size_t N = _s -> bodies.positions.size();
+    _s -> solver -> set_bounds(1, -1);
 
     size_t LW_size = 64;
     size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
 
     const REAL G = _s -> get_G(), dt = _s -> get_dt();
-    const int first = 0, second = 1, lower = _s -> solver -> get_lower_bound(), upper = _s -> solver -> get_upper_bound();
 
-    Check(clSetKernelArg(kernel, 0, sizeof(cl_mem), &_s -> positions_cl));
-    Check(clSetKernelArg(kernel, 1, sizeof(cl_mem), &_s -> velocities_cl));
-    Check(clSetKernelArg(kernel, 2, sizeof(cl_mem), &_s -> accs_cl));
-    Check(clSetKernelArg(kernel, 3, sizeof(cl_mem), &_s -> masses_cl));
-    Check(clSetKernelArg(kernel, 4, sizeof(REAL), &dt));
-    Check(clSetKernelArg(kernel, 5, sizeof(REAL), &G));
-    Check(clSetKernelArg(kernel, 6, sizeof(unsigned int), &lower));
-    Check(clSetKernelArg(kernel, 7, sizeof(unsigned int), &upper));
-    Check(clSetKernelArg(kernel, 8, sizeof(unsigned int), &first));
+    Check(clSetKernelArg(kernel1, 0, sizeof(cl_int), &N));
+    Check(clSetKernelArg(kernel1, 1, sizeof(REAL), &G));
+    Check(clSetKernelArg(kernel1, 2, sizeof(REAL), &dt));
+    Check(clSetKernelArg(kernel1, 3, sizeof(cl_mem), &_s -> masses_cl));
+    Check(clSetKernelArg(kernel1, 4, sizeof(cl_mem), &_s -> positions_cl));
+    Check(clSetKernelArg(kernel1, 5, sizeof(cl_mem), &_s -> velocities_cl));
 
-    Check(clEnqueueNDRangeKernel(queue, kernel, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
+    Check(clEnqueueNDRangeKernel(queue, kernel1, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
 
     _s -> solver -> compute_forces();
 
-    Check(clSetKernelArg(kernel, 0, sizeof(cl_mem), &_s -> positions_cl));
-    Check(clSetKernelArg(kernel, 1, sizeof(cl_mem), &_s -> velocities_cl));
-    Check(clSetKernelArg(kernel, 2, sizeof(cl_mem), &_s -> accs_cl));
-    Check(clSetKernelArg(kernel, 3, sizeof(cl_mem), &_s -> masses_cl));
-    Check(clSetKernelArg(kernel, 4, sizeof(REAL), &dt));
-    Check(clSetKernelArg(kernel, 5, sizeof(REAL), &G));
-    Check(clSetKernelArg(kernel, 6, sizeof(unsigned int), &lower));
-    Check(clSetKernelArg(kernel, 7, sizeof(unsigned int), &upper));
-    Check(clSetKernelArg(kernel, 8, sizeof(unsigned int), &second));
+    Check(clSetKernelArg(kernel2, 0, sizeof(cl_int), &N));
+    Check(clSetKernelArg(kernel2, 1, sizeof(REAL), &G));
+    Check(clSetKernelArg(kernel2, 2, sizeof(REAL), &dt));
+    Check(clSetKernelArg(kernel2, 3, sizeof(cl_mem), &_s -> masses_cl));
+    Check(clSetKernelArg(kernel2, 4, sizeof(cl_mem), &_s -> positions_cl));
+    Check(clSetKernelArg(kernel2, 5, sizeof(cl_mem), &_s -> velocities_cl));
+    Check(clSetKernelArg(kernel2, 6, sizeof(cl_mem), &_s -> accs_cl));
 
-    Check(clEnqueueNDRangeKernel(queue, kernel, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
+    Check(clEnqueueNDRangeKernel(queue, kernel2, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
 }
 
 func_ptr resolve_gpu_updater(update_type t, int ord){

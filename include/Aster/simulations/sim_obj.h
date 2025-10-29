@@ -165,6 +165,8 @@ class Simulation{
     int integrator_order = 0;
 
     std::vector<Graphs::Graph> between_graphs;
+    std::vector<Graphs::Graph> graphs;
+    
     ClusterQueue loading_queue;
     std::pair<std::string, REAL> loading_meta = {"", 0};
     Solver* solver = nullptr;
@@ -176,10 +178,6 @@ class Simulation{
     protected:
     REAL total_mass = 0;
     sim_meta data;
-
-
-    
-    std::vector<Graphs::Graph> graphs;
  
     REAL
         c_squared,

@@ -6,11 +6,10 @@ namespace GPU{
 
 inline std::string wh_cl_3d = R"CLC(
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#define tol 1e-16
-#define maxiter 500
-#define z_series_thresh 1e-8
 
-static double stumpff_C(double z){
+
+inline double stumpff_C(double z) {
+    const double z_series_thresh = 1e-8;
     if (fabs(z) < z_series_thresh) {
         double z2 = z*z;
         double z3 = z2*z;
@@ -24,7 +23,8 @@ static double stumpff_C(double z){
     }
 }
 
-static double stumpff_S(double z){
+inline double stumpff_S(double z) {
+    const double z_series_thresh = 1e-8;
     if (fabs(z) < z_series_thresh) {
         double z2 = z*z;
         double z3 = z2*z;
@@ -37,69 +37,80 @@ static double stumpff_S(double z){
         return (sinh(s) - s) / (s*s*s);
     }
 }
-static void eval_F_and_Fprime(double chi, double alpha, double p, double q, double r0n, double sqrtmu, double dt, double *F_out, double *Fp_out) {
-    double z = alpha * chi * chi;
+
+
+inline void eval_F(double chi_in, double *F, double *Fp,
+                   double r0n, double vr0, double alpha,
+                   double mu, double dt) {
+    double z = alpha * chi_in * chi_in;
     double C = stumpff_C(z);
     double S = stumpff_S(z);
-
-    double F = p * chi*chi * C + q * chi*chi*chi * S + r0n * chi - sqrtmu * dt;
-    double Fp = p * chi * (1.0 - alpha * chi*chi * S) + q * chi*chi * C + r0n;
-
-    *F_out = F;
-    *Fp_out = Fp;
-}
-
-static void update_kepler(double3 *r0_ptr, double3 *v0_ptr, double mu, double dt) {
-    double3 r0 = *r0_ptr;
-    double3 v0 = *v0_ptr;
-
-    double r0n = length(r0);
-    if (r0n == 0.0) {
-        return;
-    }
-    double v0n = length(v0);
-    double vr0 = dot(r0, v0) / r0n;
-
-    double energy = v0n*v0n/2.0 - mu / r0n;
-    double alpha = -2.0 * energy / mu;
-
-    if (dt == 0.0) {
-        return;
-    }
-
-    double chi = 0.0;
-    if (fabs(alpha) < 1e-12) {
-        chi = sqrt(mu) * dt / r0n;
-    } else if (alpha > 0.0) {
-        chi = sqrt(mu) * dt * alpha;
-    } else {
-        double sign_dt = (dt >= 0.0 ? 1.0 : -1.0);
-        double a = 1.0 / alpha;
-        double sqrtm = sqrt(-a);
-        double denom = (vr0 + sign_dt * sqrt(-mu / alpha) * (1.0 - r0n * alpha));
-        double arg = 0.0;
-        if (denom != 0.0) arg = -2.0 * mu * alpha * dt / denom;
-        if (arg > 0.0)
-            chi = sign_dt * sqrtm * log(arg);
-        else
-            chi = sign_dt * sqrt(mu) * fabs(alpha) * dt; 
-    }
-
     double sqrtmu = sqrt(mu);
     double p = r0n * vr0 / sqrtmu;
     double q = 1.0 - alpha * r0n;
 
-    double correction = 1.0;
-    int iter = 0;
-    for (; iter < maxiter; ++iter) {
-        double F, Fp;
-        eval_F_and_Fprime(chi, alpha, p, q, r0n, sqrtmu, dt, &F, &Fp);
+    *F  = p * chi_in*chi_in * C + q * chi_in*chi_in*chi_in * S + r0n * chi_in - sqrtmu * dt;
+    *Fp = p * chi_in * (1.0 - alpha * chi_in*chi_in * S) + q * chi_in*chi_in * C + r0n;
+}
 
-        double h = fmax(1e-6, 1e-8 * fmax(1.0, fabs(chi)));
-        double F_ph, Fm_ph;
-        double Fp_ph, Fp_mh;
-        eval_F_and_Fprime(chi + h, alpha, p, q, r0n, sqrtmu, dt, &F_ph, &Fp_ph);
-        eval_F_and_Fprime(chi - h, alpha, p, q, r0n, sqrtmu, dt, &Fm_ph, &Fp_mh);
+
+inline double3 kepler_update(double3 r0, double3 v0, double mu, double dt, __private double3* v_out) {
+    const double tol_base = 2.21e-14;
+    const int maxiter = 500;
+    const double small = 2.21e-16;
+    const double eps = 2.21e-16; 
+
+    double r0n_raw = length(r0);
+    double r0n = fmax(r0n_raw, small);
+    double v0n = length(v0);
+
+    double vr0 = (r0n_raw > small) ? dot(r0, v0) / r0n_raw : 0.0;
+
+    double energy = 0.5 * v0n * v0n - mu / r0n;
+    double alpha = -2.0 * energy / mu;
+
+    if (dt == 0.0) {
+        *v_out = v0;
+        return r0;
+    }
+
+    double chi;
+    if (fabs(alpha) < 1e-12) {
+        chi = sqrt(mu) * dt / r0n;
+    } else if (alpha > 0.0) {
+        double a = 1.0 / alpha;
+        double tmp = sqrt(mu) * dt * alpha;
+        if (fabs(tmp) > 1e6) tmp = copysign(1e6, tmp);
+        chi = tmp;
+        if (r0n < 1e-3 * fabs(a)) chi *= 0.5;
+    } else {
+        double sign_dt = (dt >= 0.0 ? 1.0 : -1.0);
+        double a = 1.0 / alpha; // negative
+        double sqrtm = sqrt(-a);
+        double denom = vr0 + sign_dt * sqrt(-mu / alpha) * (1.0 - r0n * alpha);
+        double arg = (fabs(denom) > small) ? -2.0 * mu * alpha * dt / denom : -1.0;
+        if (arg > 0.0) {
+            double lg = log(arg);
+            if (lg > 700.0) lg = 700.0;
+            if (lg < -700.0) lg = -700.0;
+            chi = sign_dt * sqrtm * lg;
+        } else {
+            chi = sign_dt * sqrt(mu) * fabs(alpha) * dt;
+        }
+    }
+
+    double tol = tol_base;
+
+    double correction = 1.0;
+    for (int iter = 0; iter < maxiter; ++iter) {
+        double F, Fp;
+        eval_F(chi, &F, &Fp, r0n, vr0, alpha, mu, dt);
+
+        double h = fmax(1e-8, sqrt(eps));
+
+        double F_ph, F_mh, Fp_ph, Fp_mh;
+        eval_F(chi + h, &F_ph, &Fp_ph, r0n, vr0, alpha, mu, dt);
+        eval_F(chi - h, &F_mh, &Fp_mh, r0n, vr0, alpha, mu, dt);
 
         double Fpp = (Fp_ph - Fp_mh) / (2.0 * h);
         double Fppp = (Fp_ph - 2.0*Fp + Fp_mh) / (h*h);
@@ -116,7 +127,11 @@ static void update_kepler(double3 *r0_ptr, double3 *v0_ptr, double mu, double dt
         double denom3 = Fp + 0.5 * delta1 * (Fpp + (delta1*delta1 * Fppp) / 3.0);
         double delta3 = (fabs(denom3) < 1e-20) ? delta2 : - F / denom3;
 
-        correction = delta3;
+        double correction = delta3;
+
+        double max_step = fmax(1e-6, 1.0 + fabs(chi)) * 1e3;
+        if (fabs(correction) > max_step) correction = copysign(max_step, correction);
+
         chi += correction;
 
         if (fabs(correction) < tol) break;
@@ -125,62 +140,83 @@ static void update_kepler(double3 *r0_ptr, double3 *v0_ptr, double mu, double dt
     double z = alpha * chi * chi;
     double C = stumpff_C(z);
     double S = stumpff_S(z);
+    double sqrtmu = sqrt(mu);
 
-    double f_gauss = 1.0 - (chi*chi / r0n) * C;
-    double g_gauss = dt - (chi*chi*chi / sqrtmu) * S;
+    double chi2 = chi * chi;
+    double chi3 = chi2 * chi;
+
+    double f_gauss = 1.0 - (chi2 / r0n) * C;
+    double g_gauss = dt - (chi3 / sqrtmu) * S;
 
     double3 r = f_gauss * r0 + g_gauss * v0;
     double rn = length(r);
+    rn = fmax(rn, small); 
 
-    double fdot = (sqrtmu / (rn * r0n)) * (alpha * chi*chi*chi * S - chi);
-    double gdot = 1.0 - (chi*chi / rn) * C;
+    double fdot = (sqrtmu / (rn * r0n)) * (alpha * chi3 * S - chi);
+    double gdot = 1.0 - (chi2 / rn) * C;
 
     double3 v = fdot * r0 + gdot * v0;
 
-    *r0_ptr = r;
-    *v0_ptr = v;
+    *v_out = v;
+    return r;
 }
 
-__kernel void wh_planetary(
-    __global double* pos, 
-    __global double* vel,
-    __global double* acc,
-    __global double* masses,
-    const double dt,
+__kernel void wh_first(
+    const uint N,
     const double G,
-    const int lower,
-    const int upper,
-    const int pass
-) {
+    const double dt,
+    __global const double* masses,
+    __global double* positions,
+    __global double* velocities
+){
     const uint gid = get_global_id(0);
-    if ((int)gid < lower) return;
-    if ((int)gid >= upper) return;
+    const uint i = gid;
+    if (i >= N || i == 0) return;
 
-    double3 r_central = vload3(0, pos);
-    double3 v_central = vload3(0, vel);
-    double m_central = masses[0];
+    double3 r_central = vload3(0, positions);
+    double3 v_central = vload3(0, velocities); 
+    double m_central = masses[0];   
 
-    double3 p = vload3(gid, pos);
-    double3 v = vload3(gid, vel);
-    double3 a = vload3(gid, acc);
+    double3 r = vload3(i, positions) - r_central;
+    double3 v = vload3(i, velocities) - v_central;
 
-    if (pass) {
-        v += a * dt;
-    }
+    double mu_i = G * (m_central + masses[i]);
+    double3 v_new;
+    double3 r_new = kepler_update(r, v, mu_i, dt*0.5, &v_new);
 
-    double3 r_rel = p - r_central;
-    double3 v_rel = v - v_central;
+    vstore3(r_central + r_new, i, positions);
+    vstore3(v_central + v_new, i, velocities);
+}
 
-    double mu_i = G * (m_central + masses[gid]);
+__kernel void wh_second(
+    const uint N,
+    const double G,
+    const double dt,
+    __global const double* masses,
+    __global double* positions,
+    __global double* velocities,
+    __global double* accs
+){
+    const uint gid = get_global_id(0);
+    const uint i = gid;
+    if (i >= N || i == 0) return;
 
-    update_kepler(&r_rel, &v_rel, mu_i, dt * 0.5);
+    double3 r_central = vload3(0, positions);
+    double3 v_central = vload3(0, velocities); 
+    double m_central = masses[0];  
 
-    p = r_central + r_rel;
-    v = v_central + v_rel;
+    double3 r = vload3(i, positions) - r_central;
+    double3 v = vload3(i, velocities) - v_central;    
+    double3 a = vload3(i, accs);
+    v += a * dt; 
 
-    vstore3(p, gid, pos);
-    vstore3(v, gid, vel);
-    vstore3((double3)(0.0,0.0,0.0), gid, acc);
+    double mu_i = G * (m_central + masses[i]);
+    double3 v_new;
+    double3 r_new = kepler_update(r, v, mu_i, dt*0.5, &v_new);
+
+    vstore3(r_central + r_new, i, positions);
+    vstore3(v_central + v_new, i, velocities);
+    vstore3((double3)(0.0,0.0,0.0), i, accs);
 }
     
 )CLC";

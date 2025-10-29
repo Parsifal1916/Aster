@@ -13,12 +13,48 @@
 
 #define DIS_SCALE .05
 #define FOV 1
+#define MAX_LABEL_SIZE 10
+#define MAX_NAME_SIZE 16
+#define SB_COLOR 48.0/255.0, 48.0/255.0, 48.0/255.0
+#define GRAPH_COLOR 28.0/255.0, 28.0/255.0, 28.0/255.0
 
 namespace Aster{
 
 namespace Renderer{
-
+enum layout_type:  int {NORMAL = 0, SIDEBAR = 1, PANEL = 2};
 extern float rng_colors[15][3];
+struct Renderer3d;
+using label_gen = std::function<std::string(Simulation*)>;
+
+struct GraphDrawer{
+    GraphDrawer(Simulation* s, Graphs::Graph* g, Renderer3d* _r, int place);
+    GraphDrawer(){};
+    void draw();
+    void draw_bg();
+    void parse_data(int which);
+
+    int index = 0;
+    int skip_size = 1;
+    vec2 corner;
+    REAL highest = std::numeric_limits<double>::lowest();
+    REAL lowest = std::numeric_limits<double>::max();
+    int place =0;
+    int internal_counter = 0;
+    int max_size = 1024;
+    std::vector<std::vector<REAL>> data;
+    Simulation* _s;
+    Renderer3d* rend;
+    Graphs::Graph* _g;
+};
+struct Sidebar {
+    Sidebar(GLFWwindow* _w, Simulation* s, Renderer3d* rend);
+    Sidebar(){}
+    void draw(Renderer3d* rend);
+    GLFWwindow* window;
+    Simulation* _s;
+
+    GraphDrawer g_drawers[3];
+};
 
 class Renderer3d{
     public: 
@@ -49,10 +85,15 @@ class Renderer3d{
     */
     void body_update_func();
 
+    void change_layout();
+
     /**
     * @brief shows the axis
     */
     Renderer3d* show_axis();
+
+    void add_label(std::string name, label_gen _lbl);
+    void draw_all_labels();
 
     /**
     * @brief returns true if show_axis has been called
@@ -92,8 +133,24 @@ class Renderer3d{
     };
     REAL gui_scale = .5;
 
+    int get_h() const {return this -> current_height;}
+    int get_w() const {return this -> current_width;}
+
+    bool 
+        paused = false ,  // has the simulation been paused?
+        clicked = false // has the mouse been clicked?
+    ;
+
+    std::vector<std::pair<std::string, label_gen>> labels;
     private:
-    
+    float fps = 0.0;
+    float cycles  = 0.0;
+    Sidebar sidebar;
+    vec3 cube_offset = {0,0, 0};
+    std::pair<vec2, vec2> cube_size = {{-1,-1}, {1,1}};
+    layout_type layout = NORMAL;
+
+
     void setup();
     // should it show the axis on screen?
     bool show_axis_b = true;
@@ -109,10 +166,7 @@ class Renderer3d{
     */
     void draw_axis(bool is_back);
 
-    bool 
-        paused = false ,  // has the simulation been paused?
-        clicked = false // has the mouse been clicked?
-    ;
+ 
 
     /**
     *  @brief resets the mouse position

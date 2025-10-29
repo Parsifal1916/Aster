@@ -335,7 +335,6 @@ void update_WH_planetary(Simulation* _s) {
     });
 }
 
-
 void Solver::set_force(force_type _t){
     auto idx = static_cast<int>(_t);
     if (critical_if(idx > 3 || idx < 0, "Invalid force type")) return;
