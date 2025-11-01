@@ -36,6 +36,7 @@ class Solver{
     public:
     Solver(Simulation* _s);
     Solver() {}
+    virtual ~Solver() = default;
 
     solver_type get_type();
     void set_force(force_type _t);
@@ -63,7 +64,7 @@ class Solver{
 class Updater{
     public:
     Updater(Simulation* _s, int _o, update_type _t);
-
+    virtual ~Updater() = default;
     update_type get_type();
     virtual void update_bodies();
     int get_order();
@@ -90,6 +91,7 @@ class Simulation{
     float current_a = 0;
 
     Simulation();
+    ~Simulation();
     
     BodyArray bodies;
 
@@ -175,7 +177,9 @@ class Simulation{
     int N, selected_N;
     double softening = 1e-14, theta = .2;
 
+    std::unordered_map<std::string, cl_kernel> kernels;
     protected:
+    
     REAL total_mass = 0;
     sim_meta data;
  

@@ -88,24 +88,19 @@ void spinny(Simulation<vec3>* _s, int n, vec3 v, vec3 p){
 */
 int main(){
     Simulation* _s = new Simulation();
-    load_solar_system(_s);
-    //add_disk(_s, 1e5, vec3(0), 200, 1, {0,0,0}, 1e-2, 1e30);
+    add_disk(_s, 1e5, vec3(0), 200, 1, {0,0,0}, 1e-2, 1e30);
     _s -> gravity_solver = GPU_BARNES_HUT;
-    _s -> integrator = WH_PLANETARY;
+    _s -> integrator = EULER;
     _s -> integrator_order = 0;
     _s -> force_used = NEWTON;
-    
-    //_s -> softening = 1;
+    _s -> theta = 1;
+    _s -> softening = 1e-16;
     _s 
     -> set_scale(200e7) 
     -> set_dt(1e4)
-    -> collect_hamiltonian()
-    -> collect_distance()
-    -> collect_error()
     -> load();
-
-    _s -> integrate(1, true);
-    //exit(0);
+    
+    _s -> integrate(5);
     
     auto a = Renderer::Renderer3d(_s);
     a.show();

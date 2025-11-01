@@ -33,7 +33,7 @@ inline static constexpr auto LOCAL_SIZE = 128;
 
 inline void pull_down(cl_mem buff, void* addr, size_t size){
     using namespace GPU;
-    clFinish(queue);
+
     Check(clEnqueueReadBuffer(queue, buff, CL_TRUE, 0, size, addr, 0, nullptr, nullptr));
 }
 
@@ -86,6 +86,8 @@ BH_hyper::~BH_hyper(){
     clReleaseMemObject(left_nodes_buff);
     clReleaseMemObject(right_nodes_buff);
     clReleaseMemObject(com_buffer);   
+    clReleaseMemObject(bd_size_gpu);
+         
 }
 
  
@@ -107,7 +109,7 @@ void BH_hyper::make_mortons(){
     Check(clSetKernelArg(morton_writer_kernel, 5, sizeof(uint), &upper));
     
     Check(clEnqueueNDRangeKernel(queue, morton_writer_kernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL));
-    clFinish(queue);
+
 }
 
 /*
@@ -182,7 +184,7 @@ void BH_hyper::build_bottom_up(int N){
 
 
     Check(clEnqueueNDRangeKernel(queue, first_pass_kernel, 1, 0, &leaf_only_GW, &LW_size, 0, nullptr, nullptr));
-    clFinish(queue);
+
 }
 
 void compose_updater(){
@@ -261,6 +263,7 @@ void BH_hyper::load_buffers(){
     node_masses     = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(REAL) * (2*N -1), NULL, &err);
     Check(err);
 }
+
 /*
 * @brief loads the simulation
 */
@@ -319,7 +322,7 @@ void BH_hyper::upload_force_calc(int num_leaves){
     Check(clSetKernelArg(force_calculator, 13,  sizeof(int),   &upper            ));
 
     Check(clEnqueueNDRangeKernel(queue, force_calculator, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr));
-    clFinish(queue);
+
 }
 
  
@@ -347,13 +350,13 @@ void BH_hyper::load_tree_kernel(int N){
 
     operation_result = clEnqueueNDRangeKernel(queue, tree_builder, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr );
     Check(operation_result);
-    clFinish(queue);
+
 }
 
 
 BH_hyper* BH_hyper::read_positions(){
     using namespace GPU;
-    clFinish(queue);
+
     Check(clEnqueueReadBuffer(queue, this -> _s -> positions_cl, CL_FALSE, 0, sizeof(vec3) * N, this  -> _s -> bodies.positions.data(), 0, nullptr, nullptr));
     return this;
 }
@@ -381,7 +384,7 @@ void BH_hyper::debug_step() {
     auto time_block = [&](const std::string& name, auto&& func) {
         auto start = clock::now();
         func();
-        clFinish(queue);
+    
         auto end = clock::now();
         timings.emplace_back(name, ms(end - start).count());
     };

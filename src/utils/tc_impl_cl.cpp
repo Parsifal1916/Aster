@@ -106,13 +106,15 @@ void init_opencl(){
     has_initialized = true;
 }
 
+inline std::vector<std::pair<cl_program, cl_kernel>> programs;
+
 /**
 * @brief compiles a kernel
 * @param name: pointer to the name of the function
 * @param source: source code of the kernel
 * @param k: kernel object onto which to write the kernel 
 */
-cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening) {
+cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening, bool del) {
     cl_int programResult;
     const char* c = source->c_str();
     size_t l = source->size();
@@ -167,15 +169,85 @@ cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening)
     if (critical_if(kernel_res != CL_SUCCESS,
                    "Could not load kernel '" + *name + "', error code: " + std::to_string(kernel_res)))
         exit(4);
-
-    clRetainProgram(program);
         
     auto end = clock::now();
     
     std::cout << std::setfill(' ') << std::setw(37 - name -> size() ) << "done (" << std::fixed
                 << std::setprecision(3)
                 << std::setw(time_characters) << ms(end - start).count() / 1000 << " s)\n";
+    
+    if (del){
+        programs.emplace_back(program, k);
+    } else {
+        clRetainProgram(program);
+        clRetainKernel(k);
+    }
     return k;
+}
+
+inline std::vector<cl_mem> buffers; 
+
+cl_mem create_vbuffer(std::vector<REAL> base){
+    size_t bytes = sizeof(REAL) * base.size();
+    cl_int err;
+    cl_mem ret = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, &err);
+    Check(err);
+    Check(clEnqueueWriteBuffer(queue, ret,  CL_TRUE, 0, bytes, base.data(), 0, NULL, NULL));
+    buffers.push_back(ret);
+    return ret;
+}
+
+cl_mem create_vbuffer(std::vector<vec3> base){
+    size_t bytes = sizeof(vec3) * base.size();
+    cl_int err;
+    cl_mem ret = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, &err);
+    Check(err);
+    Check(clEnqueueWriteBuffer(queue, ret,  CL_TRUE, 0, bytes, base.data(), 0, NULL, NULL));
+    buffers.push_back(ret);
+    return ret;
+}
+
+cl_mem create_vbuffer(std::vector<cl_ulong> base){
+    size_t bytes = sizeof(cl_ulong) * base.size();
+    cl_int err;
+    cl_mem ret = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, &err);
+    Check(err);
+    Check(clEnqueueWriteBuffer(queue, ret,  CL_TRUE, 0, bytes, base.data(), 0, NULL, NULL));
+    buffers.push_back(ret);
+    return ret;
+}
+
+cl_mem create_vbuffer(std::vector<cl_int> base){
+    size_t bytes = sizeof(cl_int) * base.size();
+    cl_int err;
+    cl_mem ret = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, &err);
+    Check(err);
+    Check(clEnqueueWriteBuffer(queue, ret,  CL_TRUE, 0, bytes, base.data(), 0, NULL, NULL));
+    buffers.push_back(ret);
+    return ret;
+}
+
+
+cl_mem create_vbuffer(size_t bytes){
+    cl_int err;
+    cl_mem ret = clCreateBuffer(context, CL_MEM_READ_WRITE, bytes, NULL, &err);
+    Check(err);
+    buffers.push_back(ret);
+    return ret;
+}
+
+void reset_GPU(){
+    clFinish(queue);
+    for (auto prog : programs){
+        clReleaseProgram(prog.first);
+        clReleaseKernel(prog.second);
+    }
+    for (auto buff : buffers){
+        clReleaseMemObject(buff);
+    }
+
+    buffers.clear();
+    programs.clear();
 }
 
 

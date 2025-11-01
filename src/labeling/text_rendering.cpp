@@ -15,6 +15,29 @@ namespace Text {
 
 static NVGcontext* vg = nullptr;
 
+int get_image(const char* path, int index){
+    return nvgCreateImage(vg, path, index);
+}
+
+
+
+void load_png(const char *path, int img, int height, int width) {
+    int w, h; nvgImageSize(Text::vg, img, &w, &h);
+    int scale =  20;
+
+    float aspect = float(w) / float(h);
+
+    w = float(width) / scale * aspect;
+    h = float(width) / scale;
+
+    NVGpaint p = nvgImagePattern(Text::vg, 0, height - h, w, h, 0.0f, img, 1.0f);
+    nvgBeginPath(Text::vg);
+    nvgRect(Text::vg, 0, height - h, w, h);
+    nvgFillPaint(Text::vg, p);
+    nvgFill(Text::vg);
+}
+
+
 void load_font() {
     glfwWindowHint(GLFW_SAMPLES, 4);
     glEnable(GL_MULTISAMPLE);

@@ -588,6 +588,7 @@ void Renderer3d::show(){
 
     Text::load_font();
     Text::nvg_resize(_s -> get_width(), _s -> get_height());
+    int img = Text::get_image(LIBRARY_PATH "/logo.png", 0);
 
     // starts the main loop 
     while (!glfwWindowShouldClose(window)) {
@@ -604,7 +605,7 @@ void Renderer3d::show(){
         (this ->*render3d)();
 
         draw_scale();
-
+        Text::load_png(LIBRARY_PATH "/logo.png", img, current_height, current_width);
         draw_axis(false);
 
         if (layout == SIDEBAR)

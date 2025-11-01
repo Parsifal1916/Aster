@@ -108,21 +108,10 @@ Simulation* Simulation::load_gpu_buffers(){
     size_t N = this -> bodies.positions.size();
     log_info("Loading internal AOB buffers... ");
 
-    cl_int err = 0;
-
-    positions_cl       = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(vec3) * N, NULL, &err);
-    Check(err);
-    velocities_cl      = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(vec3) * N, NULL, &err);
-    Check(err);
-    accs_cl            = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(vec3) * N, NULL, &err);
-    Check(err);
-    masses_cl          = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(REAL) * N, NULL, &err);
-    Check(err);
-
-    clEnqueueWriteBuffer(queue, positions_cl,  CL_TRUE, 0, sizeof(vec3) * N, this -> bodies.positions.data(), 0, NULL, NULL);
-    clEnqueueWriteBuffer(queue, velocities_cl, CL_TRUE, 0, sizeof(vec3) * N, this -> bodies.velocities.data(), 0, NULL, NULL);
-    clEnqueueWriteBuffer(queue, accs_cl,       CL_TRUE, 0, sizeof(vec3) * N, this -> bodies.accs.data(), 0, NULL, NULL);
-    clEnqueueWriteBuffer(queue, masses_cl,     CL_TRUE, 0, sizeof(REAL) * N, this -> bodies.masses.data(), 0, NULL, NULL);
+    positions_cl = create_vbuffer(this -> bodies.positions);
+    velocities_cl = create_vbuffer(this -> bodies.velocities);
+    accs_cl = create_vbuffer(this -> bodies.accs);
+    masses_cl = create_vbuffer(this -> bodies.masses);
 
     return this;
 }
@@ -365,6 +354,20 @@ Simulation* Simulation::read_bodies_gpu(){
     Check(clEnqueueReadBuffer(queue, this -> velocities_cl, CL_FALSE, 0, sizeof(vec3) * N, this ->bodies.velocities.data(), 0, nullptr, nullptr));
 
     return this;
+}
+
+Simulation::~Simulation(){
+    using namespace GPU;
+    clFinish(queue);
+    if (!has_loaded) return;
+    delete solver;
+    delete updater;
+    if (!uses_GPU())  return;
+    for (auto k : kernels)
+        clReleaseKernel(k.second);
+
+    reset_GPU();
+
 }
 
 Simulation* Simulation::load(){

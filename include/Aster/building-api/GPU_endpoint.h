@@ -29,8 +29,12 @@ namespace GPU{
     inline cl_command_queue queue;
     
     inline bool has_initialized = false;
-    
-    
+    cl_mem create_vbuffer(std::vector<REAL> base);
+    cl_mem create_vbuffer(std::vector<vec3> base);
+    cl_mem create_vbuffer(std::vector<cl_ulong> base);
+    cl_mem create_vbuffer(std::vector<cl_int> base);
+    cl_mem create_vbuffer(size_t bytes);
+    void reset_GPU();
     /**
     * @brief sets the best device in terms of compute power
     */
@@ -42,13 +46,13 @@ namespace GPU{
     * @param source: source code of the kernel
     * @param k: kernel object onto which to write the kernel 
     */
-    cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening);
+    cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening, bool del = true);
     
     /**
     * @brief initializes opencl and finds the right device
     */
     void init_opencl();
-    
+
     /**
     * @brief compiles the force program
     */
@@ -66,27 +70,5 @@ namespace GPU{
     
      
     void upload_update_kernel(cl_kernel& k, Simulation* _s, REAL c = 1, REAL d = 1);
-    
-    /**
-    * @brief merges two already sorted arrays
-    * @param left first array
-    * @param L first array size
-    * @param right second array
-    * @param R second array size
-    * @param merged ptr to the merged array
-    */
-    static void merge_arrays(const uint32_t* left, size_t L,const uint32_t* right, size_t R,uint32_t* merged);
-    
-    cl_program compile_sorting_kernels();
-    
-    /**
-    * @brief sorts an array using the gpu
-    * @param input: ptr to the start of the arrya
-    * @param output: array onto which to write
-    * @param N: size of the array
-    */
-    void sort(uint64_t* input, uint64_t* output, size_t N);
-    }
-    
-    
+}
 }

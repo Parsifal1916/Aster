@@ -5,8 +5,8 @@
 #include <vector>
 
 namespace Aster{
-namespace Text{
-
+    namespace Text{
+    
     /**
     * @brief alerts nano vg of a resive event
     */
@@ -17,7 +17,8 @@ namespace Text{
     * @brief ends nvg frame
     */
     void end_vg_frame();
-
+    void load_png(const char *path, int img, int h, int w);
+    int get_image(const char* path, int index);
     /**
     * @brief loads the font texture, called at the start of the renderer
     */

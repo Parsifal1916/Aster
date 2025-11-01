@@ -33,29 +33,29 @@ inline void update_euler_gpu_3d(Simulation* _s){
     }
 
     std::string k_name = "euler";
-    static auto kernel = compile_kernel(&k_name, &eulerian_update_cl_3d, _s->softening);
-
+    static auto kernel = compile_kernel(&k_name, &eulerian_update_cl_3d, _s->softening, false);
     const size_t N = _s -> bodies.positions.size();
+    
 
     size_t LW_size = 64;
     size_t GW_size = ((N + LW_size - 1) / LW_size) * LW_size;
     REAL dt = _s -> get_dt();
 
-    Check(clSetKernelArg(kernel, 0, sizeof(unsigned int), &N));
-    Check(clSetKernelArg(kernel, 1, sizeof(REAL), &dt));
-    Check(clSetKernelArg(kernel, 2, sizeof(cl_mem), &_s -> positions_cl));
-    Check(clSetKernelArg(kernel, 3, sizeof(cl_mem), &_s -> velocities_cl));
-    Check(clSetKernelArg(kernel, 4, sizeof(cl_mem), &_s -> accs_cl)); 
+    Check(clSetKernelArg(kernel, 0, sizeof(unsigned int),         &N          ));
+    Check(clSetKernelArg(kernel, 1, sizeof(REAL)        ,         &dt         ));
+    Check(clSetKernelArg(kernel, 2, sizeof(cl_mem)      , &_s -> positions_cl ));
+    Check(clSetKernelArg(kernel, 3, sizeof(cl_mem)      , &_s -> velocities_cl));
+    Check(clSetKernelArg(kernel, 4, sizeof(cl_mem)      , &_s -> accs_cl      )); 
 
     Check(clEnqueueNDRangeKernel(queue, kernel, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
 }
-
+ 
 inline void update_leapfrog_gpu_3d(Simulation* _s){
     _s -> solver -> compute_forces();
     using namespace GPU;
-
     std::string k_name = "leapfrog";
-    static auto kernel = compile_kernel(&k_name, &leapfrog_cl_3d, _s->softening);
+
+    static auto kernel = compile_kernel(&k_name, &leapfrog_cl_3d, _s->softening, false);
 
     const size_t N = _s -> bodies.positions.size();
 
@@ -86,12 +86,15 @@ inline void update_leapfrog_gpu_3d(Simulation* _s){
     Check(clEnqueueNDRangeKernel(queue, kernel, 1, 0, &GW_size, &LW_size, 0, nullptr, nullptr ));
 }
 
+
 inline void update_WH_planetary_gpu(Simulation* _s){
     using namespace GPU;
+
     std::string k_name1 = "wh_first";
-    static auto kernel1 = compile_kernel(&k_name1, &wh_cl_3d, _s -> softening);
     std::string k_name2 = "wh_second";
-    static auto kernel2 = compile_kernel(&k_name2, &wh_cl_3d, _s -> softening);
+
+    static auto kernel1 = compile_kernel(&k_name1, &wh_cl_3d, _s -> softening, false);  
+    static auto kernel2 = compile_kernel(&k_name2, &wh_cl_3d, _s -> softening, false); 
 
     const size_t N = _s -> bodies.positions.size();
     _s -> solver -> set_bounds(1, -1);
