@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(Aster VERSION 1.7.8 LANGUAGES CXX)
+project(Aster VERSION 1.7.9 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -115,10 +115,6 @@ file(COPY ${CMAKE_SOURCE_DIR}/include/Aster/thirdparty/roboto.ttf
 
 if(APPLE)
     target_compile_options(Aster PRIVATE -Wno-nullability-completeness)
-endif()
-
-if(NOT APPLE)
-    target_compile_options(Aster PRIVATE -mavx2 -mfma)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
