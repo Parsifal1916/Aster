@@ -9,10 +9,6 @@
 #include <bitset>
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
     #include <xmmintrin.h>
-#elif defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)
-    #include <arm_neon.h>
-#else
-    #error "Unsupported architecture for SIMD intrinsics"
 #endif
 
 #include "Aster/simulations/barnes-hut.h"
@@ -223,11 +219,13 @@ void Barnes_Hut::get_node_body(long root, size_t index, REAL size) {
         const auto [node, s] = stack[--sp];
         if ((unsigned long)node >= nodes.size()) continue;
 
+#if (defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86))
         _mm_prefetch(reinterpret_cast<const char*>(&nodes.centers_of_mass[node]), _MM_HINT_T0);
         _mm_prefetch(reinterpret_cast<const char*>(&nodes.velocities[node]), _MM_HINT_T0);
         _mm_prefetch(reinterpret_cast<const char*>(&nodes.masses[node]), _MM_HINT_T0);
         _mm_prefetch(reinterpret_cast<const char*>(&nodes.left_nodes[node]), _MM_HINT_T0);
         _mm_prefetch(reinterpret_cast<const char*>(&nodes.right_nodes[node]), _MM_HINT_T0);
+#endif
 
         const vec3& com = nodes.centers_of_mass[node];
         const vec3& vel_node = nodes.velocities[node];
@@ -245,11 +243,16 @@ void Barnes_Hut::get_node_body(long root, size_t index, REAL size) {
             const long right = nodes.right_nodes[node];
 
             if ((unsigned long)left < nodes.size()) {
+#if (defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86))
                 _mm_prefetch(reinterpret_cast<const char*>(&nodes.centers_of_mass[left]), _MM_HINT_T0);
+#endif
                 stack[sp++] = { left, s * half };
+
             }
             if ((unsigned long)right < nodes.size()) {
+#if (defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86))
                 _mm_prefetch(reinterpret_cast<const char*>(&nodes.centers_of_mass[right]), _MM_HINT_T0);
+#endif
                 stack[sp++] = { right, s * half };
             }
         }
