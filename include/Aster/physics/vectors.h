@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <cmath>
 
 using REAL = double;
 
@@ -70,7 +71,41 @@ struct vec3 {
     vec3 normalize();
     REAL sqr_magn() const;
     void reset();
+    vec3 cross(vec3& other) const;
 };
+
+inline vec3 vec3::operator+(const vec3& other) const {
+    return vec3(x + other.x, y + other.y, z + other.z);
+}
+
+inline vec3 vec3::operator-(const vec3& other) const {
+    return vec3(x - other.x, y - other.y, z - other.z);
+}
+
+inline vec3 vec3::operator-() const {
+    return vec3(-x, -y, -z);
+}
+
+inline vec3 vec3::operator*(const int& other) const{
+    return vec3(x*other, y*other, z*other);
+}
+
+inline REAL vec3::magnitude() const{
+    return std::sqrt(
+        this -> x * this -> x + 
+        this -> y * this -> y + 
+        this -> z * this -> z
+    );
+}
+
+inline vec3 vec3::normalize(){
+       double magn = this -> magnitude();
+       return vec3(this -> x/magn, this -> y/magn, this -> z/magn);
+}
+
+inline REAL vec3::sqr_magn() const{
+    return x*x + y*y + z*z;
+}
 
 vec2 operator*(REAL scalar, vec2 v);
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(Aster VERSION 1.7.4 LANGUAGES CXX)
+project(Aster VERSION 1.7.6 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -58,7 +58,7 @@ set_target_properties(Aster PROPERTIES
 if(NOT MSVC)
     target_compile_options(Aster PUBLIC
         -Wno-aggressive-loop-optimizations
-        -O3
+        -O3 -march=native -mavx2 -mfma
         -lTBB
         -lOpenCL
     )

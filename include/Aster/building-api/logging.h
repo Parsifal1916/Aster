@@ -6,10 +6,11 @@
 namespace Aster{
 
 enum error_type: int {
-    DEBUG_t = 0,
-    WARNING_t = 1,
-    ERROR_t = 2,
-    CRITICAL_t = 3
+    LOW_t = 0,
+    DEBUG_t = 1,
+    WARNING_t = 2,
+    ERROR_t = 3,
+    CRITICAL_t = 4
 };
 
 constexpr int time_characters = 7;

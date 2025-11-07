@@ -31,7 +31,7 @@ void SimpleGPU::compute_forces(){
     const size_t vec_size = N * sizeof(vec3);
 
     std::string name = "cl3d_newton";
-    static cl_kernel k = compile_kernel(&name, &newton_cl3d, this -> _s -> softening);
+    static cl_kernel k = compile_kernel(&name, &newton_cl3d, this -> _s -> softening, false);
 
     // creates buffer for temperature
     cl_mem temp_b = clCreateBuffer(context, CL_MEM_READ_ONLY, num_bytes, nullptr, &operation_result);

@@ -342,13 +342,13 @@ void Solver::set_force(force_type _t){
 
     switch (_t){
         case NEWTON:
-            this -> get_force = newtonian;
+            this -> get_force = newtonian; break;
         case PN1:
-            this -> get_force = pn1;
+            this -> get_force = pn1; break;
         case PN2:
-            this -> get_force = pn2;
+            this -> get_force = pn2; break;
         case PN25:
-            this -> get_force = pn25;
+            this -> get_force = pn25; break;
     }
 }
 
@@ -433,10 +433,11 @@ void adaptive_euler(Simulation* _s){
 
 
 vec3 newtonian(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
-    vec3 n = (p2 - p1);
-    REAL r = n.magnitude();
-
-    return n.normalize() * _s -> get_G() *m1*m2/(r*r+_s -> softening);
+    vec3 d = p2 - p1;
+    REAL r2 = d.x*d.x + d.y*d.y + d.z*d.z + _s->softening;
+    REAL inv_r = 1.0/std::sqrt(r2);
+    REAL inv_r3 = inv_r * inv_r * inv_r;
+    return d * (_s -> get_G() * m1 * m2 * inv_r3);
 }
 
 //===---------------------------------------------------------===//

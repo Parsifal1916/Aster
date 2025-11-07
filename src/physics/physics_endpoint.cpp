@@ -96,7 +96,7 @@ vec2& vec2::operator/=(const REAL& other){
     return *this;
 }
 
-REAL vec2::magnitude() const{
+ REAL vec2::magnitude() const{
     return std::sqrt(
         this -> x * this -> x + 
         this -> y * this -> y
@@ -112,7 +112,7 @@ vec2 vec2::normalize(){
     return vec2(this -> x/magn, this -> y/magn);
 }
 
-REAL vec2::sqr_magn() const {
+ REAL vec2::sqr_magn() const {
     return x*x + y*y;
 }
 
@@ -161,18 +161,6 @@ vec3 vec3::operator/(float scalar) const {
     return vec3(x / scalar, y / scalar, z / scalar);
 }
 
-vec3 vec3::operator+(const vec3& other) const {
-    return vec3(x + other.x, y + other.y, z + other.z);
-}
-
-vec3 vec3::operator-(const vec3& other) const {
-    return vec3(x - other.x, y - other.y, z - other.z);
-}
-
-vec3 vec3::operator-() const {
-    return vec3(-x, -y, -z);
-}
-
 vec3& vec3::operator+=(const vec3& other) {
     x += other.x;
     y += other.y;
@@ -180,12 +168,16 @@ vec3& vec3::operator+=(const vec3& other) {
     return *this;
 }
 
-bool vec3::operator==(const vec3& other) const {
-    return other.x == x && other.y == y && other.z == z;
+vec3 vec3::cross(vec3& other) const{
+    return {
+        this -> y * other.z - this -> z * other.y,
+        this -> z * other.x - this -> x * other.z,
+        this -> x * other.y - this -> y * other.x
+    };
 }
 
-vec3 vec3::operator*(const int& other) const{
-    return vec3(x*other, y*other, z*other);
+bool vec3::operator==(const vec3& other) const {
+    return other.x == x && other.y == y && other.z == z;
 }
 
 vec3 vec3::operator/(const int& other) const{
@@ -203,26 +195,10 @@ vec3& vec3::operator/=(const REAL& other){
     return *this;
 }
 
-REAL vec3::magnitude() const{
-    return std::sqrt(
-        this -> x * this -> x + 
-        this -> y * this -> y + 
-        this -> z * this -> z
-    );
-}
-
 vec3 vec3::direction(vec3 v2){
     return (*this)*-1 + v2;
 }
 
-vec3 vec3::normalize(){
-       double magn = this -> magnitude();
-       return vec3(this -> x/magn, this -> y/magn, this -> z/magn);
-}
-
-REAL vec3::sqr_magn() const{
-    return x*x + y*y + z*z;
-}
 
 vec3 vec3::update_by(vec3* v, REAL delta){
     return {

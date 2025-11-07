@@ -295,12 +295,17 @@ IntegrationReport Simulation::integrate(size_t times, bool precision_test){
         e_before = get_total_energy(this);
     }
 
+    bool prev = this->always_read_pos; 
+    this->always_read_pos = false;
+
     auto start = std::chrono::high_resolution_clock::now();
 
     for (size_t i = 0; i < times; ++i)
         this -> step();
 
     auto end = std::chrono::high_resolution_clock::now();
+
+    this->always_read_pos = prev;
     if (precision_test){
         if (uses_GPU())
             read_bodies_gpu();

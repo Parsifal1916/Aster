@@ -53,7 +53,7 @@ inline void draw_rect(float w, float h, float x, float y){
 GraphDrawer::GraphDrawer(Simulation* s, Graphs::Graph* g, Renderer3d* _r, int p) 
     : _s(s), rend(_r), place(p), _g(g){
     // sets up the default settings for the cube
-    corner = {GRAPH_PADDING, GRAPH_HPAD - .4*place};
+    corner = {GRAPH_PADDING, GRAPH_HPAD - REAL(.4)*place};
     data.resize(s -> N);
 
     // preresizes all the data object
@@ -364,16 +364,17 @@ void Renderer3d::draw_axis(bool is_back){
 */
 vec3 Renderer3d::map_point(vec3 v, bool fixed) {
     // offsets the vector on the center
-    v = v* distance;
-    v = v - vec3(.5, .5, .5) * distance;
-    v = v*gui_scale;
+    v = v - vec3(.5, .5, .5);
+    
+    v = v*2 * distance;
 
-    v = v*2/gui_scale;
-
-    if (!fixed && !(v.x < 1 && v.x > -1 && v.y < float(current_width)/current_height && v.y > -float(current_width)/current_height))
+    if (!fixed && !(
+        v.x < 1 && v.x > -1 && 
+        v.y < float(current_width)/current_width && v.y > -float(current_width)/current_width) &&
+        v.z < 1 && v.z > -1 )
         return {10,10,10};
         
-     v = v*gui_scale * gui_scale/2;
+     v = v*gui_scale * gui_scale/2 / distance;
 
     // applies the z-x rotation
     float x1 =  v.x * cos_x_theta + v.z * sin_x_theta;
@@ -383,17 +384,15 @@ vec3 Renderer3d::map_point(vec3 v, bool fixed) {
     float y1 = v.y *  cos_y_theta + z1 * sin_y_theta;
     float z2 = -v.y * sin_y_theta + z1 * cos_y_theta;
 
-    // calculates the parallax strenght
-    float scale_z = 1 / (distance + z2/ _s -> get_depth()  + _s -> softening); 
-    float scale_x = 1 / (distance + x1/ _s -> get_width()  + _s -> softening);
-    float scale_y = 1 / (distance + y1/ _s -> get_height() + _s -> softening);
 
     v = {x1, y1, z2};
-    
+
+
+
     if (fixed)
-        return v / distance;
+        return v;
     
-    return v;
+    return v * distance;
 }
 
 
@@ -414,13 +413,6 @@ void Renderer3d::setup(){
 
     if (this -> _s -> bodies.positions.size() >= 50)
         render3d = &Renderer3d::draw_minimal3d;
-
-    // defines the center of rotation
-    rot_center = {
-        _s -> get_width() / 2,
-        _s -> get_height()/ 2,
-        _s -> get_depth() / 2
-    };
 
     // checks if glfw can initialize correctly
     if (critical_if(!glfwInit(), "failed to load glfw")) 
@@ -763,21 +755,22 @@ void Renderer3d::draw_minimal3d(){
     glPointSize(10);    
 
     vec3 temp = {0,0,0}; // makes only one instance of the position vector
+    float aspect_ratio = float(current_width) / current_height;
 
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
         glColor3f(1.0,1.0,1.0);
         // maps the point in 2d space 
         vec3 v = _s -> bodies.positions[i];
-        v.x = (v.x + _s -> get_width()) / (2*_s -> get_width()) ;
-        v.y = (v.y + _s -> get_height())/ (2*_s -> get_height());
-        v.z = (v.z + _s -> get_depth()) / (2*_s -> get_depth()) ;
+        v.x = (v.x + _s -> get_width()) / (2*_s -> get_width());
+        v.y = (v.y + _s -> get_width()) / (2*_s -> get_width()) ;
+        v.z = (v.z + _s -> get_width()) / (2*_s -> get_width());
         v = map_point(v, false) + cube_offset;
     
         // draws the point if it's in range
         if (is_unitary_bound(v))
             glVertex2f( 
                 v.x, 
-                v.y
+                v.y* aspect_ratio
             );
     }
 

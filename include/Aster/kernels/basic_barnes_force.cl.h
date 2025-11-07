@@ -43,7 +43,7 @@ inline std::string barnes_force_basic =
 "        if (node < 0 || node >= max_nodes) continue;\n"
 "\n"
 "        double2 r = my_pos - com[node];\n"
-"        double d_squared = r.x * r.x + r.y * r.y SOFTENING;\n"
+"        double d_squared = r.x * r.x + r.y * r.y + SOFTENING;\n"
 "\n"
 "        bool is_leaf = (lefts[node] == -1 && rights[node] == -1);\n"
 "\n"

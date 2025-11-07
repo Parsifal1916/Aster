@@ -7,6 +7,7 @@
 #include <bitset>
 #include <unordered_map>
 #include <bitset>
+#include <xmmintrin.h>
 
 #include "Aster/simulations/barnes-hut.h"
 #include <tbb/parallel_for.h>
@@ -74,7 +75,8 @@ void NodesArray::allocate(size_t n){
 @brief resizes all arrays
 */
 
-void NodesArray::resize(size_t n){
+void NodesArray::resize(size_t n) {
+    if (n == left_nodes.size()) return;
     size_t prev_size =  left_nodes.size();
     centers_of_mass.resize(n);
     temps.resize(n);
@@ -196,29 +198,58 @@ Barnes_Hut::Barnes_Hut(Simulation* _s){
 * @returns nothing, everything is done internally
 */
 
-void Barnes_Hut::get_node_body(signed long int node, size_t index, REAL size){
-    if (node < 0 || (node >= static_cast<signed long int>(nodes.size())))
-        return;
+void Barnes_Hut::get_node_body(long root, size_t index, REAL size) {
+    struct Task { long node; REAL size; };
+    std::array<Task, 64> stack;
+    int sp = 0;
+    stack[sp++] = { root, size };
 
-    auto& bodies = this -> _s -> bodies;
+    auto& bodies = this->_s->bodies;
+    const vec3& pos_i = bodies.positions[index];
+    const vec3& vel_i = bodies.velocities[index];
+    const REAL mass_i = bodies.masses[index];
+    const REAL inv_m = REAL(1.0) / mass_i;
+    const REAL theta2 = this->_s->theta * this->_s->theta;
+    constexpr REAL half = REAL(0.5);
+    vec3 n_acc;
 
-    REAL d_squared = (bodies.get_position_of(index) - nodes.centers_of_mass[node]).sqr_magn();
-    
-    if (d_squared == 0) return; 
+    while (sp > 0) {
+        const auto [node, s] = stack[--sp];
+        if ((unsigned long)node >= nodes.size()) continue;
 
-    if ( size * size < d_squared * this -> _s -> theta * this -> _s -> theta || nodes.is_leaf(node)){ // use the optmisation
-        bodies.get_acc_of(index) += this -> get_force(
-            bodies.get_mass_of(index), nodes.masses[node], 
-            bodies.get_velocity_of(index), nodes.velocities[node], 
-            bodies.get_position_of(index), nodes.centers_of_mass[node], 
-            this -> _s
-        ) / bodies.get_mass_of(index);
+        _mm_prefetch(reinterpret_cast<const char*>(&nodes.centers_of_mass[node]), _MM_HINT_T0);
+        _mm_prefetch(reinterpret_cast<const char*>(&nodes.velocities[node]), _MM_HINT_T0);
+        _mm_prefetch(reinterpret_cast<const char*>(&nodes.masses[node]), _MM_HINT_T0);
+        _mm_prefetch(reinterpret_cast<const char*>(&nodes.left_nodes[node]), _MM_HINT_T0);
+        _mm_prefetch(reinterpret_cast<const char*>(&nodes.right_nodes[node]), _MM_HINT_T0);
 
-        return;
-    } 
+        const vec3& com = nodes.centers_of_mass[node];
+        const vec3& vel_node = nodes.velocities[node];
+        const REAL mass_node = nodes.masses[node];
 
-    get_node_body(nodes.left_nodes[node],  index, size / 2);
-    get_node_body(nodes.right_nodes[node], index, size / 2);
+        const auto d = pos_i - com;
+        const REAL d2 = d.sqr_magn();
+        if (d2 == REAL(0)) continue;
+
+        if ((s * s < d2 * theta2) || nodes.is_leaf(node)) {
+            const auto acc = this->get_force(mass_i, mass_node, vel_i, vel_node, pos_i, com, this->_s);
+            n_acc += acc * inv_m;
+        } else {
+            const long left  = nodes.left_nodes[node];
+            const long right = nodes.right_nodes[node];
+
+            if ((unsigned long)left < nodes.size()) {
+                _mm_prefetch(reinterpret_cast<const char*>(&nodes.centers_of_mass[left]), _MM_HINT_T0);
+                stack[sp++] = { left, s * half };
+            }
+            if ((unsigned long)right < nodes.size()) {
+                _mm_prefetch(reinterpret_cast<const char*>(&nodes.centers_of_mass[right]), _MM_HINT_T0);
+                stack[sp++] = { right, s * half };
+            }
+        }
+    }
+
+    bodies.accs[index] = n_acc;
 }
 
 inline signed int count_leading_zeros(uint32_t num){
@@ -249,55 +280,52 @@ inline void translate2nodes(Simulation* _s, NodesArray& base_layer, const std::v
 void printTreeRecursive(const NodesArray& nodes, int node, std::string prefix = "", bool isRight = false) {
     if (node == -1) return;
 
-    // Stampa il nodo corrente con connettori
     std::cout << prefix;
     if (!prefix.empty()) {
         std::cout << (isRight ? "└── " : "├── ");
     }
     std::cout << node << "\n";
 
-    // Aggiorna prefisso per i figli
     std::string newPrefix = prefix + (isRight ? "    " : "│   ");
 
-    // Stampa ramo sinistro e destro
     printTreeRecursive(nodes, nodes.left_nodes[node], newPrefix, false);
     printTreeRecursive(nodes, nodes.right_nodes[node], newPrefix, true);
 }
 
-// Wrapper
 
 void print_nodes(const NodesArray& nodes, int root = 0) {
     std::cout << "Tree structure:\n";
     printTreeRecursive(nodes, root);
 }
 
-
 void Barnes_Hut::make_tree(){
-    this->threads.clear();
-    this->nodes.clear();
-    this->mortons.clear();
-
-    size_t N = this->_s -> bodies.positions.size();
-    if (N == 0) return; 
+    std::vector<std::pair<uint32_t, unsigned int>> enhanced_mortons(get_range());
     
-    std::vector<std::pair<uint32_t, unsigned int>> enhanced_mortons;
-    enhanced_mortons.reserve(this -> get_range());
-    this->bounding_box = this->_s -> get_center() * 2;
-
-    for (size_t i = this -> get_lower_bound(); i < this -> get_upper_bound(); ++i) {
-        uint32_t morton_code = get_tbreaked_morton(this, this->_s -> bodies.positions[i], i);
-        enhanced_mortons.emplace_back(morton_code, i);
-    }
-
-    std::sort(enhanced_mortons.begin(), enhanced_mortons.end(), [](const std::pair<uint32_t, size_t>& a, const std::pair<uint32_t, size_t>&b ){ return a.first < b.first;});
-
-    translate2nodes(this -> _s, nodes, enhanced_mortons);
-    size_t num_leaves = nodes.size();
-    
+    size_t num_leaves = get_range();
+    size_t num_internal = num_leaves - 1;
     if (num_leaves <= 1) return;
   
-    size_t num_internal = num_leaves - 1;
-    nodes.resize(num_leaves + num_internal);
+    this -> nodes.resize(num_internal+num_leaves);
+    this->bounding_box = this->_s -> get_center() * 2;
+
+    parallel_for(size_t(get_lower_bound()), size_t(get_upper_bound()), [&](size_t i){
+        uint32_t morton_code = get_tbreaked_morton(this, this->_s->bodies.positions[i], i);
+        enhanced_mortons[i - get_lower_bound()] = {morton_code, i - get_lower_bound()};
+    });
+
+    parallel_sort(enhanced_mortons.begin(), enhanced_mortons.end(), [](const std::pair<uint32_t, size_t>& a, const std::pair<uint32_t, size_t>&b ){ return a.first < b.first;});
+
+    parallel_for(size_t(0), enhanced_mortons.size(), [&](size_t i){
+        int _b = enhanced_mortons[i].second;
+        auto& bodies = _s -> bodies;
+
+        this->nodes.masses[i]         =  bodies.get_mass_of(_b);
+        this->nodes.centers_of_mass[i] = bodies.get_position_of(_b);
+        this->nodes.velocities[i]      = bodies.get_velocity_of(_b);
+        this->nodes.temps[i]           = bodies.get_temp_of(_b);
+        this->nodes.left_nodes[i] = -1;
+        this->nodes.right_nodes[i] = -1;
+    });
 
     auto delta = [&](size_t i, size_t j) -> int {
         if (j >= enhanced_mortons.size()) return -1;
@@ -359,10 +387,8 @@ void Barnes_Hut::make_tree(){
         }
     });
 
-
     nodes.unite(num_leaves);
     this->compressed_mortons_size = num_leaves;
-
 }
  
 void Barnes_Hut::compute_forces(){
@@ -371,13 +397,13 @@ void Barnes_Hut::compute_forces(){
     const REAL bd_size = (this -> _s -> get_center()*2).magnitude();
     this -> make_tree();
 
-    N = N - this -> lower_int_bound - ((this -> upper_int_bound < 0) ? 0 : N - this -> upper_int_bound);
+    N = this->get_range();
     
     if (warn_if(N <= 0, "either upper or lower bound were set too high in the gravity solver, resulting in a negative amount of bodies to load")) 
         return; 
         
 
-    parallel_for(size_t(this -> lower_int_bound), size_t((this -> upper_int_bound < 0) ? root : this -> upper_int_bound), [&, this, root](size_t idx){
+    parallel_for(size_t(get_lower_bound()), size_t(get_upper_bound()), [&, this, root](size_t idx){
         this -> _s -> bodies.accs[idx].reset();
         this -> get_node_body(root, idx, bd_size);
     });

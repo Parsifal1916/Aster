@@ -14,7 +14,7 @@ const std::string CRITICAL = "\033[35m";
 const std::string RESET = "\033[0m";
 
 
-error_type error_level = WARNING_t;
+error_type error_level = LOW_t;
 
 double get_time(){
     using namespace std::chrono;
@@ -28,7 +28,7 @@ double get_time(){
 
 bool critical_if(bool cond, std::string msg){
     if (!cond) return false ;
-
+    if (error_level >= CRITICAL_t) return cond;
     std::cout << "("
               << std::fixed
               << std::setprecision(3)
@@ -40,7 +40,7 @@ bool critical_if(bool cond, std::string msg){
 
 bool warn_if(bool cond, std::string msg){
     if (!cond) return false;
-
+    if (error_level >= WARNING_t) return cond;
     std::cout << "("
               << std::fixed
               << std::setprecision(3)
@@ -53,7 +53,7 @@ bool warn_if(bool cond, std::string msg){
 
 bool err_if(bool cond, std::string msg){
     if (!cond) return false;
-
+    if (error_level >= ERROR_t) return cond;
     std::cout << "("
               << std::fixed
               << std::setprecision(3)
@@ -65,7 +65,7 @@ bool err_if(bool cond, std::string msg){
 
 
 void log_info(std::string msg, std::string EOL){
-
+    if (error_level >= DEBUG_t) return;
     std::cout << "("
               << std::fixed
               << std::setprecision(3)

@@ -50,11 +50,11 @@ uint32_t get_morton2D(Barnes_Hut* _s, vec2 point) {
     point.x = (point.x + _s -> bounding_box.x) / (2* _s -> bounding_box.x);
     point.y = (point.y + _s -> bounding_box.y) / (2* _s -> bounding_box.y);
 
-    point.x = std::max(point.x, (double)0.0);
-    point.y = std::max(point.y, (double)0.0);
+    point.x = std::max(point.x, (REAL)0.0);
+    point.y = std::max(point.y, (REAL)0.0);
 
-    point.x = std::min(point.x, (double)1.0);
-    point.y = std::min(point.y, (double)1.0);
+    point.x = std::min(point.x, (REAL)1.0);
+    point.y = std::min(point.y, (REAL)1.0);
 
     uint32_t ix = std::min((uint32_t)(point.x * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);
     uint32_t iy = std::min((uint32_t)(point.y * (1 << PRECISION_BITS)), (1u << PRECISION_BITS) - 1);

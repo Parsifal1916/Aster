@@ -172,6 +172,7 @@ cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening,
         
     auto end = clock::now();
     
+    if (error_level == LOW_t)
     std::cout << std::setfill(' ') << std::setw(37 - name -> size() ) << "done (" << std::fixed
                 << std::setprecision(3)
                 << std::setw(time_characters) << ms(end - start).count() / 1000 << " s)\n";
