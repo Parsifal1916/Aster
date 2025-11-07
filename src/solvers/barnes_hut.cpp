@@ -7,7 +7,13 @@
 #include <bitset>
 #include <unordered_map>
 #include <bitset>
-#include <xmmintrin.h>
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+    #include <xmmintrin.h>
+#elif defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)
+    #include <arm_neon.h>
+#else
+    #error "Unsupported architecture for SIMD intrinsics"
+#endif
 
 #include "Aster/simulations/barnes-hut.h"
 #include <tbb/parallel_for.h>
