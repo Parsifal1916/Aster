@@ -13,9 +13,9 @@ using namespace Aster;
 
 void load_solar_system(Simulation* sim){
     add_body(sim, 1.989e30, {0,0,0}, {0,0, 0}); //sun
-    add_body(sim, 3.3011e23, -vec3(0.31 * AU, 0, 0), {0, 38700, 0}); //mercury 
-    add_body(sim, 4.8675e24, -vec3(0.71 * AU, 0, 0), {0, 34790, 0}); //venus 
-    add_body(sim, 5.9721e24, -vec3(1.00 * AU, 0, 0), {0, 29782, 0}); //earth 
+    add_body(sim, 3.3011e23, -vec3(0.31 * AU, 0, 0), {0, 18700, 0}); //mercury 
+    //add_body(sim, 4.8675e24, -vec3(0.71 * AU, 0, 0), {0, 34790, 0}); //venus 
+    //add_body(sim, 5.9721e24, -vec3(1.00 * AU, 0, 0), {0, 29782, 0}); //earth 
     //add_body(sim, 6.4171e23, -vec3(1.67 * AU, 0, 0), {0, 23130, 0}); //mars
     //add_body(sim, 1.8982e27, -vec3(4.95 * AU, 0, 0), {0, 16060, 0}); //jupiter
     //add_body(sim, 8.6810e25, -vec3(18.3 * AU, 0, 0), {0,  6800, 0}); //uranus
@@ -148,14 +148,17 @@ void gravitating_sphere(Simulation* _s, size_t nums, vec3 center, REAL inner, RE
 
 int main() {
     Simulation* sim = new Simulation();
-    add_disk(sim, 1e2, vec3(0), 200, 1, {0,0,0}, 1e-2, 1e30);
-    
-    sim->gravity_solver = BARNES_HUT;
-    sim->integrator = WH_PLANETARY;
-    sim->integrator_order = 0;
-    sim->force_used = NEWTON;
+    //add_disk(sim, 1e4, vec3(0), 200, 1, {0,0,0}, 1e-2, 1e30);
+    load_solar_system(sim);
+    sim -> gravity_solver = PARALLEL;
+    sim -> integrator = EULER;
+    sim -> integrator_order = 0;
+    sim -> force_law = NEWTON | PN1 | PN2 | PN25;
     sim -> theta = .44;
     sim->softening = 1e-16;
     sim->set_scale(200e7)->set_dt(1E4)->load();
     auto report = sim->integrate(3, true).time_per_step;
+
+    auto a = Renderer::Renderer3d(sim);
+    a.show();
 }

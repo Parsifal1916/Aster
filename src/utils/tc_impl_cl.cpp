@@ -114,7 +114,7 @@ inline std::vector<std::pair<cl_program, cl_kernel>> programs;
 * @param source: source code of the kernel
 * @param k: kernel object onto which to write the kernel 
 */
-cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening, bool del) {
+cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening, bool del, std::string extra) {
     cl_int programResult;
     const char* c = source->c_str();
     size_t l = source->size();
@@ -132,7 +132,7 @@ cl_kernel compile_kernel(std::string* name, std::string* source, REAL softening,
 
     // Compiler optimization flags
     std::ostringstream opts;
-    opts << "-DSOFTENING=" << std::scientific << softening;
+    opts << "-DSOFTENING=" << std::scientific << softening << " " << extra;
 
     std::string build_options = opts.str();
 
@@ -302,23 +302,22 @@ func_ptr compile_ub_saba(int ord) {
 //===---------------------------------------------------------===//
 
 
-func_ptr compile_uf(force_type t, REAL softening) {
+func_ptr compile_uf(PN_expansion_type t, REAL softening) {
     log_info("compiling GPU scripts from source...");
-    size_t index = static_cast<size_t>(t);
+    std::string kernel_code = GPU::cl3d_pn;
+    std::string extra = "";
 
-    static std::string force_kernels2d[] = {newton_cl, cl_pn1, cl_pn2, cl_pn25};
-    static std::string force_kernels3d[] = {newton_cl3d, cl3d_pn1, cl3d_pn2, cl3d_pn25};
+    auto index = t;
+    if (index.pn1()) extra += "-D PN1 ";
+    if (index.pn2()) extra += "-D PN2 ";
+    if (index.pn25()) extra += "-D PN25 "; 
 
-    std::string& force_kernel = force_kernels3d[index];
+    static std::string kernel_name = "apply_forces";
 
-    std::string kernel_names[] = {"cl3d_newton", "pn1", "pn2", "pn25"};
-
-    if (critical_if(index > 3 || index < 0, 
-    "could not find a suitable GPU-accelerated function for kernel " + kernel_names[index]))
-        exit(1);
+    auto force_kernel = GPU::compile_kernel(&kernel_name, &GPU::cl3d_pn, softening, true, extra);
 
     log_info("done compiling force calculation scripts");
-    return uf_functor{compile_kernel(&kernel_names[index], &force_kernel, softening)};
+    return uf_functor{force_kernel};
 }
 
 }

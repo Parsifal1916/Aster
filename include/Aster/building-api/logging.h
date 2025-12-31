@@ -14,7 +14,10 @@ enum error_type: int {
 };
 
 constexpr int time_characters = 7;
-extern error_type error_level;
+inline error_type error_level = LOW_t;
+
+error_type& get_error_level();
+void set_error_level(error_type err);
 
 double get_time();
 bool critical_if(bool cond, std::string msg);

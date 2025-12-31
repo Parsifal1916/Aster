@@ -213,7 +213,7 @@ void update_SABA6(Simulation* _s) {
     _s -> solver -> compute_forces();
 
     parallel_for(size_t(0), _s -> bodies.positions.size(), [d2, c3, dt, _s](size_t body) {
-        _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d3 * dt;
+        _s -> bodies.get_velocity_of(body) += _s -> bodies.get_acc_of(body) * d2 * dt;
         _s -> bodies.get_position_of(body) += _s -> bodies.get_velocity_of(body) * c3 * dt;
     });
 

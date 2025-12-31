@@ -296,9 +296,9 @@ __kernel void barnes_force(
     double  my_mass = body_masses[gid];
     double2 acc = (double2)(0.0, 0.0);
 
-    const int STACK_SIZE = 1024;
-    int  stack[STACK_SIZE];
-    double sizes[STACK_SIZE];
+
+    int  stack[1024];
+    double sizes[1024];
     int sp = 0;
 
     stack[sp] = N;
@@ -324,12 +324,12 @@ __kernel void barnes_force(
             continue;
         }
 
-        if (rights[node] != -1 && sp+1 < STACK_SIZE) {
+        if (rights[node] != -1 && sp+1 < 1024) {
             sp++;
             stack[sp] = rights[node];
             sizes[sp] = size * 0.5;
         }
-        if (lefts[node] != -1 && sp+1 < STACK_SIZE) {
+        if (lefts[node] != -1 && sp+1 < 1024) {
             sp++;
             stack[sp] = lefts[node];
             sizes[sp] = size * 0.5;
@@ -368,9 +368,9 @@ __kernel void barnes_force(
     double  my_mass = body_masses[gid];
     double3 acc = (double3)(0.0, 0.0, 0.0);
 
-    const int STACK_SIZE = 1024;
-    int  stack[STACK_SIZE];
-    double sizes[STACK_SIZE];
+
+    int  stack[1024];
+    double sizes[1024];
     int sp = 0;
 
     stack[sp] = N;
@@ -396,12 +396,12 @@ __kernel void barnes_force(
             continue;
         }
 
-        if (rights[node] != -1 && sp+1 < STACK_SIZE) {
+        if (rights[node] != -1 && sp+1 < 1024) {
             sp++;
             stack[sp] = rights[node];
             sizes[sp] = size * 0.5;
         }
-        if (lefts[node] != -1 && sp+1 < STACK_SIZE) {
+        if (lefts[node] != -1 && sp+1 < 1024) {
             sp++;
             stack[sp] = lefts[node];
             sizes[sp] = size * 0.5;

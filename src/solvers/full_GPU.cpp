@@ -133,18 +133,18 @@ void BH_hyper<vec2>::compose_force_kernel(){
 
 
 void BH_hyper::compose_force_kernel(){
-    static std::string* force_kernels[4] = {&GPU::newton_cl3d, &GPU::cl3d_pn1, &GPU::cl3d_pn2, &GPU::cl3d_pn25};
-
-    int index = static_cast<int>(this -> _t);
-    if (critical_if(index > 3, "Cannot find suitable kernel for custom force calculating function")) exit(-1);
-
-    
-    std::string kernel_code = *force_kernels[index];
+    std::string kernel_code = GPU::cl3d_pn;
     kernel_code += GPU::BHH_force_basic3d;
+
+    std::string extra = "";
+    auto index = this->force_law;
+    if (index.pn1()) extra += "-D PN1 ";
+    if (index.pn2()) extra += "-D PN2 ";
+    if (index.pn25()) extra += "-D PN25 "; 
 
     static std::string kernel_name = "barnes_force";
 
-    force_calculator = GPU::compile_kernel(&kernel_name, &kernel_code, this->_s->softening);
+    force_calculator = GPU::compile_kernel(&kernel_name, &kernel_code, this->_s->softening, true, extra);
 }
 
 
@@ -201,21 +201,6 @@ void compose_updater(){
 
     //compile_kernel(&kernel_name, &update_kernel_src, update_kernel);
 }
-/*
-void compose_updater3(){
-    using namespace GPU;
-    static std::string update_kernel_src = general_saba3d;
-
-    static std::string kernel_name = "saba";
-    int index =  static_cast<int>(1);
-
-
-    if (critical_if(index < 0 || index >= static_cast<int>(CUSTOM_U), 
-    "could not find a suitable GPU-accelerated function for kernel " + kernel_name))
-        exit(1);
-
-    //compile_kernel(&kernel_name, &update_kernel_src, update_kernel);
-}*/
 
 
 void BH_hyper::load_buffers(){

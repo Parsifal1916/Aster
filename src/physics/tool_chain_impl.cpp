@@ -64,69 +64,77 @@ FORCE_INLINE REAL get_B25(REAL eta, vec3 v, REAL r_dot, REAL m, REAL r){
 }
 
  
-vec3 pn25(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
-    vec3 x = (p2 - p1 + vec3(_s -> get_e_sqr()));
-    REAL r = x.magnitude() + 1;
-    REAL m = m1 + m2;
-    REAL eta = m1*m2 / (m*m);
-    
-    vec3 v = v1 - v2;
-    vec3 n = x / r;
-    REAL r_dot = v * n;
+inline vec3 get_pn25(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s, REAL inv_r, vec3 norm){
+    const REAL G = _s -> get_G();
+    REAL pseudo_newton1 = G * m1 * inv_r;
+    REAL pseudo_newton2 = G * m2 * inv_r;
 
-    REAL a_components = get_A1(eta, v, r_dot, m, r) + get_A2(eta, v, r_dot, m, r);
-    REAL b_components = get_B1(eta                ) + get_B2(eta, v, r_dot, m, r);
+    REAL sq_v_diff = (v1 - v2).sqr_magn();
 
-    REAL half_a = get_A25(eta, v, r_dot, m, r);
-    REAL half_b = get_B25(eta, v, r_dot, m, r);
+    vec3 internal_1 = (v1-v2) * (-sq_v_diff + 2 * pseudo_newton1 - 8 * pseudo_newton2);
 
-    vec3 acc = n * m1*m2 / (r*r+ _s->softening); 
-    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r+ _s->softening)) / std::pow(_s -> get_c(), 3); 
-    acc += -( 8.0/5.0 * eta * (m*m) / (r*r*r  + _s->softening) * (n * r_dot * half_a - v * half_b)) / (std::pow(_s -> get_c(), 5));
+    vec3 internal_2 = norm * (norm*v1 - norm*v2) * (3* sq_v_diff - 6 * pseudo_newton1 + 52.0/3.0 * pseudo_newton2);
 
-    return acc * _s -> get_G();
+    return (internal_1 + internal_2) * 4.0/5.0 * G *G *m1*m2 * inv_r*inv_r*inv_r ;
 }
 
  
-vec3 pn2(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
-    vec3 x = (p2 - p1 + vec3(_s -> get_e_sqr()));
-    REAL r = x.magnitude();
-    REAL m = m1 + m2;
-    REAL eta = m1*m2 / (m*m);
-    
-    vec3 v = v1 - v2;
-    vec3 n = x / r;
-    REAL r_dot = v * n;
+inline vec3 get_pn2(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s, REAL inv_r, vec3 norm){
+    const REAL v2_sq = v2.sqr_magn();
+    const REAL v1_sq = v1.sqr_magn();
 
-    REAL a_components = get_A1(eta, v, r_dot, m, r) + get_A2(eta, v, r_dot, m, r);
-    REAL b_components = get_B1(eta                ) + get_B2(eta, v, r_dot, m, r);
+    const REAL v_prod = v1*v2;
+    const REAL G = _s -> get_G();
 
+    REAL nv1 = norm * v1;
+    REAL nv2 = norm * v2;
+    REAL nv22 = nv2 * nv2;
+    REAL pseudo_newtonian1 = G * m1 * inv_r;
+    REAL pseudo_newtonian2 = G * m2 * inv_r;
+    const REAL nv12 = nv1 * nv1;
 
-    vec3 acc = n * m1*m2 / (r*r + _s->softening); 
-    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r + _s->softening)) / std::pow(_s -> get_c(), 3);  
-    return acc* _s -> get_G();
+    return G * m2 * inv_r * inv_r * (norm * (-2 *v2_sq * v2_sq + 4 * v2_sq * v_prod - 2 *v_prod * v_prod
+    + 3.0/2.0 * v1_sq * nv22 + 9.0/2.0 * v2_sq * nv22 - 6 * v_prod * nv22
+    -15.0/8.0 * nv22 * nv22 + pseudo_newtonian1 * (-15.0/4.0 * v1_sq+5.0/4.0 *v2_sq-5.0/2.0 * v_prod
+    +39.0/2.0 * nv12-39.0 * nv1 * nv2+ 17.0/2.0 * nv22)
+    + pseudo_newtonian2 * (4 * v2_sq- 8 * v_prod +2* nv12
+    -4 * nv1 * nv2 - 6 * nv22))
+    +(v1-v2) * (v1_sq * nv2+ 4 * v2_sq * nv1- 5 * v2_sq * nv2
+    -4 * v_prod * nv1+4 * v_prod * nv2 - 6 * nv1 * nv22
+    +9.0/2.0 * nv22 * nv2 + pseudo_newtonian1 * (-63.0/4.0 * nv1+55.0/4.0 * nv2)
+    + pseudo_newtonian2 * (-2 * nv1- 2 * nv2)))
+    +G*G*G * m2 * inv_r*inv_r*inv_r*inv_r * norm * (-57.0/4.0 *  m1*m1 - 9 * m2 * m2 - 69.0/2.0 * m1 * m2);
 }
 
  
-vec3 pn1(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
-    vec3 x = (p2 - p1 + vec3(_s -> get_e_sqr()));
-    REAL r = x.magnitude();
-    REAL m = m1 + m2;
-    REAL eta = m1*m2 / (m*m);
-    
-    vec3 v = v1 - v2;
-    vec3 n = x / r;
-    REAL r_dot = v * n;
+inline vec3 get_pn1(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s, REAL inv_r, vec3 norm){
+    const REAL v2_sq = v2.sqr_magn();
+    const REAL G = _s -> get_G(); 
+    vec3 a = norm * (-v1.sqr_magn() - 2 * v2_sq + 4 *v1*v2 + 3.0/2.0 * ((norm *v2) * (norm * v2)) + 5 * G * m1 * inv_r + 4 * G * m2 *inv_r);
+    a += (v1-v2) * (4.0 * norm * v1 - 3 * norm * v2);
+    a = a * G * m2 * inv_r * inv_r;
 
-    REAL a_components = get_A1(eta, v, r_dot, m, r);
-    REAL b_components = get_B1(eta                );
-
-
-    vec3 acc = n * m1*m2 / (r*r+ _s->softening); 
-    acc +=  -((n * a_components + v *r_dot * b_components) * m / (r*r+ _s->softening)) / std::pow(_s -> get_c(), 3);  
-    return acc* _s -> get_G();
+    return a;
 }
 
+vec3 compute_gravitational(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
+    vec3 d = p2 - p1;
+    REAL r2 = d.x*d.x + d.y*d.y + d.z*d.z + _s->softening;
+    REAL inv_r = 1.0/std::sqrt(r2);
+    REAL inv_r2 = inv_r * inv_r;
+    vec3 norm = d * inv_r;
+
+    vec3 newton = norm * (_s -> get_G() * m2 * m1 * inv_r2);
+    REAL inv_c = 1.0 / _s -> get_c();
+
+    vec3 a1(0), a2(0), a25(0);
+    auto index = _s->solver->force_law;
+
+    if (index.pn1())  a1  = inv_c * inv_c * get_pn1(m1, m2, v1, v2, p1, p2, _s, inv_r, -norm);
+    if (index.pn2())  a2  = inv_c * inv_c * inv_c * inv_c * get_pn2(m1, m2, v1, v2, p1, p2, _s, inv_r, -norm);
+    if (index.pn25()) a25 = inv_c * inv_c * inv_c * inv_c * inv_c * get_pn25(m1, m2, v1, v2, p1, p2, _s, inv_r, -norm);
+    return newton + a1 * m1 + a2 * m1 + a25 * m1;
+}
 
 
 REAL get_eccentricity(Simulation* _s, size_t body, REAL relv_sq, REAL w_squared,  REAL radius, REAL mass2){
@@ -300,56 +308,51 @@ inline void update_kepler(vec3& r0, vec3& v0, REAL mu, REAL dt) {
 
 void update_WH_planetary(Simulation* _s) {
     const size_t N = _s->bodies.positions.size();
+    _s -> solver -> set_bounds(1, -1);
     if (N <= 1) return;
 
     const REAL G = _s->get_G();
     const REAL dt = _s->get_dt();
-    _s -> solver -> set_bounds(1, -1);
+    
     vec3 r_central = _s->bodies.positions[0];
     vec3 v_central = _s->bodies.velocities[0];
     REAL m_central = _s->bodies.masses[0];
-
+    
     parallel_for(size_t(1), N, [_s, r_central, v_central, m_central, G, dt](size_t i){
         vec3 r_rel = _s->bodies.positions[i] - r_central;
         vec3 v_rel = _s->bodies.velocities[i] - v_central;
-
-        REAL mu_i = G * (m_central + _s->bodies.masses[i]);
-        update_kepler(r_rel, v_rel, mu_i, dt*0.5);
+        
+        REAL mu = G * m_central;
+        update_kepler(r_rel, v_rel, mu, dt*0.5);
+        
         _s->bodies.positions[i] = r_central + r_rel;
         _s->bodies.velocities[i] = v_central + v_rel;
     });
-
-    _s -> solver -> compute_forces();
-
-    parallel_for(size_t(1), N, [_s, r_central, v_central, m_central, G, dt](size_t i){
+    
+    _s->solver->compute_forces();  
+    
+    parallel_for(size_t(1), N, [_s, dt](size_t i){
         _s->bodies.velocities[i] += _s->bodies.accs[i] * dt;
+    });
+    
+    parallel_for(size_t(1), N, [_s, r_central, v_central, m_central, G, dt](size_t i){
         vec3 r_rel = _s->bodies.positions[i] - r_central;
         vec3 v_rel = _s->bodies.velocities[i] - v_central;
-
-        REAL mu_i = G * (m_central + _s->bodies.masses[i]);
-        update_kepler(r_rel, v_rel, mu_i, dt*0.5);
-
+        
+        REAL mu = G * m_central;
+        update_kepler(r_rel, v_rel, mu, dt*0.5);
+        
         _s->bodies.positions[i] = r_central + r_rel;
         _s->bodies.velocities[i] = v_central + v_rel;
-        _s->bodies.accs[i].reset(); 
+    });
+    
+    parallel_for(size_t(0), N, [_s](size_t i){
+        _s->bodies.accs[i].reset();
     });
 }
 
-void Solver::set_force(force_type _t){
-    auto idx = static_cast<int>(_t);
-    if (critical_if(idx > 3 || idx < 0, "Invalid force type")) return;
-    
-
-    switch (_t){
-        case NEWTON:
-            this -> get_force = newtonian; break;
-        case PN1:
-            this -> get_force = pn1; break;
-        case PN2:
-            this -> get_force = pn2; break;
-        case PN25:
-            this -> get_force = pn25; break;
-    }
+void Solver::set_force(PN_expansion_type _t){
+    this->force_law = _t;
 }
 
 
@@ -431,14 +434,6 @@ void adaptive_euler(Simulation* _s){
 // Force calculation methods                                     //
 //===---------------------------------------------------------===//
 
-
-vec3 newtonian(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s){
-    vec3 d = p2 - p1;
-    REAL r2 = d.x*d.x + d.y*d.y + d.z*d.z + _s->softening;
-    REAL inv_r = 1.0/std::sqrt(r2);
-    REAL inv_r3 = inv_r * inv_r * inv_r;
-    return d * (_s -> get_G() * m1 * m2 * inv_r3);
-}
 
 //===---------------------------------------------------------===//
 // Force calculation methods                                     //

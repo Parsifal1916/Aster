@@ -28,9 +28,10 @@ struct Graph{
     collector_fptr collector;
     std::vector<std::vector<REAL>> data;
     std::string name = "Graph";
+    int rate = 1;
 
-    Graph(Simulation* _s, listener_fptr listener,  graph_type type = ONCE);
-    Graph(Simulation* _s, collector_fptr listener,  graph_type type = ONCE);
+    Graph(Simulation* _s, listener_fptr listener,  graph_type type = ONCE , int r = 1);
+    Graph(Simulation* _s, collector_fptr listener,  graph_type type = ONCE, int r = 1);
 
     /**
     * @brief triggers the contained graph listener
@@ -77,6 +78,13 @@ struct Graph{
     * @brief updates the data for a FOR_EACH or for a BETWEEN
     */
     void update_data();
+    public:
+        ~Graph();
+    Graph(const Graph&) = delete;
+    Graph& operator=(const Graph&) = delete;
+
+    Graph(Graph&&) = default;
+    Graph& operator=(Graph&&) = default;
 };
 
 

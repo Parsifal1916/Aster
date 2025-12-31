@@ -23,8 +23,8 @@ namespace Renderer{
 #define GRAPH_HEIGHT .3
 #define GRAPH_HPAD .4
 
-//===---------------------------------------------------------===//
-// SIDEBAR IMPLEMENTATION                                        //
+  //===---------------------------------------------------------===//
+ // SIDEBAR IMPLEMENTATION                                        //
 //===---------------------------------------------------------===//
 /** 
 * @brief draws a rectangle on screen
@@ -54,7 +54,7 @@ GraphDrawer::GraphDrawer(Simulation* s, Graphs::Graph* g, Renderer3d* _r, int p)
     : _s(s), rend(_r), place(p), _g(g){
     // sets up the default settings for the cube
     corner = {GRAPH_PADDING, GRAPH_HPAD - REAL(.4)*place};
-    data.resize(s -> N);
+    if (g) data.resize(s -> N);
 
     // preresizes all the data object
     for (auto& a : data) 

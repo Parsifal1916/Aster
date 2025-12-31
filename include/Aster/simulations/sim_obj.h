@@ -25,11 +25,10 @@ namespace Aster{
 
 class Simulation;
 
-
-vec3 newtonian(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s);
-
+vec3 compute_gravitational(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s);
 
 void update_euler(Simulation* _s);
+
 
 
 class Solver{
@@ -39,7 +38,7 @@ class Solver{
     virtual ~Solver() = default;
 
     solver_type get_type();
-    void set_force(force_type _t);
+    void set_force(PN_expansion_type _t);
     void set_force(force_func _t);
     virtual void load() {};
     virtual void compute_forces() {};
@@ -48,14 +47,15 @@ class Solver{
     int get_upper_bound() const;
     int get_lower_bound() const;
     int get_range() const;
-
+    PN_expansion_type force_law = NEWTON;
 
     protected:
     
+
     int lower_int_bound = 0;
     int upper_int_bound = -1;
-    force_func get_force;
-    force_type _t = NEWTON;
+    force_func get_force = compute_gravitational;
+    force_type _t = GRAVITATIONAL;
     solver_type type = SINGLE_THREAD;
     Simulation* _s = nullptr;
 };
@@ -110,20 +110,21 @@ class Simulation{
     Simulation* load();
     Simulation* load_gpu_buffers();
     Simulation* read_bodies_gpu();
-    Simulation* add_graph(typename Graphs::Graph::listener_fptr listener, graph_type type = ONCE);
-    Simulation* add_graph(typename Graphs::Graph::collector_fptr listener, graph_type type = BETWEEN);
+    Simulation* add_graph(typename Graphs::Graph::listener_fptr listener, graph_type type = ONCE, int rate = 1);
+    Simulation* add_graph(typename Graphs::Graph::collector_fptr listener, graph_type type = BETWEEN, int rate= 1);
 
-    Simulation* get_force_with(force_type t);
+    Simulation* get_force_with(PN_expansion_type t);
     Simulation* update_with(update_type t);
     Simulation* update_with(Updater* p);
 
     Simulation* get_force_with(force_func p);
 
-    Simulation* collect_hamiltonian();
-    Simulation* collect_error();
-    Simulation* collect_distance();
+    Simulation* collect_hamiltonian(int rate = 1);
+    Simulation* collect_error(int rate = 1);
+    Simulation* collect_distance(int rate = 1);
 
     virtual IntegrationReport integrate(size_t time, bool precision_test = false);
+    virtual IntegrationReport integrate(halting_condition cond, bool precision_test = false, size_t max_steps = -1);
     Simulation* calculate_total_mass();
     
     REAL get_total_mass() const;
@@ -161,7 +162,8 @@ class Simulation{
 
     void step();
 
-    force_type force_used = NEWTON;
+    PN_expansion_type force_law = NEWTON;
+    force_type force_used = GRAVITATIONAL;
     solver_type gravity_solver = PARALLEL;
     update_type integrator = EULER;
     int integrator_order = 0;

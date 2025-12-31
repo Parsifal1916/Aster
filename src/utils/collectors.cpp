@@ -73,23 +73,9 @@ REAL error_collector(Graph* g, Simulation* _s, size_t b){
 
 REAL distance_collector(Graph* g, Simulation* _s, size_t b){
     static std::mutex mtx;
-    static std::pair<REAL, vec3> baricenter = {-1, vec3(0)};
+    vec3 baricenter = _s->get_center_of_mass();
 
-    if (baricenter.first != _s -> get_time_passed()){
-        mtx.lock();
-        if (baricenter.first != _s -> get_time_passed()){
-            baricenter.first = _s -> get_time_passed();
-            baricenter.second = vec3(0);
-
-            for (int i = 0; i < _s -> bodies.positions.size(); ++i)
-                baricenter.second += _s -> bodies.get_position_of(i) * _s -> bodies.get_mass_of(i);
-
-            baricenter.second = baricenter.second / _s -> get_total_mass();
-        }
-        mtx.unlock();
-    }
-
-    return (baricenter.second - _s -> bodies.get_position_of(b) + .1).magnitude();
+    return (baricenter- _s -> bodies.get_position_of(b) + .1).magnitude();
 }
 
 }

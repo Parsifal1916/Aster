@@ -41,16 +41,18 @@ inline void parallel(int cores, size_t num, F func) {
     }
 }
     
+Graph::~Graph(){
+    this -> file.close();
+}
 
-
-Graph::Graph(Simulation* _s, typename Graph::listener_fptr listener, graph_type type)
-: _s(_s), listener(listener), type(type) {
+Graph::Graph(Simulation* _s, typename Graph::listener_fptr listener, graph_type type, int r)
+: _s(_s), listener(listener), type(type), rate(r){
     critical_if(!_s, "No simulation object specified! seams to be nullptr");
 }
 
 
-Graph::Graph(Simulation* _s, typename Graph::collector_fptr listener, graph_type type)
-: _s(_s), collector(listener), type(type) {
+Graph::Graph(Simulation* _s, typename Graph::collector_fptr listener, graph_type type, int r)
+: _s(_s), collector(listener), type(type), rate(r) {
     critical_if(!_s, "No simulation object specified! seams to be nullptr");
 }
 
@@ -89,7 +91,7 @@ void Graph::init(){
             data[i].reserve(buffer_size);
             if (save) 
                 // writes to file
-                file << "Body" << i << ", ";
+                file << "Body" << i << ",";
             }
 
         file << "\n";  
@@ -132,7 +134,7 @@ void Graph::flush_to_file(){
         // cleans the data
         for (auto& c : data)
             c.clear();
-
+        file.flush();
         return;
     }
 
@@ -147,6 +149,7 @@ void Graph::flush_to_file(){
 
     // cleans the data
     data[0].clear();
+    file.flush();
 }
 
 /**

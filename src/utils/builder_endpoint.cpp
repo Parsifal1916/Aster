@@ -4,6 +4,8 @@
 #include <chrono>
 #include <cassert>
 #include <iomanip>
+#include <limits>
+
 #define CL_TARGET_OPENCL_VERSION 300
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef __APPLE__
@@ -244,7 +246,7 @@ struct CoMReducer {
     }
 
     void join(const CoMReducer& rhs) {
-        m_sum   += rhs.m_sum;
+        m_sum  += rhs.m_sum;
         mp_sum += rhs.mp_sum;
     }
 };
@@ -349,6 +351,76 @@ IntegrationReport Simulation::integrate(size_t times, bool precision_test){
     };
 }
 
+IntegrationReport Simulation::integrate(halting_condition cond, bool precision_test, size_t max_steps){
+    using namespace Graphs;
+    std::ostringstream aft, bef, prec;
+
+    REAL e_before, e_after;
+
+    max_steps = (max_steps < 0) ? std::numeric_limits<size_t>::max() : max_steps;
+
+    if (precision_test){
+        if (uses_GPU())
+            read_bodies_gpu();
+        e_before = get_total_energy(this);
+    }
+
+    bool prev = this->always_read_pos; 
+    this->always_read_pos = false;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    int i = 0;
+    while (!cond(this) && i < max_steps)
+        this -> step();
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    this->always_read_pos = prev;
+    if (precision_test){
+        if (uses_GPU())
+            read_bodies_gpu();
+        e_after = get_total_energy(this);
+    }
+
+    std::chrono::duration<REAL, std::milli> lasted_for = end - start;
+    std::ostringstream per_step;
+    std::ostringstream total;
+
+    per_step <<  std::fixed << std::setprecision(3) << lasted_for.count() / i;
+    total    <<  std::fixed << std::setprecision(3) << lasted_for.count();
+
+    std::string msg = std::string("Integration report:\n") 
+        + std::string("[ + ] Total time:        ") + total.str() + std::string("ms\n")
+        + std::string("[ + ] Time for one step: ") + per_step.str()  + std::string("ms\n");
+
+    REAL acc = std::abs(e_before - e_after);
+    if (!e_before) acc = 0;
+    else acc /= std::abs(e_before);
+
+    std::string add = "";
+    if (precision_test){
+        aft << std::scientific << std::setprecision(3) << e_after;
+        bef << std::scientific << std::setprecision(3) << e_before;
+        prec  << std::scientific << std::setprecision(3) << acc;
+        add = std::string("[ + ] Total Energy Before:  ") + std::string(bef.str()  + std::string("J")) 
+          + std::string("\n[ + ] Total Energy After:   ") + std::string(aft.str()) + std::string("J")
+          + std::string("\n[ + ] Integrator Precision: ") + std::string(prec.str());
+    }
+
+    log_info(msg + add);
+
+    return {
+        lasted_for.count(), 
+        lasted_for.count() / i, 
+        e_before, 
+        e_after,  
+        acc,
+        precision_test
+    };
+}
+
+
 Simulation* Simulation::read_bodies_gpu(){
     if (!this -> uses_GPU()) return this;
 
@@ -380,14 +452,14 @@ Simulation* Simulation::load(){
     loading_queue.load(this);
     has_loaded = true;
     this -> calculate_total_mass();
-
+  
     this -> GPU_on = (gravity_solver == SIMPLE_GPU || gravity_solver == GPU_BARNES_HUT);
     if (this -> GPU_on) this -> load_gpu_buffers();
 
     this -> updater = new Updater(this, integrator_order, integrator);
     
     this -> solver = bake_solver(this, gravity_solver);
-    this -> solver -> set_force(this -> force_used);
+    this -> solver -> force_law = force_law;
 
     this -> solver -> load();
 
@@ -396,6 +468,7 @@ Simulation* Simulation::load(){
 
 
 Simulation* Simulation::get_force_with(force_func p){
+    critical_if(!solver, "the assignment of a custom force calculation routine must happen after the simulation has loaded with load()");
     this -> solver -> set_force(p);
     this -> force_used = CUSTOM_F;
 
@@ -409,16 +482,16 @@ Simulation* Simulation::update_with(Updater* p){
 }
 
 
-Simulation* Simulation::add_graph(typename Graphs::Graph::collector_fptr listener, graph_type type){
+Simulation* Simulation::add_graph(typename Graphs::Graph::collector_fptr listener, graph_type type, int rate){
     assert(type == BETWEEN && "cannot assign this specific function to anything other then a BETWEEN graph");
-    this -> between_graphs.push_back({this, listener, type});
+    this -> between_graphs.emplace_back(this, listener, type, rate);
     this -> between_graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
     return this;
 }
 
-Simulation* Simulation::add_graph(typename Graphs::Graph::listener_fptr listener, graph_type type){
+Simulation* Simulation::add_graph(typename Graphs::Graph::listener_fptr listener, graph_type type, int rate){
     assert(type != BETWEEN && "cannot assign this specific function to be BETWEEN graph");
-    this -> graphs.push_back({this, listener, type});
+    this -> graphs.push_back({this, listener, type, rate});
     this -> graphs.back().name = "Graph" + std::to_string(int(this -> graphs.size()));
     return this;
 }
@@ -517,8 +590,10 @@ REAL Simulation::get_boltzmann() const{
 
 
 void Simulation::trigger_all_graphs(){
-    for (auto& graph : graphs)
-        graph.trigger();
+    for (auto& graph : graphs){
+        if (!(int(time_passed) % graph.rate))
+            graph.trigger();
+    }
 }
 
 
@@ -568,27 +643,26 @@ REAL Simulation::get_time_passed() const {
 }
 
 
-Simulation* Simulation::collect_hamiltonian(){
-    this -> add_graph(Graphs::hamiltonian_collector, ONCE);
+Simulation* Simulation::collect_hamiltonian(int rate){
+    this -> add_graph(Graphs::hamiltonian_collector, ONCE, rate);
     return this;
 }
 
 
-Simulation* Simulation::collect_error(){
-    this -> add_graph(Graphs::error_collector, ONCE);
+Simulation* Simulation::collect_error(int rate){
+    this -> add_graph(Graphs::error_collector, ONCE, rate);
     return this;
 }
 
 
-Simulation* Simulation::collect_distance(){
-    this -> add_graph(Graphs::distance_collector, FOR_EACH);
+Simulation* Simulation::collect_distance(int rate){
+    this -> add_graph(Graphs::distance_collector, FOR_EACH, rate);
     return this;
 }
 
 
-Simulation* Simulation::get_force_with(force_type t){
+Simulation* Simulation::get_force_with(PN_expansion_type t){
     this -> solver -> set_force(t);
-    this -> force_used = t;
     return this;
 }
 
@@ -609,7 +683,7 @@ Simulation* Simulation::update_with(update_type t){
 SingleThread::SingleThread(Simulation* _s){
     this -> type = SINGLE_THREAD;
     this -> _s = _s;
-    this -> get_force = newtonian;
+    this -> get_force = compute_gravitational;
 }
 
 
@@ -648,7 +722,7 @@ void SingleThread::compute_forces(){
 Parallelized::Parallelized(Simulation* _s){
     this -> type = PARALLEL;
     this -> _s = _s;
-    this -> get_force = newtonian;
+    this -> get_force = compute_gravitational;
 }
 
 

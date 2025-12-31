@@ -13,9 +13,6 @@ const std::string WARNING = "\033[33m";
 const std::string CRITICAL = "\033[35m";
 const std::string RESET = "\033[0m";
 
-
-error_type error_level = LOW_t;
-
 double get_time(){
     using namespace std::chrono;
     using clock = std::chrono::high_resolution_clock;
@@ -24,6 +21,12 @@ double get_time(){
     static auto start = clock::now();
     auto end = clock::now();
     return ms(end - start).count() / 1000;
+}
+
+error_type& get_error_level(){return error_level;}
+
+void set_error_level(error_type err){
+    error_level = err;
 }
 
 bool critical_if(bool cond, std::string msg){

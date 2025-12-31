@@ -33,11 +33,26 @@ class Simulation;
 
 
 using func_ptr = std::function<void(Simulation*)>;
-
-
+using halting_condition = std::function<bool(Simulation*)>;
 using force_func = vec3(*)(REAL, REAL, vec3, vec3, vec3, vec3, Simulation*);
 
-enum force_type:  int {NEWTON = 0, PN1 = 1, PN2 = 2, PN25 = 3, CUSTOM_F = 4};
+constexpr short NEWTON = 0x00000001;
+constexpr short PN1    = 0x00000010;
+constexpr short PN2    = 0x00000100;
+constexpr short PN25   = 0x00001000;
+
+struct PN_expansion_type{
+    short type = NEWTON;
+
+    PN_expansion_type(short i) : type(i){} 
+
+    bool newton(){return type & NEWTON;}
+    bool pn1()   {return type & PN1;}
+    bool pn2()   {return type & PN2;}
+    bool pn25()  {return type & PN25;}
+};
+
+enum force_type:  int {GRAVITATIONAL = 0, CUSTOM_F = 4};
 enum update_type: int {EULER = 0, SABA =1, LEAPFROG=2, WH_PLANETARY = 3, CUSTOM_U=4};
 enum solver_type: int {SINGLE_THREAD = 0, PARALLEL = 1, BARNES_HUT = 2, MIXED_BARNES = 3, SIMPLE_GPU = 4, GPU_BARNES_HUT = 5};
 

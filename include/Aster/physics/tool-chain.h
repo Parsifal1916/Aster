@@ -60,16 +60,6 @@ void update_SABA10(Simulation* _s);
 * @param p2: position if the second object
 */
 
-
-vec3 pn2(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s);
-
-
-vec3 pn1(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s);
-
-
-vec3 pn25(REAL m1, REAL m2, vec3 v1, vec3 v2, vec3 p1, vec3 p2, Simulation* _s);
-
-
 std::vector<vec3> get_new_pos(vec3* position, vec3* velocity, vec3* acceleration, REAL step);
 
 

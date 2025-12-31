@@ -282,20 +282,18 @@ void BHG::compose_force_kernel(){
 
 
 void BHG::compose_force_kernel(){
-    static std::string* force_kernels[4] = {&GPU::newton_cl3d, &GPU::cl3d_pn1, &GPU::cl3d_pn2, &GPU::cl3d_pn25};
-
-    int index = static_cast<int>(this -> _t);
-    if (critical_if(index > 3, "Cannot find suitable kernel for custom force calculating function")){ 
-        exit(-1); 
-    }
-
-    
-    std::string kernel_code = *force_kernels[index];
+    std::string kernel_code = GPU::cl3d_pn;
     kernel_code += GPU::barnes_force_basic_3d;
+
+    std::string extra = "";
+    auto index = this->force_law;
+    if (index.pn1()) extra += "-D PN1 ";
+    if (index.pn2()) extra += "-D PN2 ";
+    if (index.pn25()) extra += "-D PN25 "; 
 
     static std::string kernel_name = "barnes_force";
 
-    force_calculator = GPU::compile_kernel(&kernel_name, &kernel_code, this->_s->softening);
+    force_calculator = GPU::compile_kernel(&kernel_name, &kernel_code, this->_s->softening, true, extra);
 }
 
 
