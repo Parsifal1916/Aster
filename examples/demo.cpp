@@ -113,7 +113,7 @@ void gravitating_sphere(Simulation* _s, size_t nums, vec3 center, REAL inner, RE
 
     // sets up the builder lambda
     cluster.builder = [inner, outer, v, avr_mass, center, _s, center_mass ](Cluster cl3d, size_t _) {
-        REAL r = rng_val(inner, outer);
+        REAL r = rng_val(inner, outer) * _s->get_scale();
         REAL theta = rng_val(0, M_PI);
         REAL phi = rng_val(0, 2*M_PI);
 
@@ -146,19 +146,56 @@ void gravitating_sphere(Simulation* _s, size_t nums, vec3 center, REAL inner, RE
     _s -> loading_queue.add_cluster(cluster);
 }
 
+void add_disk1(Simulation* _s, size_t nums, vec3 center, REAL radius, REAL thickness, vec3 rotation, REAL avr_mass, REAL center_mass, vec3 v = vec3(0)){
+    // sets up the cluster
+    Cluster cluster;
+    cluster.number = nums;
+    cluster.name = "Disk";
+    add_body(_s, 
+        center_mass, 
+        center,
+        v
+    );
+
+    // sets up the builder lambda
+    cluster.builder = [radius, v, avr_mass, center, thickness, rotation, _s, center_mass ](Cluster cl3d, size_t _) {
+        vec3 pos = rng_point_in_cylinder(radius, 10, thickness)* _s -> get_scale(); // gets a random point inside the disk
+        REAL r = pos.magnitude();
+
+        // velocty on that point
+        REAL magn_vel = std::sqrt(_s -> get_G() * center_mass/ r);
+        vec3 vel = rotate_point(vec3(pos.y/r * magn_vel, -pos.x/r * magn_vel, 0), rotation.x, rotation.z);
+        
+        pos = rotate_point(pos, rotation.x, rotation.z);
+        pos.x/=2;
+
+        // assembles the body
+        add_body(_s,
+            rng_percent() * avr_mass + (int(rng_val(1, 20)) % 20) * .0000001*center_mass, 
+            pos + center,
+            vel + v
+        );
+    };
+
+    // adds the cluster to the queue
+    _s -> loading_queue.add_cluster(cluster);
+}
+
 int main() {
     Simulation* sim = new Simulation();
-    //add_disk(sim, 1e4, vec3(0), 200, 1, {0,0,0}, 1e-2, 1e30);
-    load_solar_system(sim);
-    sim -> gravity_solver = PARALLEL;
+    gravitating_sphere(sim, 1e4, vec3({-2e11, -2e11,  -2e11}), 10, 200, 1e-2, 1e33, {0,0,0});
+    gravitating_sphere(sim, 1e4, vec3({ 2e11,  2e11,   2e11}), 10, 200, 1e-2, 1e33, {0,0,0});
+    //add_disk1(sim, 1e4, vec3({-2e11, -2e11,  -2e11}) * 5, 200, 1, { 45,0, 45}, 1e-2, 1e33);
+    //add_disk1(sim, 1e4, vec3({ 2e11,  2e11,   2e11}) * 5, 200, 1, {-45,0,-45}, 1e-2, 1e33);
+    //add_disk1(sim, 1e4, vec3(0), 200, 1, {0,0,0}, 1e-2, 1e32);
+
+    sim -> gravity_solver = GPU_BARNES_HUT;
     sim -> integrator = EULER;
     sim -> integrator_order = 0;
     sim -> force_law = NEWTON | PN1 | PN2 | PN25;
-    sim -> theta = .44;
+    sim -> theta = .1;
     sim->softening = 1e-16;
-    sim->set_scale(200e7)->set_dt(1E4)->load();
-    auto report = sim->integrate(3, true).time_per_step;
-
+    sim->set_scale(200e7)->set_dt(1e4)->load();
     auto a = Renderer::Renderer3d(sim);
     a.show();
 }

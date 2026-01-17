@@ -314,6 +314,11 @@ void Renderer2d::draw_termal(){
 }
 
 
+inline double sigmoid (double a){
+    double e = std::exp(a);
+    return e / (1 + e);
+}
+
 /**
 * @brief rendering function made to fit most simulations
 */
@@ -327,6 +332,10 @@ void Renderer2d::draw_minimal(){
     glPointSize(10);
     
     for (int i = 0; i < _s -> bodies.positions.size(); ++i){
+        int index = std::min(sigmoid(std::log10(_s->bodies.accs[i].sqr_magn())/2), double(255));
+        auto& color = color_scale[index];
+
+        glColor3f(color[0], color[1], color[2]);
         // trasforms the coordinates to -> [-1, 1]
         REAL x = 2.f * (_s -> bodies.get_position_of(i).x * get_scale())/ (_s -> get_width());
         REAL y = 2.f * (_s -> bodies.get_position_of(i).y * get_scale())/ (_s -> get_height());

@@ -174,10 +174,8 @@ void NodesArray::merge(Simulation* _s, size_t _b, size_t index){
 
 
 /*                   //===---------------------------------------------------------===//
-.                    // BARNES HUvec3 IMPLEMENTATION                                     //
+.                    // BARNES HUT IMPLEMENTATION                                     //
 .                    //===---------------------------------------------------------===*/
-
-
 
 
 Barnes_Hut::Barnes_Hut(Simulation* _s){
@@ -191,6 +189,7 @@ Barnes_Hut::Barnes_Hut(Simulation* _s){
 //===---------------------------------------------------------===//
 // Inserting body into tree                                      //
 //===---------------------------------------------------------===//
+
 
 
 /**

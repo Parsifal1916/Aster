@@ -13,8 +13,8 @@ struct sim_meta{
     
     vec3 size = {
         1366, // x
-        768,  // y
-        1000  // z
+        1366,  // y
+        1366  // z
     };
 
     REAL  

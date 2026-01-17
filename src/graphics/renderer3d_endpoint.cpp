@@ -301,6 +301,7 @@ void Renderer3d::draw_all_labels(){
 */
 void Renderer3d::draw_axis(bool is_back){
     // gets the needed points in simulation space
+    if (layout == NORMAL) return;
     static vec3 cube_vertecies[8] = {
         {0,0,0}, {0,1,0}, {1,1,0}, {1,0,0},
         {0,0,1}, {0,1,1}, {1,1,1}, {1,0,1} 
@@ -370,12 +371,13 @@ vec3 Renderer3d::map_point(vec3 v, bool fixed) {
 
     if (!fixed && !(
         v.x < 1 && v.x > -1 && 
-        v.y < float(current_width)/current_width && v.y > -float(current_width)/current_width) &&
-        v.z < 1 && v.z > -1 )
+        v.y < 1 && v.y > -1 &&
+        v.z < 1 && v.z > -1) && layout != NORMAL)
         return {10,10,10};
         
      v = v*gui_scale * gui_scale/2 / distance;
-
+     v.y *= _s->get_render_height()/_s->get_render_width();
+     v.z *= _s->get_render_depth()/_s->get_render_width();
     // applies the z-x rotation
     float x1 =  v.x * cos_x_theta + v.z * sin_x_theta;
     float z1 = -v.x * sin_x_theta + v.z * cos_x_theta;
@@ -386,8 +388,6 @@ vec3 Renderer3d::map_point(vec3 v, bool fixed) {
 
 
     v = {x1, y1, z2};
-
-
 
     if (fixed)
         return v;
@@ -597,7 +597,8 @@ void Renderer3d::show(){
         (this ->*render3d)();
 
         draw_scale();
-        Text::load_png(LIBRARY_PATH "/logo.png", img, current_height, current_width);
+        if (layout != NORMAL)
+            Text::load_png(LIBRARY_PATH "/logo.png", img, current_height, current_width);
         draw_axis(false);
 
         if (layout == SIDEBAR)
@@ -745,11 +746,38 @@ void Renderer3d::draw_termal3d(){
     glEnd();
 }
 
+inline std::pair<double, double> compute_momentum_range(const std::vector<vec3>& momenta) {
+    std::vector<double> values;
+    values.reserve(momenta.size());
+
+    for (const auto& p : momenta)
+        values.push_back(std::log1p(p.sqr_magn()));
+
+    std::nth_element(values.begin(),
+                     values.begin() + values.size() / 20,
+                     values.end());
+    double lo = values[values.size() / 20];
+
+    std::nth_element(values.begin(),
+                     values.begin() + values.size() * 19 / 20,
+                     values.end());
+    double hi = values[values.size() * 19 / 20];
+
+    return {lo, hi};
+}
+
+inline double saturate(double x) {
+    return std::clamp(x, 0.0, 1.0);
+}
+
+inline double smoothstep(double x) {
+    return x * x * (3.0 - 2.0 * x);
+}
+
 /*
 * @brief fast method to draw every body in the simulation 
 */
 void Renderer3d::draw_minimal3d(){
-
     // sets up the glfw configuration
     glBegin(GL_POINTS);
     glPointSize(10);    
@@ -757,21 +785,28 @@ void Renderer3d::draw_minimal3d(){
     vec3 temp = {0,0,0}; // makes only one instance of the position vector
     float aspect_ratio = float(current_width) / current_height;
 
-    for (int i = 0; i < _s -> bodies.positions.size(); ++i){
-        glColor3f(1.0,1.0,1.0);
-        // maps the point in 2d space 
-        vec3 v = _s -> bodies.positions[i];
-        v.x = (v.x + _s -> get_width()) / (2*_s -> get_width());
-        v.y = (v.y + _s -> get_width()) / (2*_s -> get_width()) ;
-        v.z = (v.z + _s -> get_width()) / (2*_s -> get_width());
+    static std::pair<double, double> mr= compute_momentum_range(_s->bodies.velocities);;
+
+    if (!(int(_s -> get_time_passed()) % 5))  mr = compute_momentum_range(_s->bodies.velocities);
+
+    for (int i = 0; i < _s->bodies.positions.size(); ++i) {
+        double p = std::log1p(_s->bodies.velocities[i].sqr_magn());
+        double t = (p - mr.first) / (mr.second - mr.first);
+        t = smoothstep(saturate(t));
+
+        int index = int(t * 255);
+        auto& color = jet_color_scale[index];
+
+        glColor3f(color[0], color[1], color[2]);
+
+        vec3 v = _s->bodies.positions[i];
+        v.x = (v.x + _s->get_width()) / (2 * _s->get_width());
+        v.y = (v.y + _s->get_height()) / (2 * _s->get_height());
+        v.z = (v.z + _s->get_depth()) / (2 * _s->get_depth());
         v = map_point(v, false) + cube_offset;
-    
-        // draws the point if it's in range
+
         if (is_unitary_bound(v))
-            glVertex2f( 
-                v.x, 
-                v.y* aspect_ratio
-            );
+            glVertex2f(v.x, v.y * aspect_ratio);
     }
 
     glEnd();

@@ -17,7 +17,7 @@
 #include "Aster/building-api/clusters.h"
 #include "Aster/building-api/sim_meta.h"
 #include "Aster/physics/tool-chain.h"
-
+#include "Aster/building-api/units.h"
 #include "Aster/graphs/graph_collection.h"
 #include "Aster/building-api/clusters.h"
 
